@@ -1,0 +1,157 @@
+/* =========================================
+   EXPORT WINDOW STYLES
+   ========================================= */
+
+/* Адаптация модального окна под экспорт */
+.export-window {
+    width: 600px; /* Шире обычного окна */
+    max-width: 95vw;
+    background: var(--bg-elevated);
+    padding: 0; /* Убираем паддинги, будем задавать внутри */
+    gap: 0;
+    overflow: hidden;
+}
+
+.modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated-soft);
+}
+
+.modal-subtitle {
+    font-size: 13px;
+    color: var(--text-soft);
+    margin-top: 4px;
+}
+
+/* Список карточек экспорта */
+.export-list {
+    padding: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    background: var(--bg);
+}
+
+/* Карточка экспорта */
+.export-card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.4s ease backwards;
+    animation-delay: var(--delay, 0s);
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.export-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.export-card:active {
+    transform: translateY(0);
+}
+
+/* Иконка типа экспорта */
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+}
+
+.html-icon { background: rgba(228, 77, 38, 0.1); color: #E44D26; } /* HTML5 Orange */
+.win-icon { background: rgba(0, 120, 215, 0.1); color: #0078D7; } /* Windows Blue */
+.android-icon { background: rgba(61, 220, 132, 0.1); color: #3DDC84; } /* Android Green */
+
+.card-info {
+    flex: 1;
+}
+
+.card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+}
+
+.card-desc {
+    font-size: 11px;
+    color: var(--text-soft);
+    line-height: 1.4;
+}
+
+.card-action {
+    color: var(--text-soft);
+    opacity: 0;
+    transition: 0.2s;
+    transform: translateX(-10px);
+}
+
+.export-card:hover .card-action {
+    opacity: 1;
+    transform: translateX(0);
+    color: var(--accent);
+}
+
+/* Disabled state */
+.export-card.disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+.export-card.disabled:hover {
+    transform: none;
+    border-color: var(--border);
+    box-shadow: none;
+}
+
+.card-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: var(--bg-elevated-soft);
+    border: 1px solid var(--border);
+    font-size: 9px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 700;
+    color: var(--text-soft);
+}
+
+.modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-elevated);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.ios-icon { 
+    background: rgba(255, 255, 255, 0.1); 
+    color: #fff; /* Белое яблоко */
+}
+
+.ecr-icon { 
+    background: rgba(156, 39, 176, 0.1); 
+    color: #9c27b0; /* Фиолетовый */
+    border: 1px solid rgba(156, 39, 176, 0.2);
+}

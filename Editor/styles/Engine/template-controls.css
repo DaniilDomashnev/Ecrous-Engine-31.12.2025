@@ -1,0 +1,66 @@
+/* =========================================
+   TEMPLATE CONTROLS
+   ========================================= */
+.template-controls {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 10px;
+	background: var(--bg-elevated);
+	border-top: 1px solid var(--border);
+	padding: 16px;
+	margin-top: auto;
+}
+
+.template-controls p {
+	grid-column: 1 / -1;
+	margin: 0 0 8px;
+	font-size: 10px;
+	font-weight: 800;
+	text-transform: uppercase;
+	color: var(--text-soft);
+}
+
+.template-controls button {
+	background: var(--bg);
+	border: 1px solid var(--border);
+	color: var(--text);
+	font-family: var(--font-main);
+	font-size: 12px;
+	padding: 8px 10px;
+	border-radius: 8px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 8px;
+	transition: all 0.2s ease;
+	outline: none;
+	height: 36px;
+}
+
+.template-controls button:first-of-type {
+	grid-column: 1 / -1;
+	background: var(--accent-soft);
+	border-color: transparent;
+	color: var(--accent);
+	justify-content: flex-start;
+	font-weight: 600;
+}
+.template-controls button:first-of-type i {
+	color: var(--accent);
+}
+
+.template-controls button:hover {
+	background: var(--bg-elevated-soft);
+	border-color: var(--text-soft);
+	transform: translateY(-1px);
+}
+
+.template-controls button:first-of-type:hover {
+	background: var(--accent);
+	color: #fff;
+	box-shadow: 0 4px 12px var(--accent-soft);
+}
+.template-controls button:first-of-type:hover i {
+	color: #fff;
+}

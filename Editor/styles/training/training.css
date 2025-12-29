@@ -1,0 +1,202 @@
+/* =========================================
+   EDITOR TUTORIAL OVERLAY & BASE STYLES
+   ========================================= */
+
+.editor-tutorial-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7); /* Затемненный фон */
+    z-index: 9998; /* Ниже тултипа и хайлайта */
+    display: none;
+    align-items: center; /* Flex centering for potential children, though elements are absolute */
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    box-sizing: border-box; /* Ensures no padding/border adds to 100vw/vh */
+}
+
+.editor-tutorial-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+/* =========================================
+   EDITOR TUTORIAL TOOLTIP (Окно с текстом и кнопками)
+   ========================================= */
+
+.editor-tutorial-tooltip {
+    position: absolute;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    max-width: 90vw; /* Prevents exceeding screen width; required for small screens/mobile */
+    max-height: 80vh; /* Prevents exceeding screen height; leaves room for safe margins */
+    overflow: auto; /* Enables scrolling if content (e.g., long text) exceeds max-height; required to avoid vertical overflow */
+    box-shadow: var(--shadow-soft);
+    z-index: 10000; /* Выше всего */
+    color: var(--text);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(20px) scale(0.95); /* Slide + scale анимация */
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    will-change: opacity, transform;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Flex centering for internal content */
+    word-wrap: break-word; /* Ensures long words (e.g., Russian text) wrap to prevent horizontal overflow */
+    hyphens: auto; /* Automatic hyphenation for better wrapping of long Russian words */
+    box-sizing: border-box; /* Includes padding/border in max-width/height calculations; required for consistent sizing */
+}
+
+.editor-tutorial-tooltip.visible {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.editor-tutorial-tooltip h2 {
+    font-size: 20px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    word-wrap: break-word; /* Reinforces wrapping for titles if unusually long */
+    hyphens: auto; /* Hyphenation for titles */
+}
+
+.editor-tutorial-tooltip p {
+    font-size: 14px;
+    line-height: 1.5; /* Improves readability and controls vertical spacing for long text */
+    margin-bottom: 20px;
+    color: var(--text-soft);
+    word-wrap: break-word; /* Ensures text paragraphs wrap properly */
+    hyphens: auto; /* Better handling of long Russian sentences */
+}
+
+.editor-tutorial-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box; /* Ensures buttons fit within max-width */
+}
+
+.editor-tutorial-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-sizing: border-box; /* Prevents padding from causing overflow */
+}
+
+.editor-tutorial-btn:hover {
+    transform: scale(1.05);
+}
+
+.editor-tutorial-btn-prev {
+    background: var(--bg-elevated-soft);
+    color: var(--text);
+}
+
+.editor-tutorial-btn-next {
+    background: var(--accent);
+    color: var(--text);
+}
+
+.editor-tutorial-btn-skip {
+    background: transparent;
+    color: var(--text-soft);
+    text-decoration: underline;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    font-size: 12px;
+    box-sizing: border-box; /* Consistent sizing */
+}
+
+/* =========================================
+   EDITOR TUTORIAL HIGHLIGHT (Подсветка элемента)
+   ========================================= */
+
+.editor-tutorial-highlight {
+    position: absolute;
+    border: 2px solid var(--accent);
+    border-radius: 12px;
+    box-shadow: 0 0 20px var(--accent-soft);
+    z-index: 9999; /* Выше оверлея, ниже тултипа */
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.95);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    will-change: opacity, transform;
+    box-sizing: border-box; /* Ensures border doesn't add to calculated size in JS clamps */
+    max-width: calc(100vw - 20px); /* CSS fallback max-width; required if JS clamp fails */
+    max-height: calc(100vh - 20px); /* CSS fallback max-height; leaves safe margin */
+}
+
+/* JS will dynamically clamp position/size, but this provides baseline safety */
+
+.editor-tutorial-highlight.visible {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* =========================================
+   ANIMATIONS & TRANSITIONS
+   ========================================= */
+
+@keyframes editorFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes editorSlideUp {
+    from { transform: translateY(20px) scale(0.95); }
+    to { transform: translateY(0) scale(1); }
+}
+
+/* =========================================
+   MOBILE ADAPTATIONS
+   ========================================= */
+
+@media (max-width: 768px) {
+    .editor-tutorial-tooltip {
+        max-width: 90vw;
+        max-height: 70vh; /* Reduced for mobile to account for keyboard/OS bars; required for usability */
+        padding: 16px;
+        position: fixed;
+        bottom: 20px;
+        left: 50%;
+        transform: translateX(-50%) translateY(20px) scale(0.95); /* Для slide + scale */
+    }
+
+    .editor-tutorial-tooltip.visible {
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+
+    .editor-tutorial-buttons {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .editor-tutorial-btn-skip {
+        position: static;
+        text-align: center;
+        margin-top: 12px;
+    }
+
+    /* Additional mobile safety: Reduce font sizes slightly to fit more content without overflow */
+    .editor-tutorial-tooltip h2 {
+        font-size: 18px;
+    }
+
+    .editor-tutorial-tooltip p {
+        font-size: 13px;
+    }
+}

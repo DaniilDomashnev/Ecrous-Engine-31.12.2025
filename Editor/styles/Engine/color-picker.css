@@ -1,0 +1,120 @@
+/* =========================================
+   COLOR PICKER
+   ========================================= */
+.cp-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+.cp-window {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 12px;
+    width: 300px;
+    padding: 15px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+.cp-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #fff;
+    font-weight: bold;
+}
+.cp-preview {
+    width: 40px; height: 25px;
+    border-radius: 4px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+
+.cp-body {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+}
+
+/* Квадрат внутри круга (дизайн из картинки) */
+.cp-area-hue {
+    position: absolute;
+    top: 0; left: 0;
+    width: 200px; height: 200px;
+    cursor: crosshair;
+}
+.cp-area-sb {
+    position: absolute;
+    top: 35px; left: 35px; /* (200 - 130) / 2 */
+    width: 130px; height: 130px;
+    z-index: 10;
+    cursor: crosshair;
+    border: 2px solid rgba(255,255,255,0.2);
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    overflow: hidden;
+}
+/* Растягиваем канвасы */
+#cp-canvas-hue, #cp-canvas-sb {
+    width: 100%; height: 100%;
+    display: block;
+}
+
+/* Курсоры */
+.cp-cursor-hue {
+    position: absolute;
+    width: 16px; height: 16px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 4px rgba(0,0,0,0.5);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+.cp-cursor-sb {
+    position: absolute;
+    width: 12px; height: 12px;
+    border: 2px solid #fff; /* Черный для контраста на светлом */
+    border-radius: 50%;
+    box-shadow: 0 0 2px rgba(255,255,255,1);
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+}
+
+.cp-inputs input {
+    background: #1a1a1a;
+    border: 1px solid #444;
+    color: #fff;
+    padding: 6px;
+    border-radius: 4px;
+    width: 100%;
+    font-family: monospace;
+    text-transform: uppercase;
+}
+.cp-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+/* Стили для сватча в блоке */
+.color-input-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+.color-swatch-btn {
+    width: 32px; height: 32px;
+    border-radius: 6px;
+    border: 2px solid rgba(255,255,255,0.2);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: transform 0.1s;
+}
+.color-swatch-btn:active { transform: scale(0.9); }

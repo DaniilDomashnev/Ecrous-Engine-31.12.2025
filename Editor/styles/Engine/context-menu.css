@@ -1,0 +1,64 @@
+/* --- КОНТЕКСТНОЕ МЕНЮ --- */
+.context-menu {
+    position: fixed;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    padding: 6px 0;
+    z-index: 99999;
+    min-width: 160px;
+    display: flex;
+    flex-direction: column;
+}
+
+.context-menu.hidden {
+    display: none;
+}
+
+.ctx-item {
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.1s;
+}
+
+.ctx-item:hover {
+    background: var(--bg-elevated-soft);
+    color: var(--accent);
+}
+
+.ctx-item.delete:hover {
+    background: rgba(255, 23, 68, 0.1);
+    color: #ff1744;
+}
+
+.ctx-separator {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+/* --- СТИЛИ ДЛЯ ГРУППЫ --- */
+.group-toggle-btn {
+    margin-left: auto;
+    cursor: pointer;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: 0.2s;
+}
+.group-toggle-btn:hover {
+    background: rgba(255,255,255,0.2);
+}
+.node-block.collapsed {
+    opacity: 0.7;
+    border: 2px dashed #ff9800;
+}

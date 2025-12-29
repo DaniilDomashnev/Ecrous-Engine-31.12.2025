@@ -1,0 +1,61 @@
+/* --- ОКНО НАСТРОЕК --- */
+
+/* Используем стили движка, добавляем только специфику */
+.settings-modal {
+    width: 450px !important; /* Чуть шире стандартного */
+    max-width: 90vw !important;
+}
+
+.setting-group {
+    margin-bottom: 16px;
+}
+
+.setting-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-soft);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Используем ваши стандартные инпуты, но добавим обертку */
+.select-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.select-wrapper i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    color: var(--text-soft);
+}
+
+/* Скрываем стандартную стрелку select */
+.setting-group select {
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    background-color: var(--bg); /* Чтобы отличалось от фона модалки */
+}
+
+.setting-group input {
+    background-color: var(--bg);
+}
+
+/* Адаптив для мобильных устройств */
+@media (max-width: 600px) {
+    .settings-modal {
+        width: 95vw !important;
+        padding: 20px 15px !important;
+    }
+    
+    .modal-message {
+        max-height: 60vh;
+        overflow-y: auto; /* Скролл если клавиатура перекрывает */
+    }
+}

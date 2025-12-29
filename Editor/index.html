@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Ecrous Engine | Editor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="../src/styles/themes.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="styles/export.css">
+    <link rel="stylesheet" href="styles/mobile.css">
+
+    <!-- Engine -->
+    <link rel="stylesheet" href="styles/Engine/canvas.css">
+    <link rel="stylesheet" href="styles/Engine/game.css">
+    <link rel="stylesheet" href="styles/Engine/layout.css">
+    <link rel="stylesheet" href="styles/Engine/nodes.css">
+    <link rel="stylesheet" href="styles/Engine/template-controls.css">
+    <link rel="stylesheet" href="styles/Engine/templates-modals.css">
+    <link rel="stylesheet" href="styles/Engine/thread.css">
+    <link rel="stylesheet" href="styles/Engine/toolbox.css">
+    <link rel="stylesheet" href="styles/Engine/context-menu.css">
+    <link rel="stylesheet" href="styles/Engine/color-picker.css">
+
+    <!-- Core -->
+    <link rel="stylesheet" href="styles/Core/modals.css">
+    <link rel="stylesheet" href="styles/Core/notification.css">
+    <link rel="stylesheet" href="styles/Core/screenshots.css">
+    <link rel="stylesheet" href="styles/Core/scrollbars.css">
+    <link rel="stylesheet" href="styles/Core/ui.css">
+
+    <!-- Settings -->
+    <link rel="stylesheet" href="styles/settings.css">
+
+    <!-- Training -->
+    <link rel="stylesheet" href="styles/training/training.css">
+
+    <link rel="icon" type="image/png" href="../public/vite.jpg">
+</head>
+<body class="theme-dark">
+    <header>
+        <div class="header-left">
+            <a href="../index.html" class="icon-btn" style="text-decoration:none; margin-right: 10px;">
+                <i class="ri-home-4-line"></i>
+            </a>
+
+            <div class="brand">
+                Ecrous Engine
+            </div>
+
+            <button id="btnMobileMenuToggle" class="icon-btn mobile-only-btn">
+                <i class="ri-menu-line"></i>
+            </button>
+
+            <div class="menu-bar" id="mainMenuBar">
+                <div class="menu-item" id="menuFile">
+                    Файл <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="btnSave"><i class="ri-save-3-line"></i> Сохранить проект <span>Ctrl+S</span>
+                        </div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="btnProjectSettings"><i class="ri-settings-3-line"></i> Настройки...
+                            <span>Ctrl+Shift+P</span></div>
+                        <div class="menu-entry" id="btnExport"><i class="ri-archive-line"></i> Экспорт <span>Shift+E</span></div>
+                    </div>
+                </div>
+            
+                <div class="menu-item" id="menuEdit">
+                    Правка <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="btnUndo"><i class="ri-arrow-go-back-line"></i> Отменить <span>Ctrl+Z</span>
+                        </div>
+                        <div class="menu-entry" id="btnRedo"><i class="ri-arrow-go-forward-line"></i> Повторить <span>Ctrl+Y</span>
+                        </div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="btnCut"><i class="ri-scissors-cut-line"></i> Вырезать <span>Ctrl+X</span></div>
+                        <div class="menu-entry" id="btnCopy"><i class="ri-file-copy-line"></i> Копировать <span>Ctrl+C</span></div>
+                        <div class="menu-entry" id="btnPaste"><i class="ri-clipboard-line"></i> Вставить <span>Ctrl+V</span></div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="btnDuplicate"><i class="ri-file-copy-2-line"></i> Дублировать
+                            <span>Ctrl+D</span></div>
+                        <div class="menu-entry" id="btnDelete"><i class="ri-delete-bin-line"></i> Удалить <span>Del</span></div>
+                        <div class="menu-entry" id="btnSelectAll"><i class="ri-checkbox-multiple-line"></i> Выделить всё
+                            <span>Ctrl+A</span></div>
+                    </div>
+                </div>
+            
+                <div class="menu-item" id="menuObjects">
+                    Объекты <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="btnObjCreate"><i class="ri-add-box-line"></i> Создать объект</div>
+                        <div class="menu-entry" id="btnObjEmpty"><i class="ri-checkbox-blank-circle-line"></i> Пустой объект</div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="btnObjCamera"><i class="ri-camera-fill"></i> Камера</div>
+                        <div class="menu-entry" id="btnObjLight"><i class="ri-lightbulb-flash-line"></i> Свет</div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="btnObjPrefab"><i class="ri-shape-2-line"></i> Префабы...</div>
+                    </div>
+                </div>
+            
+                <div class="menu-item" id="menuAssets">
+                    Ассеты <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="btnAssetImport"><i class="ri-upload-2-line"></i> Импорт...</div>
+                        <div class="menu-entry" id="btnAssetManager"><i class="ri-folder-open-line"></i> Менеджер ассетов</div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="btnAssetRefresh"><i class="ri-refresh-line"></i> Обновить</div>
+                        <div class="menu-entry" id="btnAssetClean"><i class="ri-delete-bin-2-line"></i> Очистить неиспользуемые
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="menu-item" id="menuRun">
+                    Запуск <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="btnRunMenu"><i class="ri-play-fill"></i> Запустить <span>F5</span></div>
+                        <div class="menu-entry" id="btnPauseMenu"><i class="ri-pause-line"></i> Пауза <span>F8</span></div>
+                        <div class="menu-entry" id="btnStopMenu"><i class="ri-stop-fill"></i> Остановить <span>Esc</span></div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="btnRunWindow"><i class="ri-window-line"></i> Запуск в окне</div>
+                        <div class="menu-entry" id="btnRunFull"><i class="ri-fullscreen-line"></i> Полноэкранный режим <span>F11</span></div>
+                    </div>
+                </div>
+            
+                <div class="menu-item" id="menuTools">
+                    Инструменты <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="btnToolConsole"><i class="ri-terminal-box-line"></i> Консоль</div>
+                        <div class="menu-entry" id="btnToolProfiler"><i class="ri-pulse-line"></i> Профайлер</div>
+                        <div class="menu-entry" id="btnToolDebug"><i class="ri-bug-line"></i> Отладчик</div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="btnToolAI"><i class="ri-brain-line"></i> AI / Скрипты</div>
+                        <div class="menu-entry" id="btnToolExt"><i class="ri-puzzle-line"></i> Расширения</div>
+                    </div>
+                </div>
+            
+                <div class="menu-item" id="menuWindow">
+                    Окна <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="winToggleHierarchy"><i class="ri-list-check"></i> Иерархия (Сцены)</div>
+                        <div class="menu-entry" id="winToggleInspector"><i class="ri-settings-4-line"></i> Инспектор</div>
+                        <div class="menu-entry" id="winToggleScene"><i class="ri-drag-move-line"></i> Сцена (Canvas)</div>
+                        <div class="menu-entry" id="winToggleToolbox"><i class="ri-function-line"></i> Инструменты</div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="winResetLayout"><i class="ri-layout-grid-fill"></i> Сброс интерфейса</div>
+                    </div>
+                </div>
+            
+                <div class="menu-item" id="menuHelp">
+                    Помощь <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="hlpDocs"><i class="ri-book-open-line"></i> Документация</div>
+                        <div class="menu-entry" id="hlpShortcuts"><i class="ri-keyboard-box-line"></i> Горячие клавиши</div>
+                        <div class="menu-separator"></div>
+                        <div class="menu-entry" id="hlpCommunity"><i class="ri-discord-line"></i> Сообщество / Discord</div>
+                        <div class="menu-entry" id="hlpAbout"><i class="ri-information-line"></i> О движке</div>
+                        <div class="menu-entry" style="font-size: 10px; opacity: 0.5;">Версия: ECX 2025.31.12</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="header-controls">
+            <button class="icon-btn" onclick="openScreenshotModal()" title="Сделать красивый скриншот">
+                <i class="ri-camera-3-line"></i> Beta
+            </button>
+            <button id="btnToggleToolbox" class="icon-btn" title="Скрыть/Показать инструменты" style="margin-right: 10px;">
+                <i class="ri-layout-right-line"></i>
+            </button>
+            <button id="btnRun" class="play-btn">
+                <i class="ri-play-fill"></i> ЗАПУСК
+            </button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <div class="sidebar">
+            <div class="section-title">
+                <span><i class="ri-movie-line"></i> СЦЕНЫ</span>
+                <i class="ri-add-line action-icon" id="btnAddScene" title="Новая сцена"></i>
+            </div>
+            <div class="list-container" id="sceneList"></div>
+
+            <div class="divider"></div>
+
+            <div class="section-title">
+                <span><i class="ri-box-3-line"></i> ОБЪЕКТЫ</span>
+                <i class="ri-add-line action-icon" id="btnAddObject" title="Новый объект"></i>
+            </div>
+            <div class="list-container" id="objectList"></div>
+
+            <div class="panel-footer-info">
+                <div><i class="ri-drag-move-2-line"></i> <span id="current-context">Нет выбора</span></div>
+            </div>
+
+            <div class="divider"></div>
+            
+            <div class="section-title">
+                <span><i class="ri-folder-image-line"></i> АССЕТЫ</span>
+                <input type="file" id="assetFileInput" style="display: none;" multiple accept="image/*,audio/*,.ttf,.otf,.woff">
+                <i class="ri-upload-2-line action-icon" onclick="document.getElementById('assetFileInput').click()"
+                    title="Загрузить файл"></i>
+            </div>
+            <div class="list-container" id="assetList">
+                <div style="padding:10px; color:#666; font-size:11px; text-align:center;">Нет файлов</div>
+            </div>
+
+            <div class="template-controls">
+                <p>Мои шаблоны:</p>
+                <button onclick="createTemplateFromCurrent()" title="Сохранить текущие блоки как новый шаблон">
+                    <i class="ri-add-box-line"></i> В шаблон
+                </button>
+                <button onclick="exportTemplates()" title="Скачать файл с моими шаблонами">
+                    <i class="ri-download-cloud-line"></i> Экспорт
+                </button>
+                <button onclick="importTemplates()" title="Загрузить шаблоны из файла">
+                    <i class="ri-upload-cloud-line"></i> Импорт
+                </button>
+            </div>
+        </div>
+
+        <div class="canvas" id="mainCanvas">
+            <div id="canvas-container">
+                <svg id="connections-layer"></svg>
+            </div>
+        
+            <div class="canvas-controls">
+                <div class="mode-switch hint-text" style="padding: 4px; display:flex; gap:5px; pointer-events:auto;">
+                    <button id="btnModeStack" class="mode-btn active" title="Режим списков (Stack)"><i
+                            class="ri-list-check-2"></i></button>
+                    <button id="btnModeNodes" class="mode-btn" title="Режим узлов (Nodes)"><i class="ri-node-tree"></i></button>
+                </div>
+        
+                <div class="hint-text"><i class="ri-mouse-line"></i> ПКМ: Меню | Колесо: Двигать</div>
+                <button class="zoom-btn" id="resetView" title="Сброс камеры"><i class="ri-focus-3-line"></i></button>
+            </div>
+        </div>
+
+        <div class="toolbox">
+            <div class="panel-header">
+                <i class="ri-tools-line"></i<i class="ri-tool-line"></i> Инструменты
+            </div>
+            <div id="toolboxContent"></div>
+        </div>
+    </div>
+
+    <div id="game-overlay" class="hidden">
+        <div class="game-window">
+            <div class="game-header">
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <i class="ri-gamepad-line" style="color:var(--accent)"></i>
+                    <span>ИГРОВОЙ ПРОЦЕСС</span>
+                </div>
+                <button id="btnCloseGame" class="close-game-btn"><i class="ri-close-line"></i></button>
+            </div>
+            <div id="game-stage"></div>
+            <div id="game-console">
+                <div class="console-line system">> Движок готов к работе...</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-prompt-overlay" class="modal-overlay hidden">
+        <div class="modal-window">
+            <div class="modal-title" id="modalTitle">Ввод данных</div>
+            <div class="modal-message" id="modalMessage">Введите название:</div>
+            <input type="text" id="modalInput" class="modal-input" autocomplete="off">
+            <div class="modal-buttons">
+                <button id="btnModalConfirm" class="modal-btn primary">Продолжить</button>
+                <button id="btnModalCancel" class="modal-btn secondary">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="export-overlay" class="modal-overlay">
+        <div class="modal-window export-window">
+            <div class="modal-header">
+                <div class="modal-title"><i class="ri-share-forward-fill"></i> Экспорт проекта</div>
+                <div class="modal-subtitle">Выберите формат сборки вашей игры</div>
+            </div>
+            <div class="export-list">
+                <button class="export-card" id="exportWindows" style="--delay: 0.1s">
+                    <div class="card-icon html-icon"><i class="ri-html5-fill"></i></div>
+                    <div class="card-info">
+                        <div class="card-title">Web Build (HTML)</div>
+                        <div class="card-desc">Единый файл .html, работает в браузере.</div>
+                    </div>
+                    <div class="card-action"><i class="ri-download-line"></i></div>
+                </button>
+                <button class="export-card" id="exportExe" style="--delay: 0.2s">
+                    <div class="card-icon win-icon"><i class="ri-windows-fill"></i></div>
+                    <div class="card-info">
+                        <div class="card-title">Windows (EXE)</div>
+                        <div class="card-desc">ZIP-архив с лаунчером для запуска без браузера.</div>
+                    </div>
+                    <div class="card-action"><i class="ri-download-line"></i></div>
+                </button>
+                <button class="export-card" id="exportAndroid" style="--delay: 0.3s">
+                    <div class="card-icon android-icon"><i class="ri-android-fill"></i></div>
+                    <div class="card-info">
+                        <div class="card-title">Android (APK)</div>
+                        <div class="card-desc">Архив для конвертации в APK (PWA).</div>
+                    </div>
+                    <div class="card-action"><i class="ri-download-line"></i></div>
+                </button>
+                <button class="export-card" id="exportIOS" style="--delay: 0.4s">
+                    <div class="card-icon ios-icon"><i class="ri-apple-fill"></i></div>
+                    <div class="card-info">
+                        <div class="card-title">iOS (PWA)</div>
+                        <div class="card-desc">Web-сборка для запуска на iPhone/iPad.</div>
+                    </div>
+                    <div class="card-action"><i class="ri-download-line"></i></div>
+                </button>
+                <button class="export-card" id="exportEcr" style="--delay: 0.05s">
+                    <div class="card-icon ecr-icon"><i class="ri-file-code-line"></i></div>
+                    <div class="card-info">
+                        <div class="card-title">Ecrous Project (.ecr)</div>
+                        <div class="card-desc">Файл проекта для обмена с друзьями.</div>
+                    </div>
+                    <div class="card-action"><i class="ri-download-line"></i></div>
+                </button>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn secondary" id="closeExport">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="fabAddBlock" class="fab-btn" title="Добавить блок"><i class="ri-add-line"></i></button>
+
+    <div id="library-overlay" class="modal-overlay hidden">
+        <div class="library-window">
+            <div class="library-header">
+                <span style="display:flex; align-items:center; gap:10px;">
+                    <i class="ri-function-line" style="color:var(--accent)"></i> Библиотека
+                </span>
+                <button id="btnCloseLib" class="close-game-btn"><i class="ri-close-line"></i></button>
+            </div>
+            <div class="library-body">
+                <div class="lib-sidebar" id="libCategories"></div>
+                <div class="lib-content" id="libGrid"></div>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="templateFileInput" accept=".json" style="display: none;"
+        onchange="handleTemplateFileSelect(this)">
+
+    <div id="modal-tpl-create" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 380px;">
+            <div class="modal-title">
+                <i class="ri-save-3-line" style="color:var(--accent)"></i> Новый шаблон
+            </div>
+            <div class="modal-message">
+                <p>Придумайте название для вашего набора блоков.</p>
+                <div class="input-group">
+                    <input type="text" id="tpl-create-input" class="modal-input" placeholder="Например: Прыжок игрока"
+                        autocomplete="off">
+                    <div class="input-error hidden" id="tpl-create-error">Введите название!</div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeTemplateModal('modal-tpl-create')">Отмена</button>
+                <button class="modal-btn primary" id="btn-confirm-create-tpl">Сохранить</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-tpl-import" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 400px;">
+            <div class="modal-title">
+                <i class="ri-download-cloud-2-line" style="color:var(--accent)"></i> Импорт
+            </div>
+            <div class="modal-message">
+                <div class="drop-zone" id="tpl-drop-zone">
+                    <i class="ri-file-upload-line"></i>
+                    <p>Перетащите файл <b>.json</b> сюда</p>
+                    <span>или нажмите для выбора</span>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeTemplateModal('modal-tpl-import')">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-alert" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 360px;">
+            <div class="modal-title" id="alert-title">
+                <i class="ri-information-line" style="color:var(--accent)"></i> Внимание
+            </div>
+            <div class="modal-message" id="alert-message">
+                Текст сообщения...
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="closeAlertModal()">Понятно</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-confirm-delete" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 380px;">
+            <div class="modal-title">
+                <i class="ri-delete-bin-5-line" style="color:var(--danger)"></i> Удаление шаблона
+            </div>
+            <div class="modal-message" id="confirm-delete-msg">
+                Текст подтверждения...
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeConfirmDeleteModal()">Отмена</button>
+                <button class="modal-btn danger" id="btn-perform-delete">Удалить навсегда</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-tpl-export-select" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 450px;">
+            <div class="modal-title">
+                <i class="ri-checkbox-multiple-line" style="color:var(--accent)"></i> Экспорт шаблонов
+            </div>
+            <div class="modal-message">
+                <p style="margin-bottom: 10px;">Выберите, какие шаблоны включить в файл:</p>
+    
+                <div class="tpl-list-container" id="tpl-export-list">
+                </div>
+    
+                <div onclick="toggleAllTemplates()"
+                    style="font-size:12px; color:var(--accent); cursor:pointer; margin-top:8px; display:inline-block;">
+                    Выбрать / Снять все
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeExportSelectModal()">Отмена</button>
+                <button class="modal-btn primary" onclick="confirmExportSelected()">Скачать (.json)</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-tpl-import-success" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 380px;">
+            <div class="modal-title">
+                <i class="ri-checkbox-circle-fill" style="color:#00E676"></i> Успешно!
+            </div>
+            <div class="modal-message">
+                <p>Добавлено новых шаблонов: <b id="import-count-val" style="color:var(--text)">0</b></p>
+    
+                <div class="imported-list-container" id="imported-tpl-names">
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="closeImportSuccessModal()">Круто</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-screenshot" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 900px; max-width: 95vw; height: 85vh; display:flex; flex-direction:column;">
+    
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="modal-title">
+                    <i class="ri-camera-lens-line" style="color:var(--accent)"></i> Снимок кода
+                </div>
+                <button class="close-game-btn" onclick="closeScreenshotModal()">
+                    <i class="ri-close-line"></i>
+                </button>
+            </div>
+    
+            <div class="screenshot-preview-container"
+                style="flex:1; overflow:auto; background:#111; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; padding:20px; position: relative;">
+    
+                <div id="screenshot-capture-area" class="screenshot-card" style="position: relative;">
+    
+                    <div id="crop-overlay"></div>
+                    <div id="crop-selection-box"></div>
+    
+                    <div class="screenshot-bg" id="shot-bg">
+                        <div class="screenshot-inner-window">
+                            <div class="window-controls">
+                                <span style="background:#ff5f56"></span>
+                                <span style="background:#ffbd2e"></span>
+                                <span style="background:#27c93f"></span>
+                            </div>
+                            <div class="window-title">Ecrous Script</div>
+    
+                            <div id="shot-nodes-container" style="position: relative;">
+                                <svg id="shot-connections-layer"
+                                    style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;"></svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+            </div>
+    
+            <div class="screenshot-controls" style="margin-top:20px; display:flex; gap:15px; align-items:center;">
+    
+                <div style="display:flex; gap:5px;">
+                    <div class="color-dot" onclick="setShotBg('linear-gradient(135deg, #f093fb 0%, #f5576c 100%)')"
+                        style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" title="Sunset"></div>
+                    <div class="color-dot" onclick="setShotBg('linear-gradient(135deg, #8BC6EC 0%, #9599E2 100%)')"
+                        style="background:linear-gradient(135deg, #8BC6EC 0%, #9599E2 100%)" title="Ocean"></div>
+                    <div class="color-dot" onclick="setShotBg('linear-gradient(135deg, #08AEEA 0%, #2AF598 100%)')"
+                        style="background:linear-gradient(135deg, #08AEEA 0%, #2AF598 100%)" title="Mint"></div>
+                    <div class="color-dot"
+                        onclick="setShotBg('linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)')"
+                        style="background:linear-gradient(135deg, #FF9A9E 0%, #FECFEF 99%, #FECFEF 100%)" title="Peach">
+                    </div>
+                    <div class="color-dot" onclick="setShotBg('#1e1e1e')" style="background:#1e1e1e" title="Dark"></div>
+                </div>
+    
+                <div style="flex:1"></div>
+    
+                <button id="btn-toggle-crop" class="modal-btn secondary" onclick="toggleCropMode()"
+                    title="Выделить область мышкой">
+                    <i class="ri-crop-line"></i> Обрезать
+                </button>
+    
+                <button class="modal-btn secondary" onclick="closeScreenshotModal()">Отмена</button>
+                <button class="modal-btn primary" onclick="downloadScreenshot()">
+                    <i class="ri-download-2-line"></i> Скачать PNG
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="block-tooltip" class="tooltip hidden"></div>
+    
+    <input type="file" id="templateFileInput" accept=".json" style="display: none;">
+
+    <div id="mobile-nav">
+        <button class="mob-nav-btn active" onclick="setMobileTab('canvas')">
+            <i class="ri-edit-box-line"></i>
+            <span>Редактор</span>
+        </button>
+        <button class="mob-nav-btn" onclick="setMobileTab('toolbox')">
+            <i class="ri-function-line"></i>
+            <span>Блоки</span>
+        </button>
+        <button class="mob-nav-btn" onclick="setMobileTab('sidebar')">
+            <i class="ri-file-list-3-line"></i>
+            <span>Проект</span>
+        </button>
+    </div>
+
+    <div id="modal-project-settings" class="modal-overlay hidden">
+        <div class="modal-window settings-modal">
+            <div class="modal-title">
+                <i class="ri-settings-4-fill" style="color:var(--accent)"></i> Настройки проекта
+            </div>
+    
+            <div class="modal-message" style="text-align: left; margin-top: 15px;">
+    
+                <div class="setting-group">
+                    <label>Название игры</label>
+                    <input type="text" id="set-proj-name" class="modal-input" placeholder="My Awesome Game">
+                </div>
+    
+                <div class="setting-group">
+                    <label>Автор / Студия</label>
+                    <input type="text" id="set-proj-author" class="modal-input" placeholder="Indie Dev">
+                </div>
+    
+                <div class="setting-group">
+                    <label>Стартовая сцена</label>
+                    <div class="select-wrapper">
+                        <select id="set-start-scene" class="modal-input"></select>
+                        <i class="ri-arrow-down-s-line"></i>
+                    </div>
+                    <small style="color:var(--text-soft); font-size:11px; display:block; margin-top:4px;">
+                        Эта сцена загрузится первой после экспорта.
+                    </small>
+                </div>
+    
+                <div class="setting-group">
+                    <label>Версия</label>
+                    <input type="text" id="set-proj-version" class="modal-input" value="1.0" style="width: 100px;">
+                </div>
+    
+            </div>
+    
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeProjectSettings()">Отмена</button>
+                <button class="modal-btn primary" id="btn-save-settings">Применить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-general-confirm" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 380px;">
+            <div class="modal-title" id="confirm-gen-title">
+                <i class="ri-error-warning-line" style="color:var(--danger)"></i> Удаление
+            </div>
+            <div class="modal-message" id="confirm-gen-message" style="margin-bottom: 20px;">
+                Вы действительно хотите удалить этот элемент?
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="btn-confirm-no">Отмена</button>
+                <button class="modal-btn danger" id="btn-confirm-yes">Удалить</button>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .modal-btn.danger {
+            background: #ff4757;
+            color: white;
+            border: none;
+        }
+    
+        .modal-btn.danger:hover {
+            background: #ff6b81;
+        }
+    </style>
+
+    <div id="context-menu" class="context-menu hidden">
+        <div class="ctx-item" id="ctx-duplicate">
+            <i class="ri-file-copy-line"></i> Дублировать
+        </div>
+        <div class="ctx-item" id="ctx-disable">
+            <i class="ri-shut-down-line"></i> Вкл/Выкл
+        </div>
+        <div class="ctx-item" id="ctx-disconnect">
+            <i class="ri-links-line"></i> Отключить связи
+        </div>
+        <div class="ctx-separator"></div>
+        <div class="ctx-item delete" id="ctx-delete">
+            <i class="ri-delete-bin-line"></i> Удалить
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script src="src/main.js"></script>
+    <script src="src/game.js"></script>
+
+    <!-- Core Scripts -->
+    <script src="src/core/blocks.js"></script>
+    <script src="src/core/engine.js"></script>
+    <script src="src/core/assets.js"></script>
+    <script src="src/core/helps.js"></script>
+    <script src="src/core/bar.js"></script>
+    <script src="src/core/mobile.js"></script>
+
+    <!-- Editor Scripts -->
+    <script src="src/editor/canvas.js"></script>
+    <script src="src/editor/blocks-ui.js"></script>
+    <script src="src/editor/ghost-block.js"></script>
+    <script src="src/editor/connections.js"></script>
+    <script src="src/editor/inicialization.js"></script>
+    <script src="src/editor/context-menu.js"></script>
+    <script src="src/editor/color-picker.js"></script>
+    <script src="src/editor/menu-functions.js"></script>
+
+    <!-- Storage Scripts -->
+    <script src="src/storage/local.js"></script>
+
+    <!-- Other Scripts -->
+    <script src="src/other/notification.js"></script>
+    <script src="src/other/screenshot.js"></script>
+    <script src="src/shotcuts.js"></script>
+
+    <!-- Bar -->
+    <script src="src/bar/editor.js"></script>
+
+    <!-- More -->
+    <script src="export/export.js"></script>
+    <script src="export/templates.js"></script>
+    <script src="src/training/training.js"></script>
+
+</body>
+
+</html>

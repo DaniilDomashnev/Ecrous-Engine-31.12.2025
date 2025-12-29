@@ -1,0 +1,54 @@
+{
+	"name": "Penguinmod Project Recovery",
+	"main": "index.html",
+	"window": {
+		"title": "Penguinmod Project Recovery",
+		"width": 640,
+		"height": 360,
+		"resizable": true,
+		"icon": "www\\icon.jpg"
+	},
+	"chromium-args": "--autoplay-policy=no-user-gesture-required --disable-features=HardwareMediaKeyHandling --ignore-gpu-blacklist",
+	"settings": {
+		"content-mode": "bundle",
+		"distribution-mode": "evergreen",
+		"enable-devtools": true
+	},
+	"messages": {
+		"install-webview2": "This app requires the Microsoft Edge WebView2 runtime. It will be downloaded and installed for you now.",
+		"downloading": "Downloading...",
+		"install-webview2-failed": "Failed to install the Microsoft Edge WebView2 runtime. Check that you have permission to install it, and that your Internet connection is working. Run the app again to try again."
+	},
+	"c3-app-icons": [
+		{
+			"src": "www\\icons\\Иконка-16.png",
+			"width": 16,
+			"height": 16
+		},
+		{
+			"src": "www\\icons\\Иконка-32.png",
+			"width": 32,
+			"height": 32
+		},
+		{
+			"src": "www\\icons\\Иконка-64.png",
+			"width": 64,
+			"height": 64
+		},
+		{
+			"src": "www\\icons\\Иконка-128.png",
+			"width": 128,
+			"height": 128
+		},
+		{
+			"src": "www\\icons\\Иконка-256.png",
+			"width": 256,
+			"height": 256
+		},
+		{
+			"src": "www\\icons\\Иконка-512.png",
+			"width": 512,
+			"height": 512
+		}
+	]
+}

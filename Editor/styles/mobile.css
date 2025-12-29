@@ -1,0 +1,344 @@
+/* =========================================
+   МОБИЛЬНАЯ АДАПТАЦИЯ (FULL FINAL VERSION)
+   ========================================= */
+
+/* 1. Нижняя панель навигации */
+#mobile-nav {
+	display: none;
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	width: 100%;
+	height: 60px;
+	background: var(--bg-elevated);
+	border-top: 1px solid var(--border);
+	z-index: 9999;
+	justify-content: space-around;
+	align-items: center;
+	box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+	padding-bottom: env(safe-area-inset-bottom); /* Учет полоски iPhone */
+}
+
+.mob-nav-btn {
+	background: none;
+	border: none;
+	color: var(--text-soft);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	font-size: 10px;
+	gap: 4px;
+	width: 100%;
+	height: 100%;
+	justify-content: center;
+	padding: 0;
+	transition: all 0.2s ease;
+}
+
+.mob-nav-btn i {
+	font-size: 22px;
+	margin-bottom: 2px;
+}
+
+.mob-nav-btn.active {
+	color: var(--accent);
+	background: var(--bg-elevated-soft);
+}
+
+.mob-nav-btn:active {
+	transform: scale(0.95);
+}
+
+/* 2. ОСНОВНЫЕ МОБИЛЬНЫЕ СТИЛИ */
+@media (max-width: 768px) {
+	/* Включаем нижнее меню */
+	#mobile-nav {
+		display: flex !important;
+	}
+
+	/* Скрываем кнопку переключения панелей ПК */
+
+	/* Настройка высоты контейнера */
+	.layout {
+		height: calc(100vh - var(--nav-height) - 60px) !important;
+		position: relative;
+		overflow: hidden;
+	}
+
+	/* === ПАНЕЛИ (SIDEBAR & TOOLBOX) === */
+	.sidebar,
+	.toolbox {
+		position: absolute !important;
+		top: 0;
+		left: 0;
+		width: 100% !important;
+		height: 100% !important;
+		z-index: 50;
+		display: none !important; /* Скрыты по умолчанию, JS переключает */
+		background: var(--bg);
+		border: none;
+
+		/* Скролл */
+		overflow-y: auto !important;
+		-webkit-overflow-scrolling: touch; /* Плавность iOS */
+
+		/* ВАЖНО: Большой отступ снизу, чтобы шаблоны не уходили под меню */
+		padding-bottom: 160px !important;
+		padding-top: 10px;
+	}
+
+	/* === КАНВАС === */
+	.canvas {
+		width: 100% !important;
+		height: 100% !important;
+		display: block;
+	}
+
+	/* Класс видимости для JS */
+	.mobile-visible {
+		display: block !important;
+		animation: fadeInPanel 0.25s ease-out;
+	}
+
+	@keyframes fadeInPanel {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	/* === СПИСОК ПРОЕКТОВ (SIDEBAR) === */
+	.sidebar .list-item {
+		font-size: 16px !important;
+		padding: 15px 20px !important;
+		border-bottom: 1px solid var(--border);
+		background: var(--bg-elevated);
+		margin-bottom: 8px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: flex-start !important;
+	}
+
+	.sidebar .list-item i {
+		font-size: 24px !important;
+		margin-right: 15px !important;
+		color: var(--accent);
+	}
+
+	.section-title {
+		padding: 15px 20px;
+	}
+
+	.section-title span {
+		display: inline-block !important;
+		font-size: 13px;
+		font-weight: 700;
+		opacity: 0.6;
+		text-transform: uppercase;
+	}
+
+	/* === ИСПРАВЛЕНИЕ: БЛОК ШАБЛОНОВ === */
+	.template-controls {
+		display: flex !important;
+		flex-direction: column;
+		gap: 12px;
+		margin: 30px 15px 10px 15px; /* Отступы по бокам */
+		padding: 20px;
+		background: var(--bg-elevated);
+		border: 1px solid var(--border);
+		border-radius: 16px;
+		box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+	}
+
+	.template-controls p {
+		font-size: 15px;
+		font-weight: 700;
+		color: var(--text);
+		margin-bottom: 10px;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+		text-align: center;
+	}
+
+	.template-controls button {
+		width: 100%;
+		height: 48px; /* Большая кнопка под палец */
+		font-size: 15px;
+		font-weight: 500;
+		border-radius: 12px;
+		background: var(--bg-elevated-soft);
+		border: 1px solid var(--border);
+		color: var(--text);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: 10px;
+		transition: 0.2s;
+	}
+
+	.template-controls button:active {
+		background: var(--accent);
+		color: white;
+		transform: scale(0.98);
+		border-color: var(--accent);
+	}
+
+	.template-controls button i {
+		font-size: 20px;
+	}
+
+	/* === УЗЛЫ (NODES) - Удобство нажатия === */
+	.node-port {
+		width: 30px !important;
+		height: 30px !important;
+		margin-top: -7px;
+	}
+	.port-in {
+		left: -15px !important;
+	}
+	.port-out {
+		right: -15px !important;
+	}
+
+	.node-block {
+		min-width: 180px;
+	}
+
+	/* =========================================
+   МОБИЛЬНОЕ МЕНЮ (ВЫПАДАЮЩЕЕ)
+   ========================================= */
+
+	/* По умолчанию кнопка гамбургера скрыта (для ПК) */
+	.mobile-only-btn {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		/* 1. Показываем кнопку гамбургера */
+		.mobile-only-btn {
+			display: flex;
+			background: var(--bg-elevated-soft);
+			border: 1px solid var(--border);
+			margin-right: 10px;
+		}
+
+		/* 2. Скрываем бренд, чтобы не мешал */
+		.brand {
+			display: none !important;
+		}
+
+		/* 3. СТИЛИ ДЛЯ ВЫПАДАЮЩЕГО МЕНЮ */
+		.menu-bar {
+			display: none; /* Скрыто по умолчанию */
+
+			/* Делаем его выпадающим списком */
+			position: fixed;
+			top: var(--nav-height); /* Сразу под шапкой */
+			left: 0;
+			width: 100%;
+			background: var(--bg-elevated);
+			border-bottom: 1px solid var(--border);
+			box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+			z-index: 1000;
+
+			flex-direction: column; /* Вертикальный список */
+			padding: 10px 0;
+			max-height: 70vh;
+			overflow-y: auto; /* Скролл если меню длинное */
+		}
+
+		/* Класс, который добавляет JS для показа */
+		.menu-bar.show-mobile {
+			display: flex !important;
+			animation: slideDownMenu 0.2s ease-out;
+		}
+
+		@keyframes slideDownMenu {
+			from {
+				opacity: 0;
+				transform: translateY(-10px);
+			}
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
+		/* 4. Крупные пункты меню для пальцев */
+		.menu-bar .menu-item {
+			width: 100%;
+			padding: 15px 20px !important;
+			font-size: 16px !important;
+			border-bottom: 1px solid var(--border);
+			justify-content: space-between; /* Стрелочку вправо */
+		}
+
+		/* Скрываем стрелочку "вниз", так как на телефоне это не ховер */
+		.menu-bar .menu-item i.ri-arrow-down-s-line {
+			transform: rotate(-90deg); /* Повернем, типа "далее" */
+		}
+
+		/* 5. Выпадающие подменю (Dropdowns) на телефоне */
+		/* Они должны появляться не сбоку, а под пунктом */
+		.menu-dropdown {
+			position: static !important; /* Встраиваем в поток */
+			width: 100%;
+			box-shadow: none !important;
+			border: none !important;
+			background: var(--bg); /* Чуть темнее фон */
+			padding-left: 20px; /* Отступ слева */
+			display: none;
+		}
+
+		/* Когда нажали на пункт - показываем подменю */
+		.menu-item.open .menu-dropdown {
+			display: flex !important;
+		}
+
+		.menu-entry {
+			padding: 12px 10px !important; /* Крупнее для тапа */
+			font-size: 14px !important;
+		}
+	}
+
+    /* Класс, который добавляет JS */
+    .menu-bar.show-mobile {
+        display: flex !important;
+    }
+
+	/* === ИСПРАВЛЕНИЕ: КНОПКИ РЕЖИМОВ (NODES/STACK) === */
+	.canvas-controls {
+		bottom: 80px !important;
+		left: 15px !important;
+		display: flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+		pointer-events: none;
+	}
+
+	.canvas-controls > * {
+		pointer-events: auto;
+	}
+
+	/* --- ИСПРАВЛЕНИЕ ТУТ --- */
+	/* Скрываем ТОЛЬКО текстовую подсказку, но НЕ кнопки */
+	.canvas-controls .hint-text:not(.mode-switch) {
+		display: none !important;
+	}
+
+	/* Принудительно показываем переключатель режимов */
+	.mode-switch {
+		display: flex !important;
+		transform: scale(1.2);
+		transform-origin: left bottom;
+		background: var(--bg-elevated);
+		box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+		border: 1px solid var(--border);
+	}
+}

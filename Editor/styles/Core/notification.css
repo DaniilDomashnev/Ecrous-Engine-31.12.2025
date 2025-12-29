@@ -1,0 +1,65 @@
+/* =========================================
+   УВЕДОМЛЕНИЯ И ПОДСКАЗКИ
+   ========================================= */
+.notification-container {
+	position: fixed;
+	top: 80px;
+	right: 24px;
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+	z-index: 10000;
+	pointer-events: none;
+}
+
+.toast {
+	background: var(--bg-elevated);
+	color: var(--text);
+	padding: 12px 20px;
+	border-radius: 8px;
+	border: 1px solid var(--border);
+	border-left: 4px solid var(--accent);
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	min-width: 240px;
+	font-size: 13px;
+	font-weight: 500;
+	transform: translateX(50px);
+	opacity: 0;
+	animation: toastSlideIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+	pointer-events: auto;
+}
+
+.toast i {
+	font-size: 18px;
+	color: var(--accent);
+}
+
+@keyframes toastSlideIn {
+	to { transform: translateX(0); opacity: 1; }
+}
+
+.tooltip {
+	position: fixed;
+	background: rgba(20, 20, 20, 0.95);
+	color: #fff;
+	padding: 8px 12px;
+	border-radius: 6px;
+	font-size: 12px;
+	font-family: var(--font-main);
+	max-width: 200px;
+	z-index: 10000;
+	pointer-events: none;
+	border: 1px solid var(--border);
+	box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+	opacity: 0;
+	transform: translateY(5px);
+	transition: opacity 0.2s, transform 0.2s;
+}
+
+.tooltip.visible {
+	opacity: 1;
+	transform: translateY(0);
+}

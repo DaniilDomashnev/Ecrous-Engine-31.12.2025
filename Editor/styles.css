@@ -1,0 +1,398 @@
+/* =========================================
+   БАЗОВЫЕ НАСТРОЙКИ И ИМПОРТ ПЕРЕМЕННЫХ
+   ========================================= */
+:root {
+	/* Шрифт */
+	--font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+		Helvetica, Arial, sans-serif;
+}
+
+body {
+	background-color: var(--bg);
+	color: var(--text);
+	font-family: var(--font-main);
+	height: 100vh;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	margin: 0;
+	user-select: none;
+	transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* =========================================
+   HEADER (ВЕРХНЯЯ ПАНЕЛЬ)
+   ========================================= */
+header {
+	height: var(--nav-height);
+	background: var(--bg-elevated);
+	border-bottom: 1px solid var(--border);
+	display: flex;
+	align-items: center;
+	padding: 0 20px;
+	justify-content: space-between;
+	z-index: 20;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.brand {
+	font-weight: 700;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	color: var(--text);
+	letter-spacing: -0.5px;
+}
+
+.header-left {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+}
+
+/* Кнопки управления (справа) */
+.header-controls {
+	display: flex;
+	gap: 10px;
+}
+
+.icon-btn {
+	background: transparent;
+	border: 1px solid transparent;
+	color: var(--text-soft);
+	width: 36px;
+	height: 36px;
+	border-radius: 8px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.icon-btn:hover {
+	background: var(--bg-elevated-soft);
+	color: var(--accent);
+	border-color: var(--border);
+	transform: translateY(-1px);
+}
+
+.play-btn {
+	background: var(--accent);
+	color: #fff;
+	border: none;
+	padding: 0 20px;
+	height: 36px;
+	border-radius: 8px;
+	font-weight: 600;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	box-shadow: 0 4px 15px var(--accent-soft);
+	transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.play-btn:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 6px 20px var(--accent-soft);
+	filter: brightness(1.1);
+}
+.play-btn:active {
+	transform: translateY(0);
+}
+
+/* Меню (File, Edit...) */
+.menu-bar {
+	display: flex;
+	align-items: center;
+}
+
+.menu-item {
+	position: relative;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--text-soft);
+	padding: 6px 12px;
+	border-radius: 6px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	transition: 0.2s;
+}
+
+.menu-item:hover,
+.menu-item.open {
+	background: var(--bg-elevated-soft);
+	color: var(--text);
+}
+
+.menu-dropdown {
+	position: absolute;
+	top: calc(100% + 4px);
+	left: 0;
+	background: var(--bg-elevated);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	min-width: 220px;
+	box-shadow: var(--shadow-soft);
+	display: none;
+	flex-direction: column;
+	padding: 6px;
+	z-index: 100;
+	animation: fadeInMenu 0.15s ease-out;
+}
+
+@keyframes fadeInMenu {
+	from {
+		opacity: 0;
+		transform: translateY(-5px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.menu-item.open .menu-dropdown {
+	display: flex;
+}
+
+.menu-entry {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	font-size: 13px;
+	color: var(--text);
+	border-radius: 6px;
+	cursor: pointer;
+	transition: 0.2s;
+}
+
+.menu-entry span {
+	margin-left: auto;
+	font-size: 11px;
+	color: var(--text-soft);
+	opacity: 0.7;
+}
+
+.menu-entry:hover {
+	background: var(--accent);
+	color: #fff;
+}
+.menu-entry:hover span {
+	color: rgba(255, 255, 255, 0.8);
+}
+
+.menu-separator {
+	height: 1px;
+	background: var(--border);
+	margin: 6px 4px;
+}
+
+/* =========================================
+   11. МОБИЛЬНАЯ ВЕРСИЯ
+   ========================================= */
+.fab-btn {
+	position: fixed;
+	bottom: 24px;
+	right: 24px;
+	width: 56px;
+	height: 56px;
+	border-radius: 50%;
+	background: var(--accent);
+	border: none;
+	color: #fff;
+	font-size: 24px;
+	box-shadow: 0 4px 20px var(--accent-soft);
+	display: none;
+	align-items: center;
+	justify-content: center;
+	z-index: 90;
+	cursor: pointer;
+	transition: transform 0.2s;
+}
+.fab-btn:active {
+	transform: scale(0.9);
+}
+
+.library-window {
+	width: 90%;
+	height: 85%;
+	background: var(--bg-elevated);
+	border: 1px solid var(--border);
+	border-radius: 16px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.library-header {
+	padding: 16px;
+	border-bottom: 1px solid var(--border);
+	background: var(--bg-elevated-soft);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-weight: 700;
+	color: var(--text);
+}
+
+.lib-sidebar {
+	width: 120px;
+	background: var(--bg-elevated);
+	border-right: 1px solid var(--border);
+}
+
+.lib-cat-item {
+	padding: 16px 10px;
+	font-size: 11px;
+	color: var(--text-soft);
+	cursor: pointer;
+	border-bottom: 1px solid var(--border);
+	transition: 0.2s;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+}
+.lib-cat-item.active {
+	background: var(--bg-elevated-soft);
+	color: var(--accent);
+	border-left: 3px solid var(--accent);
+}
+
+.lib-content {
+	background: var(--bg);
+}
+
+.lib-block-card {
+	background: var(--bg-elevated);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	padding: 20px 10px;
+}
+.lib-block-name {
+	color: var(--text);
+}
+.lib-block-card:hover {
+	border-color: var(--accent);
+	transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+	.toolbox {
+		display: none !important;
+	}
+	.fab-btn {
+		display: flex;
+	}
+	.canvas {
+		width: 100%;
+	}
+	.sidebar {
+		width: 60px;
+	}
+	.sidebar .list-item {
+		font-size: 0;
+		justify-content: center;
+		padding: 16px 0;
+	}
+	.sidebar .list-item i {
+		font-size: 22px;
+		margin: 0;
+	}
+	.section-title span {
+		display: none;
+	}
+	.panel-footer-info {
+		display: none;
+	}
+}
+
+/* Кнопка сворачивания в заголовке */
+.toggle-btn {
+    cursor: pointer;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    margin-left: auto; /* Прижимаем вправо */
+    transition: 0.2s;
+    opacity: 0.7;
+}
+.toggle-btn:hover {
+    background: rgba(0,0,0,0.2);
+    opacity: 1;
+}
+
+/* Состояние: СВЕРНУТ (Collapsed) */
+.node-block.collapsed {
+    border-style: dashed !important;
+    opacity: 0.8;
+}
+.node-block.collapsed .node-content {
+    display: none; /* Скрываем инпуты самого блока */
+}
+
+/* Состояние: ОТКЛЮЧЕН (Disabled) */
+.node-block.disabled {
+    filter: grayscale(100%); /* Делаем черно-белым */
+    opacity: 0.5; /* Полупрозрачным */
+}
+/* Пометка "OFF" для наглядности */
+.node-block.disabled::after {
+    content: "OFF";
+    position: absolute;
+    top: -10px;
+    right: -5px;
+    background: red;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+/* Обновляем класс .game-window */
+.game-window {
+    position: absolute; /* Важно для перетаскивания */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); /* Центрирование по умолчанию */
+    background: #000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    border-radius: 8px;
+    border: 1px solid #333;
+    overflow: hidden;
+    /* Убираем жесткие размеры отсюда, они задаются JS, но можно оставить дефолт */
+    min-width: 320px;
+    min-height: 240px;
+}
+
+/* Обновляем заголовок */
+.game-header {
+    background: #222;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #333;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: grab; /* Курсор лапки */
+    user-select: none;
+}
+
+.game-header:active {
+    cursor: grabbing;
+}

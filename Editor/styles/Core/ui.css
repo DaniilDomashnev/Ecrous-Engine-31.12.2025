@@ -1,0 +1,71 @@
+/* =========================================
+   ИНТЕРФЕЙС ИГРЫ (UI/HUD)
+   ========================================= */
+#game-ui {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	z-index: 100;
+	pointer-events: none;
+	overflow: hidden;
+}
+
+.ui-element {
+	position: absolute;
+	pointer-events: auto;
+	font-family: 'Inter', sans-serif;
+	user-select: none;
+	box-sizing: border-box;
+}
+
+.ui-btn {
+	background: var(--accent);
+	color: white;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: 600;
+	box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+	transition: transform 0.1s, box-shadow 0.1s;
+}
+.ui-btn:active {
+	transform: translateY(4px);
+	box-shadow: 0 0 0 rgba(0,0,0,0.2);
+}
+
+.ui-progress-bg {
+	background: rgba(0,0,0,0.5);
+	border-radius: 10px;
+	overflow: hidden;
+	border: 2px solid rgba(255,255,255,0.1);
+}
+.ui-progress-fill {
+	height: 100%;
+	background: #00E676;
+	width: 50%;
+	transition: width 0.3s ease;
+}
+
+.ui-slider {
+	-webkit-appearance: none;
+	background: rgba(0,0,0,0.5);
+	height: 6px;
+	border-radius: 4px;
+	outline: none;
+	border: 1px solid rgba(255,255,255,0.2);
+}
+.ui-slider::-webkit-slider-thumb {
+	-webkit-appearance: none;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: var(--accent);
+	cursor: pointer;
+	border: 2px solid #fff;
+}
+

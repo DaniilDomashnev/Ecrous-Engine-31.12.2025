@@ -1,0 +1,60 @@
+/* =========================================
+   CANVAS (ХОЛСТ)
+   ========================================= */
+.canvas {
+	flex: 1;
+	background-color: var(--bg);
+	background-image: radial-gradient(var(--border) 1px, transparent 1px);
+	background-size: 24px 24px;
+	position: relative;
+	overflow: hidden;
+}
+
+#canvas-container {
+	position: absolute;
+	transform-origin: 0 0;
+	width: 100%;
+	height: 100%;
+}
+
+/* Контролы холста (зум) */
+.canvas-controls {
+	position: absolute;
+	bottom: 24px;
+	right: 24px;
+	display: flex;
+	gap: 12px;
+	pointer-events: none;
+}
+
+.hint-text {
+	background: var(--bg-elevated);
+	padding: 8px 12px;
+	border-radius: 8px;
+	font-size: 12px;
+	color: var(--text-soft);
+	border: 1px solid var(--border);
+	box-shadow: var(--shadow-soft);
+	backdrop-filter: blur(5px);
+}
+
+.zoom-btn {
+	pointer-events: auto;
+	width: 36px;
+	height: 36px;
+	background: var(--bg-elevated);
+	border: 1px solid var(--border);
+	color: var(--text);
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+	transition: 0.2s;
+}
+.zoom-btn:hover {
+	background: var(--bg-elevated-soft);
+	color: var(--accent);
+	border-color: var(--accent);
+}

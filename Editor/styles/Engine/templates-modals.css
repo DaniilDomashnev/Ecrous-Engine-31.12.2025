@@ -1,0 +1,115 @@
+/* =========================================
+   МОДАЛКИ ШАБЛОНОВ
+   ========================================= */
+.drop-zone {
+	border: 2px dashed var(--border);
+	border-radius: 12px;
+	padding: 30px 20px;
+	text-align: center;
+	background: var(--bg-elevated-soft);
+	transition: all 0.2s;
+	cursor: pointer;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+	color: var(--text-soft);
+}
+
+.drop-zone:hover,
+.drop-zone.drag-over {
+	border-color: var(--accent);
+	background: rgba(var(--accent-rgb), 0.05);
+	color: var(--text);
+}
+
+.drop-zone i {
+	font-size: 32px;
+	color: var(--accent);
+	margin-bottom: 5px;
+}
+
+.drop-zone p {
+	margin: 0;
+	font-weight: 600;
+	font-size: 14px;
+}
+
+.drop-zone span {
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+.input-error {
+	color: var(--danger, #ff4d4d);
+	font-size: 11px;
+	margin-top: 6px;
+	font-weight: 500;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+.input-error::before {
+	content: '\eb98';
+	font-family: 'remixicon';
+}
+
+.tpl-list-container {
+	max-height: 250px;
+	overflow-y: auto;
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 5px;
+}
+
+.tpl-list-item {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 10px;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: 0.2s;
+	user-select: none;
+}
+
+.tpl-list-item:hover {
+	background: var(--bg-elevated-soft);
+}
+
+.tpl-checkbox {
+	accent-color: var(--accent);
+	width: 16px;
+	height: 16px;
+	cursor: pointer;
+}
+
+.tpl-list-item label {
+	cursor: pointer;
+	flex: 1;
+	font-size: 13px;
+	color: var(--text);
+}
+
+.imported-list-container {
+	margin-top: 10px;
+	background: var(--bg);
+	border: 1px solid var(--border);
+	border-radius: 8px;
+	padding: 8px;
+	max-height: 150px;
+	overflow-y: auto;
+	font-size: 12px;
+	color: var(--text-soft);
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.imported-item {
+	padding: 4px 8px;
+	background: var(--bg-elevated-soft);
+	border-radius: 4px;
+	border-left: 2px solid #00E676;
+}

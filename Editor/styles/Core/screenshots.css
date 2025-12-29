@@ -1,0 +1,81 @@
+/* =========================================
+   МОДАЛКА СКРИНШОТОВ
+   ========================================= */
+.screenshot-bg {
+	padding: 60px;
+	background: linear-gradient(135deg, #8BC6EC 0%, #9599E2 100%);
+	border-radius: 12px;
+	transition: background 0.3s ease;
+	min-width: 400px;
+	min-height: 300px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.screenshot-inner-window {
+	background: rgba(20, 20, 20, 0.95);
+	border-radius: 12px;
+	box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+	border: 1px solid rgba(255,255,255,0.1);
+	position: relative;
+	padding: 20px;
+	padding-top: 50px;
+	min-width: 200px;
+	min-height: 100px;
+}
+
+.window-controls {
+	position: absolute;
+	top: 15px;
+	left: 15px;
+	display: flex;
+	gap: 8px;
+}
+.window-controls span {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+}
+
+.window-title {
+	position: absolute;
+	top: 12px;
+	width: 100%;
+	text-align: center;
+	left: 0;
+	font-size: 12px;
+	color: var(--text-soft);
+	font-family: var(--font-main);
+	pointer-events: none;
+}
+
+#shot-nodes-container {
+	position: relative;
+}
+
+.color-dot {
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	cursor: pointer;
+	border: 2px solid rgba(255,255,255,0.2);
+	transition: transform 0.2s;
+}
+.color-dot:hover {
+	transform: scale(1.1);
+	border-color: #fff;
+}
+
+/* =========================================
+   УТИЛИТАРНЫЕ КЛАССЫ
+   ========================================= */
+.hidden {
+	display: none !important;
+}
+
+#btnToggleToolbox.active {
+	background: var(--bg-elevated-soft);
+	color: var(--accent);
+	border-color: var(--border);
+}

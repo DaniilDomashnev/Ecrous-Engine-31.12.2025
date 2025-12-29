@@ -1,0 +1,95 @@
+/* =========================================
+   TOOLBOX (ИНСТРУМЕНТЫ)
+   ========================================= */
+#toolboxContent {
+	padding: 12px;
+	overflow-y: auto;
+	flex: 1;
+}
+
+.category-title {
+	font-size: 10px;
+	color: var(--accent);
+	margin: 18px 0 8px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+.category-title:first-child {
+	margin-top: 0;
+}
+
+.tool-item {
+	padding: 8px 12px;
+	background: var(--bg-elevated-soft);
+	border-radius: 8px;
+	cursor: grab;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	font-size: 13px;
+	border: 1px solid transparent;
+	color: var(--text);
+	margin-bottom: 6px;
+	transition: all 0.2s;
+}
+
+.tool-item:hover {
+	border-color: var(--accent);
+	background: var(--bg-elevated);
+	transform: translateX(4px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+.tool-item i {
+	color: var(--text-soft);
+}
+.tool-item:hover i {
+	color: var(--accent);
+}
+
+/* --- VARIABLES IN TOOLBOX --- */
+.btn-create-var {
+	width: 100%;
+	padding: 8px;
+	background: var(--bg-elevated);
+	border: 1px dashed var(--text-soft);
+	color: var(--text);
+	border-radius: 6px;
+	cursor: pointer;
+	margin-bottom: 10px;
+	transition: 0.2s;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+.btn-create-var:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+}
+
+#toolbox-vars {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 15px;
+}
+
+.variable-pill {
+    background: #FF6D00; /* Оранжевый как в Scratch */
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: grab;
+    user-select: none;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.variable-pill:active {
+    cursor: grabbing;
+    transform: scale(0.95);
+}

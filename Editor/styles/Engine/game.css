@@ -1,0 +1,100 @@
+/* =========================================
+   GAME WINDOW (ОКНО ИГРЫ)
+   ========================================= */
+#game-overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.7);
+	backdrop-filter: blur(5px);
+	z-index: 1000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.game-window {
+	width: 800px;
+	height: 600px;
+	background: #000;
+	border: 1px solid var(--border);
+	display: flex;
+	flex-direction: column;
+	border-radius: 12px;
+	overflow: hidden;
+	box-shadow: var(--shadow-soft);
+}
+
+.game-header {
+	height: 40px;
+	background: var(--bg-elevated);
+	display: flex;
+	justify-content: space-between;
+	padding: 0 15px;
+	align-items: center;
+	border-bottom: 1px solid var(--border);
+}
+
+.close-game-btn {
+	background: none;
+	border: none;
+	color: var(--text-soft);
+	font-size: 20px;
+	cursor: pointer;
+	transition: 0.2s;
+}
+.close-game-btn:hover {
+	color: var(--danger);
+	transform: rotate(90deg);
+}
+
+#game-stage {
+	flex: 1;
+	background: #050505;
+	position: relative;
+	overflow: hidden;
+}
+
+#game-console {
+	height: 120px;
+	background: var(--code-bg);
+	color: var(--text-soft);
+	padding: 10px;
+	font-family: 'Fira Code', monospace;
+	font-size: 12px;
+	overflow-y: auto;
+	border-top: 1px solid var(--border);
+}
+.console-log { color: var(--text); }
+.console-warn { color: var(--warning); }
+.console-error { color: var(--danger); }
+
+/* Джойстик */
+.joystick-base {
+	position: absolute;
+	bottom: 30px;
+	left: 30px;
+	width: 120px;
+	height: 120px;
+	background: rgba(255, 255, 255, 0.05);
+	border: 2px solid rgba(255, 255, 255, 0.1);
+	border-radius: 50%;
+	touch-action: none;
+	display: none;
+	z-index: 100;
+}
+
+.joystick-stick {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	width: 50px;
+	height: 50px;
+	background: var(--accent);
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
+	box-shadow: 0 0 15px var(--accent-soft);
+	pointer-events: none;
+}

@@ -1,0 +1,123 @@
+.store-window {
+	width: 800px;
+	height: 600px;
+	max-width: 95vw;
+	display: flex;
+  z-index: 1000;
+	flex-direction: column;
+}
+
+.store-tabs {
+	padding: 10px 20px;
+	display: flex;
+	gap: 10px;
+	border-bottom: 1px solid var(--border);
+	background: var(--bg-elevated-soft);
+}
+
+.store-tab {
+	background: transparent;
+	border: none;
+	color: var(--text-soft);
+	padding: 6px 12px;
+	border-radius: 6px;
+	cursor: pointer;
+	font-weight: 500;
+	transition: 0.2s;
+}
+
+.store-tab.active,
+.store-tab:hover {
+	background: var(--bg);
+	color: var(--text);
+}
+
+.store-grid {
+	flex: 1;
+	overflow-y: auto;
+	padding: 20px;
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 20px;
+	background: var(--bg);
+}
+
+.store-card {
+	background: var(--bg-elevated);
+	border: 1px solid var(--border);
+	border-radius: 12px;
+	overflow: hidden;
+	transition: 0.2s;
+	display: flex;
+	flex-direction: column;
+}
+
+.store-card:hover {
+	transform: translateY(-4px);
+	border-color: var(--accent);
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.store-card-img {
+	height: 120px;
+	background: #222;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 40px;
+	color: #444;
+	border-bottom: 1px solid var(--border);
+}
+
+.store-card-body {
+	padding: 15px;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+}
+
+.store-card-title {
+	font-weight: 700;
+	margin-bottom: 5px;
+	color: var(--text);
+}
+
+.store-card-desc {
+	font-size: 12px;
+	color: var(--text-soft);
+	margin-bottom: 15px;
+	flex: 1;
+}
+
+.store-btn {
+	width: 100%;
+	padding: 8px;
+	border-radius: 6px;
+	border: none;
+	font-weight: 600;
+	cursor: pointer;
+	transition: 0.2s;
+}
+
+.store-btn.buy {
+	background: var(--accent);
+	color: white;
+}
+.store-btn.buy:hover {
+	background: var(--accent-hover);
+}
+
+.store-btn.installed {
+	background: #2a2a2a;
+	color: #888;
+	cursor: default;
+}
+
+.price-tag {
+	font-size: 11px;
+	background: rgba(255, 215, 0, 0.1);
+	color: #ffd700;
+	padding: 2px 6px;
+	border-radius: 4px;
+	margin-left: auto;
+}

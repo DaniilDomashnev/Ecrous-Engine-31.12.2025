@@ -1,0 +1,88 @@
+/* =========================================
+   СИСТЕМА УЗЛОВ И ПРОВОДОВ
+   ========================================= */
+#connections-layer {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	pointer-events: none;
+	z-index: 0;
+}
+
+.connection-wire {
+	fill: none;
+	stroke: #b0bec5;
+	stroke-width: 4px;
+	stroke-linecap: round;
+	transition: all 0.2s;
+	cursor: pointer;
+	pointer-events: stroke;
+	opacity: 0.8;
+}
+
+.connection-wire:hover {
+	stroke: #2979ff;
+	stroke-width: 6px;
+	opacity: 1;
+	z-index: 100;
+}
+
+.mode-btn {
+	background: transparent;
+	border: none;
+	color: var(--text-soft);
+	width: 28px;
+	height: 28px;
+	border-radius: 6px;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+.mode-btn.active {
+	background: var(--bg-elevated-soft);
+	color: var(--accent);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.node-port {
+	width: 14px;
+	height: 14px;
+	background: var(--bg-elevated);
+	border: 2px solid var(--text-soft);
+	border-radius: 50%;
+	position: absolute;
+	cursor: crosshair;
+	transition: 0.2s;
+	z-index: 10;
+}
+.node-port:hover {
+	border-color: var(--accent);
+	transform: scale(1.2);
+}
+
+.port-in {
+	top: -9px;
+	left: 12px;
+	background: #fff;
+}
+
+.port-out {
+	bottom: -9px;
+	right: 12px;
+	background: var(--accent);
+}
+
+body:not(.mode-nodes) .node-port,
+body:not(.mode-nodes) #connections-layer {
+	display: none;
+}
+
+.node-block[data-category="События"] .port-in {
+    display: none !important;
+}
+
+
