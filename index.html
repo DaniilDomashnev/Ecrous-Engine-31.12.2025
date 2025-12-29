@@ -23,6 +23,7 @@
     <link rel="stylesheet" href="src/styles/menu/Settings.css">
     <link rel="stylesheet" href="src/styles/menu/UploadMusic.css">
     <link rel="stylesheet" href="src/styles/menu/Tutorial.css">
+    <link rel="stylesheet" href="src/styles/menu/About.css">
 
     <!-- Training -->
     <link rel="stylesheet" href="src/styles/training/training.css">
@@ -37,6 +38,7 @@
         <button class="menu-button-disable no-select" data-translate="AssetStore">Магазин Ассетов</button>
         <button class="menu-button-disable no-select" data-translate="blackStore">BlackStore</button>
         <button id="myBtn" class="menu-button" data-translate="thanks" onclick="openThanks()">Благодарности</button>
+        <button id="About" class="menu-button" data-translate="About" onclick="openAbout()">О Проекте</button>
         <div class="build-info">
             <span class="build-text">ECX 2025.31.12</span>
         </div>
@@ -461,6 +463,65 @@
         </div>
     </div>
 
+    <div id="aboutPanel" class="about-panel" style="display: none;">
+    
+        <button class="about-close" onclick="closeAbout()">
+            <img src="https://img.icons8.com/ios-glyphs/30/FFFFFF/macos-close.png" alt="Close" data-translate-alt="close">
+        </button>
+    
+        <div class="about-content-wrapper">
+            <div class="about-header-section">
+                <div class="about-logo-container">
+                    <img src="public/vite.jpg" alt="Logo" class="about-logo-img">
+                </div>
+                <h1 class="about-title no-select">Ecrous Engine</h1>
+                <div class="about-version">
+                    <span data-translate="version">Версия</span>: <span class="version-number">ECX 2025.31.12</span>
+                </div>
+            </div>
+    
+            <div class="about-scrollable-content">
+                <div class="about-section">
+                    <p class="about-description" data-translate="aboutDescription">
+                        Ecrous Engine — это современный веб-движок для создания игр, работающий прямо в браузере.
+                        Мы стремимся сделать разработку доступной, быстрой и красивой.
+                    </p>
+                </div>
+    
+                <div class="about-links-grid">
+                    <a href="https://t.me/ecrousengine" target="_blank" class="about-link-card">
+                        <img src="https://img.icons8.com/ios-filled/50/FFFFFF/telegram-app.png" alt="Telegram">
+                        <div class="link-info">
+                            <span class="link-title">Telegram</span>
+                            <span class="link-desc" data-translate="linkNews">Новости и обновления</span>
+                        </div>
+                    </a>
+    
+                    <a href="https://www.youtube.com/@EcrousEngine" target="_blank" class="about-link-card">
+                        <img src="https://img.icons8.com/ios-filled/50/FFFFFF/youtube-play.png" alt="YouTube">
+                        <div class="link-info">
+                            <span class="link-title">YouTube</span>
+                            <span class="link-desc" data-translate="linkTutorials">Уроки и гайды</span>
+                        </div>
+                    </a>
+    
+                    <a href="#" class="about-link-card">
+                        <img src="https://img.icons8.com/ios-filled/50/FFFFFF/book.png" alt="Docs">
+                        <div class="link-info">
+                            <span class="link-title">Documentation</span>
+                            <span class="link-desc" data-translate="linkDocs">База знаний</span>
+                        </div>
+                    </a>
+                </div>
+    
+                <div class="about-footer">
+                    <p>&copy; 2025 Ecrous Community. All rights reserved.</p>
+                    <p class="made-with" data-translate="madeWithLove">Сделано с ❤️ для разработчиков</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div id="loading">
         <div class="loading-logo">EE</div>
         <div class="loading-text">Ecrous Engine</div>
@@ -493,9 +554,13 @@
     <script src="src/scripts/Menu/UploadMusic.js"></script>
     <script src="src/scripts/Menu/level.js"></script>
     <script src="src/scripts/Menu/Tutorial.js"></script>
+    <script src="src/scripts/Menu/About.js"></script>
 
     <!-- Training -->
     <script src="src/scripts/training/training.js"></script>
+
+    <script src="src/scripts/web-app.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 </body>
 </html>
