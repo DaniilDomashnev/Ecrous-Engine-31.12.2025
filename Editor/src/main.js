@@ -56,10 +56,10 @@ let cameraState = {
 	lerp: 0.1,
 	shakeInfo: { power: 0, time: 0 },
 }
-window.entityComponents = {}; // Хранилище: { "obj_id": { "health": 100, ... } }
-window.gameInventory = [];    // Массив строк
-window.gameQuests = {};       // Хранилище: { "quest_id": "status" }
-window.globalEvents = {};     // Для подписок (в будущем)
+window.entityComponents = {} // Хранилище: { "obj_id": { "health": 100, ... } }
+window.gameInventory = [] // Массив строк
+window.gameQuests = {} // Хранилище: { "quest_id": "status" }
+window.globalEvents = {} // Для подписок (в будущем)
 
 // Runtime
 let isRunning = false
@@ -326,10 +326,12 @@ function executeBlockLogic(block) {
 				case 'mov_align': {
 					const el = document.getElementById(v[0])
 					if (el) {
-						const winW = 800
-						const winH = 600
+						// ИСПРАВЛЕНИЕ: Берем реальные размеры из конфига
+						const winW = (window.gameConfig && window.gameConfig.width) || 800
+						const winH = (window.gameConfig && window.gameConfig.height) || 600
 						const width = el.offsetWidth
 						const height = el.offsetHeight
+
 						if (v[1] === 'center') {
 							el.style.left = winW / 2 - width / 2 + 'px'
 							el.style.top = winH / 2 - height / 2 + 'px'
@@ -337,6 +339,10 @@ function executeBlockLogic(block) {
 							el.style.left = '0px'
 						} else if (v[1] === 'right') {
 							el.style.left = winW - width + 'px'
+						} else if (v[1] === 'top') {
+							el.style.top = '0px'
+						} else if (v[1] === 'bottom') {
+							el.style.top = winH - height + 'px'
 						}
 					}
 					break
@@ -390,19 +396,33 @@ function executeBlockLogic(block) {
 				case 'win_scale_mode': {
 					// В редакторе мы просто логируем, так как окно фиксировано
 					console.log('Режим масштабирования установлен на: ' + v[0])
-					// Но если это экспорт, логика будет в export.js
 					break
 				}
 				case 'win_set_size': {
-					const el = document.querySelector('.game-window')
-					const stage = document.getElementById('game-stage')
-					// Меняем размер окна редактора
-					if (el && stage) {
-						const w = parseInt(v[0])
-						const h = parseInt(v[1])
-						el.style.width = w + 'px'
-						el.style.height = h + 40 + 'px' // +40 на заголовок
+					const w = parseInt(v[0])
+					const h = parseInt(v[1])
+
+					// 1. Обновляем глобальный конфиг
+					if (!window.gameConfig) window.gameConfig = {}
+					window.gameConfig.width = w
+					window.gameConfig.height = h
+
+					// 2. Обновляем окно редактора
+					const win = document.querySelector('.game-window')
+					if (win) {
+						win.style.width = w + 'px'
+						win.style.height = h + 40 + 'px' // +40 шапка
 					}
+
+					// 3. Обновляем саму сцену (stage)
+					const stage = document.getElementById('game-stage')
+					if (stage) {
+						stage.style.width = w + 'px'
+						stage.style.height = h + 'px'
+					}
+
+					// 4. Пересчитываем масштаб (если включен Fit/Fill)
+					if (typeof resizeGame === 'function') resizeGame()
 					break
 				}
 				case 'win_set_cursor': {
@@ -413,7 +433,6 @@ function executeBlockLogic(block) {
 					break
 				}
 				case 'win_fullscreen': {
-					// В редакторе игнорируем или выводим предупреждение
 					console.log(
 						'Полноэкранный режим работает только в экспортированной игре.'
 					)
@@ -445,31 +464,22 @@ function executeBlockLogic(block) {
 				// --- ПЕРЕМЕННЫЕ ---
 				case 'var_set': {
 					const varName = v[0]
-					// resolveValue позволяет присвоить одной переменной значение другой: {varB}
 					const val = resolveValue(v[1])
 					gameVariables[varName] = val
-
-					// Обновляем текст на экране, если он зависит от этой переменной
 					if (typeof updateDynamicText === 'function') updateDynamicText()
 					break
 				}
 				case 'var_change': {
 					const varName = v[0]
-					// Превращаем текущее значение и добавку в числа
 					const currentVal = parseFloat(gameVariables[varName]) || 0
 					const amount = parseFloat(resolveValue(v[1])) || 0
-
 					gameVariables[varName] = currentVal + amount
-
 					if (typeof updateDynamicText === 'function') updateDynamicText()
 					break
 				}
 				case 'log_print': {
-					// Теперь умеет печатать содержимое переменных
 					const msg = resolveValue(v[0])
 					console.log('[LOG]:', msg)
-
-					// Если есть внутриигровая консоль
 					const consoleEl = document.getElementById('game-console')
 					if (consoleEl) {
 						consoleEl.innerHTML += `<div class="console-line">${msg}</div>`
@@ -1808,6 +1818,358 @@ function executeBlockLogic(block) {
 					break
 				}
 
+				// --- ВИДЕО ---
+				case 'video_load': {
+					const vidId = v[0]
+					const src = getAssetUrl(resolveValue(v[1]))
+					const wVal = resolveValue(v[2])
+					const hVal = resolveValue(v[3])
+					const zIdx = resolveValue(v[4])
+
+					// Удаляем старое, если есть
+					const old = document.getElementById(vidId)
+					if (old) old.remove()
+
+					const vid = document.createElement('video')
+					vid.id = vidId
+					vid.src = src
+					vid.style.position = 'absolute'
+					vid.style.left = '0'
+					vid.style.top = '0'
+					vid.style.width = wVal
+					vid.style.height = hVal
+					vid.style.objectFit = 'cover' // Чтобы не искажалось
+					vid.style.zIndex = zIdx
+
+					// Скрываем элементы управления браузера
+					vid.controls = false
+
+					// Добавляем обработчик окончания для события video_on_end
+					vid.onended = () => {
+						// Ищем триггеры в сцене (ХАК: используем globalCurrentSceneData)
+						if (window.globalCurrentSceneData) {
+							window.globalCurrentSceneData.objects.forEach(obj => {
+								if (!obj.scripts) return
+								const triggers = obj.scripts.filter(
+									b => b.type === 'video_on_end' && b.values[0] === vidId
+								)
+								triggers.forEach(trig =>
+									executeChain(trig, obj.scripts, obj.connections)
+								)
+							})
+						}
+					}
+
+					// Куда добавляем? Если z-index высокий, можно прямо в stage, но лучше в UI слой если это интерфейс
+					// Для простоты кидаем в game-stage
+					document.getElementById('game-stage').appendChild(vid)
+					break
+				}
+
+				case 'video_control': {
+					const vid = document.getElementById(v[0])
+					const action = v[1]
+					if (vid) {
+						if (action === 'play') vid.play().catch(e => console.warn(e))
+						else if (action === 'pause') vid.pause()
+						else if (action === 'stop') {
+							vid.pause()
+							vid.currentTime = 0
+						} else if (action === 'remove') vid.remove()
+					}
+					break
+				}
+
+				case 'video_settings': {
+					const vid = document.getElementById(v[0])
+					if (vid) {
+						vid.volume = parseFloat(resolveValue(v[1]))
+						vid.loop = v[2] === '1' || v[2] === 'true'
+						vid.style.opacity = resolveValue(v[3])
+					}
+					break
+				}
+
+				case 'game_pause': {
+					isGamePaused = v[0] === '1' || v[0] === 'true'
+					// Можно добавить визуал паузы
+					if (isGamePaused) {
+						document.getElementById('game-stage').style.filter =
+							'grayscale(100%)'
+					} else {
+						document.getElementById('game-stage').style.filter = 'none'
+					}
+					break
+				}
+
+				case 'game_restart': {
+					// Сброс всего и перезагрузка сцены
+					// Можно вызвать runProject(), но лучше мягкую перезагрузку:
+					const current = projectData.scenes.find(s => s.id === runtimeSceneId)
+					if (current) {
+						// Очищаем переменные если нужно, или оставляем
+						gameVariables = {}
+						activeKeys = {}
+						loadRuntimeScene(current)
+						return // Прерываем цепочку
+					}
+					break
+				}
+
+				case 'game_over_screen': {
+					isGamePaused = true
+					const stage = document.getElementById('game-stage')
+
+					const screen = document.createElement('div')
+					screen.style.cssText = `
+        position: absolute; top:0; left:0; width:100%; height:100%;
+        background: rgba(0,0,0,0.85); display: flex; flex-direction: column;
+        align-items: center; justify-content: center; z-index: 9999; color: white;
+    `
+
+					screen.innerHTML = `
+        <h1 style="font-size: 60px; color: #ff3d00; margin-bottom: 20px;">${resolveValue(
+					v[0]
+				)}</h1>
+        <button id="btn-restart-go" style="padding: 15px 30px; font-size: 24px; cursor: pointer; background: #fff; color: #000; border: none; border-radius: 5px;">
+            RETRY
+        </button>
+    `
+
+					stage.appendChild(screen)
+
+					// Логика кнопки
+					document.getElementById('btn-restart-go').onclick = () => {
+						screen.remove()
+						isGamePaused = false
+						// Триггерим рестарт
+						const current = projectData.scenes.find(
+							s => s.id === runtimeSceneId
+						)
+						if (current) {
+							gameVariables = {}
+							loadRuntimeScene(current)
+						}
+					}
+					break
+				}
+
+				case 'pp_filter_set': {
+					const type = v[0]
+					const val = parseFloat(resolveValue(v[1]))
+					const world = document.getElementById('game-world')
+
+					if (world) {
+						// Формируем строку CSS фильтра
+						let filterStr = ''
+						if (type === 'blur') filterStr = `blur(${val}px)`
+						else if (type === 'hue-rotate') filterStr = `hue-rotate(${val}deg)`
+						else if (
+							type === 'contrast' ||
+							type === 'brightness' ||
+							type === 'saturate'
+						)
+							filterStr = `${type}(${val}%)`
+						else filterStr = `${type}(${val}%)` // grayscale, sepia, invert
+
+						// Применяем (заменяет предыдущий фильтр, для комбинации нужна более сложная логика)
+						// Но для простоты пока перезаписываем
+						world.style.filter = filterStr
+					}
+					break
+				}
+
+				case 'pp_vignette': {
+					const isOn = v[0] === '1' || v[0] === 'true'
+					const strength = parseFloat(resolveValue(v[1]))
+					const color = v[2]
+					const stage = document.getElementById('game-stage')
+
+					// Удаляем старую
+					const old = document.getElementById('pp-overlay-vignette')
+					if (old) old.remove()
+
+					if (isOn) {
+						const div = document.createElement('div')
+						div.id = 'pp-overlay-vignette'
+						div.style.cssText = `
+            position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 800;
+            background: radial-gradient(circle, transparent 50%, ${color} 100%);
+            opacity: ${strength};
+            mix-blend-mode: multiply;
+        `
+						stage.appendChild(div)
+					}
+					break
+				}
+
+				case 'pp_crt_effect': {
+					const isOn = v[0] === '1' || v[0] === 'true'
+					const opacity = parseFloat(resolveValue(v[1]))
+					const stage = document.getElementById('game-stage')
+
+					const old = document.getElementById('pp-overlay-crt')
+					if (old) old.remove()
+
+					if (isOn) {
+						const div = document.createElement('div')
+						div.id = 'pp-overlay-crt'
+						div.style.cssText = `
+            position: absolute; top:0; left:0; width:100%; height:100%; pointer-events: none; z-index: 9990;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            opacity: ${opacity};
+        `
+						stage.appendChild(div)
+					}
+					break
+				}
+
+				case 'pp_chromatic': {
+					const isOn = v[0] === '1' || v[0] === 'true'
+					const shift = resolveValue(v[1]) // пиксели
+					const world = document.getElementById('game-world')
+
+					if (world) {
+						if (isOn) {
+							// CSS хак для хроматической аберрации через text-shadow работает только для текста,
+							// для всего мира используем просто цветовой сдвиг через фильтры или наложение.
+							// Самый простой способ имитации глитча на DOM:
+							world.style.textShadow = `${shift}px 0 red, -${shift}px 0 blue`
+							// А для картинок используем drop-shadow (дорого для производительности, но красиво)
+							// Но лучше просто сместить каналы. Сделаем "тряску" цветов:
+							world.style.filter = `drop-shadow(${shift}px 0 0 rgba(255,0,0,0.5)) drop-shadow(-${shift}px 0 0 rgba(0,0,255,0.5))`
+						} else {
+							world.style.textShadow = 'none'
+							world.style.filter = 'none'
+						}
+					}
+					break
+				}
+
+				case 'pp_bloom_fake': {
+					const isOn = v[0] === '1' || v[0] === 'true'
+					const val = parseFloat(resolveValue(v[1]))
+					const world = document.getElementById('game-world')
+
+					if (world) {
+						if (isOn) {
+							// Комбинация яркости и контраста дает эффект "выжигания" цветов (Bloom)
+							world.style.filter = `brightness(${val}) contrast(1.1) saturate(1.2)`
+						} else {
+							world.style.filter = 'none'
+						}
+					}
+					break
+				}
+
+				case 'pp_clear_all': {
+					const world = document.getElementById('game-world')
+					const stage = document.getElementById('game-stage')
+
+					if (world) {
+						world.style.filter = 'none'
+						world.style.textShadow = 'none'
+					}
+
+					// Удаляем оверлеи по ID
+					;['pp-overlay-vignette', 'pp-overlay-crt'].forEach(id => {
+						const el = document.getElementById(id)
+						if (el) el.remove()
+					})
+					break
+				}
+
+				// --- ИСПРАВЛЕННЫЙ UI_ANCHOR (сохраняет повороты) ---
+				case 'ui_anchor': {
+					const el = document.getElementById(v[0])
+					const anchor = v[1]
+					const offX = parseFloat(resolveValue(v[2])) || 0
+					const offY = parseFloat(resolveValue(v[3])) || 0
+
+					if (el) {
+						el.style.left = 'auto'
+						el.style.right = 'auto'
+						el.style.top = 'auto'
+						el.style.bottom = 'auto'
+						el.style.position = 'absolute'
+						el.style.margin = '0'
+
+						// Получаем текущие трансформации (например, поворот), кроме трансляции
+						let currentTransform = el.style.transform || ''
+						// Убираем старые трансляции, чтобы не дублировать, если они были
+						// (простая регулярка, может быть не идеальной, но рабочей для простых случаев)
+						currentTransform = currentTransform
+							.replace(/translate\([^)]+\)/g, '')
+							.replace(/translateX\([^)]+\)/g, '')
+							.replace(/translateY\([^)]+\)/g, '')
+							.trim()
+
+						let newTranslate = ''
+
+						switch (anchor) {
+							case 'top-left':
+								el.style.left = offX + 'px'
+								el.style.top = offY + 'px'
+								break
+							case 'top-center':
+								el.style.left = '50%'
+								el.style.top = offY + 'px'
+								newTranslate = `translateX(calc(-50% + ${offX}px))`
+								break
+							case 'top-right':
+								el.style.right = offX + 'px'
+								el.style.top = offY + 'px'
+								break
+
+							case 'center-left':
+								el.style.left = offX + 'px'
+								el.style.top = '50%'
+								newTranslate = `translateY(calc(-50% + ${offY}px))`
+								break
+							case 'center':
+								el.style.left = '50%'
+								el.style.top = '50%'
+								newTranslate = `translate(calc(-50% + ${offX}px), calc(-50% + ${offY}px))`
+								break
+							case 'center-right':
+								el.style.right = offX + 'px'
+								el.style.top = '50%'
+								newTranslate = `translateY(calc(-50% + ${offY}px))`
+								break
+
+							case 'bottom-left':
+								el.style.left = offX + 'px'
+								el.style.bottom = offY + 'px'
+								break
+							case 'bottom-center':
+								el.style.left = '50%'
+								el.style.bottom = offY + 'px'
+								newTranslate = `translateX(calc(-50% + ${offX}px))`
+								break
+							case 'bottom-right':
+								el.style.right = offX + 'px'
+								el.style.bottom = offY + 'px'
+								break
+
+							case 'stretch-full':
+								el.style.left = '0'
+								el.style.top = '0'
+								el.style.width = '100%'
+								el.style.height = '100%'
+								break
+						}
+
+						// Применяем комбинацию (сначала сдвиг, потом старые трансформации типа поворота)
+						if (newTranslate) {
+							el.style.transform = `${newTranslate} ${currentTransform}`
+						} else {
+							el.style.transform = currentTransform // Возвращаем поворот, если трансляция не нужна
+						}
+					}
+					break
+				}
+
 				// --- СИСТЕМНЫЕ ---
 				case 'flow_comment':
 				case 'flow_else':
@@ -1839,93 +2201,6 @@ function updateDynamicText() {
 		el.innerText = resolveText(el.dataset.template)
 	})
 }
-
-// ==========================================
-// --- НАСТРОЙКИ ПРОЕКТА ---
-// ==========================================
-
-// Инициализация кнопки (вызови это в inicialization.js или просто добавь listener здесь, если скрипт грузится последним)
-document.addEventListener('DOMContentLoaded', () => {
-	const btn = document.getElementById('btnProjectSettings')
-	if (btn) btn.onclick = openProjectSettings
-
-	document.getElementById('btn-save-settings').onclick = saveProjectSettings
-})
-
-function openProjectSettings() {
-	const modal = document.getElementById('modal-project-settings')
-	const nameInp = document.getElementById('set-proj-name')
-	const authorInp = document.getElementById('set-proj-author')
-	const verInp = document.getElementById('set-proj-version')
-	const sceneSel = document.getElementById('set-start-scene')
-
-	// Гарантируем структуру данных
-	if (!projectData.settings) projectData.settings = {}
-
-	// Заполняем поля
-	nameInp.value =
-		projectData.settings.name || projectData.meta.name || 'My Awesome Game'
-	authorInp.value = projectData.settings.author || ''
-	verInp.value = projectData.settings.version || '1.0'
-
-	// Заполняем список сцен
-	sceneSel.innerHTML = ''
-	projectData.scenes.forEach(scene => {
-		const opt = document.createElement('option')
-		opt.value = scene.id
-		opt.innerText = scene.name
-		// Если ID совпадает с сохраненным ИЛИ это первая сцена по умолчанию
-		if (projectData.settings.startSceneId === scene.id) {
-			opt.selected = true
-		}
-		sceneSel.appendChild(opt)
-	})
-
-	modal.classList.remove('hidden')
-	setTimeout(() => modal.classList.add('active'), 10)
-}
-
-function saveProjectSettings() {
-	const name = document.getElementById('set-proj-name').value
-	const author = document.getElementById('set-proj-author').value
-	const version = document.getElementById('set-proj-version').value
-	const startSceneId = document.getElementById('set-start-scene').value
-
-	projectData.settings = {
-		name,
-		author,
-		version,
-		startSceneId,
-	}
-
-	// Обновляем мету
-	projectData.meta.name = name
-	document.title = `Ecrous Engine | ${name}`
-
-	saveProjectToLocal() // Сохраняем сразу
-	closeProjectSettings()
-}
-
-function closeProjectSettings() {
-	const modal = document.getElementById('modal-project-settings')
-	modal.classList.remove('active')
-	setTimeout(() => modal.classList.add('hidden'), 200)
-}
-
-// Добавить это где-то в инициализации
-window.addEventListener('mousemove', e => {
-	// Конвертация в координаты игры (800x600)
-	const stage = document.getElementById('game-stage')
-	if (stage) {
-		const rect = stage.getBoundingClientRect()
-		const scaleX = 800 / rect.width
-		const scaleY = 600 / rect.height
-		window.mouseX = (e.clientX - rect.left) * scaleX
-		window.mouseY = (e.clientY - rect.top) * scaleY
-	}
-})
-window.addEventListener('touchstart', () => (window.isTouching = true))
-window.addEventListener('touchend', () => (window.isTouching = false))
 
 function resolveValue(val) {
 	if (typeof val !== 'string') return val

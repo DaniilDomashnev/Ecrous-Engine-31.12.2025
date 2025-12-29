@@ -4,63 +4,72 @@
 .template-controls {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
-	gap: 10px;
+	gap: 12px;
 	background: var(--bg-elevated);
+    /* Размытие фона под кнопками */
+    backdrop-filter: blur(10px);
 	border-top: 1px solid var(--border);
-	padding: 16px;
+	padding: 20px;
 	margin-top: auto;
 }
 
 .template-controls p {
 	grid-column: 1 / -1;
-	margin: 0 0 8px;
+	margin: 0 0 10px;
 	font-size: 10px;
 	font-weight: 800;
 	text-transform: uppercase;
 	color: var(--text-soft);
+    letter-spacing: 1px;
+    opacity: 0.7;
 }
 
 .template-controls button {
-	background: var(--bg);
+	background: rgba(255,255,255,0.03);
 	border: 1px solid var(--border);
 	color: var(--text);
 	font-family: var(--font-main);
 	font-size: 12px;
-	padding: 8px 10px;
-	border-radius: 8px;
+    font-weight: 500;
+	padding: 0;
+	border-radius: 10px;
 	cursor: pointer;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	gap: 8px;
-	transition: all 0.2s ease;
+	transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 	outline: none;
-	height: 36px;
+	height: 40px; /* Выше кнопки */
 }
 
+/* Главная кнопка (Сохранить) */
 .template-controls button:first-of-type {
 	grid-column: 1 / -1;
-	background: var(--accent-soft);
+	background: var(--accent); /* Полная заливка */
 	border-color: transparent;
-	color: var(--accent);
-	justify-content: flex-start;
-	font-weight: 600;
+	color: #fff;
+	justify-content: center;
+	font-weight: 700;
+    box-shadow: 0 4px 15px var(--accent-soft);
 }
 .template-controls button:first-of-type i {
-	color: var(--accent);
+	color: #fff;
 }
 
 .template-controls button:hover {
 	background: var(--bg-elevated-soft);
 	border-color: var(--text-soft);
-	transform: translateY(-1px);
+	transform: translateY(-2px);
 }
 
 .template-controls button:first-of-type:hover {
 	background: var(--accent);
-	color: #fff;
-	box-shadow: 0 4px 12px var(--accent-soft);
+	filter: brightness(1.1);
+	box-shadow: 0 6px 20px var(--accent-soft);
+    transform: translateY(-2px);
 }
-.template-controls button:first-of-type:hover i {
-	color: #fff;
+
+.template-controls button:active {
+    transform: translateY(0);
 }

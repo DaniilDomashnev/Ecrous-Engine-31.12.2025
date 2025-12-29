@@ -2,7 +2,7 @@
    TOOLBOX (ИНСТРУМЕНТЫ)
    ========================================= */
 #toolboxContent {
-	padding: 12px;
+	padding: 16px;
 	overflow-y: auto;
 	flex: 1;
 }
@@ -10,38 +10,48 @@
 .category-title {
 	font-size: 10px;
 	color: var(--accent);
-	margin: 18px 0 8px;
+	margin: 24px 0 10px;
 	font-weight: 800;
 	text-transform: uppercase;
-	letter-spacing: 0.5px;
+	letter-spacing: 1px;
+    opacity: 0.9;
 }
 .category-title:first-child {
-	margin-top: 0;
+	margin-top: 5px;
 }
 
 .tool-item {
-	padding: 8px 12px;
-	background: var(--bg-elevated-soft);
-	border-radius: 8px;
+	padding: 10px 14px;
+	background: var(--bg-elevated);
+	border-radius: 10px;
 	cursor: grab;
 	display: flex;
 	align-items: center;
-	gap: 10px;
+	gap: 12px;
 	font-size: 13px;
-	border: 1px solid transparent;
+    font-weight: 500;
+	border: 1px solid var(--border);
 	color: var(--text);
-	margin-bottom: 6px;
-	transition: all 0.2s;
+	margin-bottom: 8px;
+	transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+    position: relative;
+    overflow: hidden;
 }
 
 .tool-item:hover {
 	border-color: var(--accent);
-	background: var(--bg-elevated);
-	transform: translateX(4px);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+	background: var(--bg-elevated-soft);
+	transform: translateX(5px); /* Сдвиг вправо */
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
+.tool-item:active {
+    cursor: grabbing;
+}
+
 .tool-item i {
 	color: var(--text-soft);
+    font-size: 16px;
+    transition: color 0.2s;
 }
 .tool-item:hover i {
 	color: var(--accent);
@@ -50,43 +60,52 @@
 /* --- VARIABLES IN TOOLBOX --- */
 .btn-create-var {
 	width: 100%;
-	padding: 8px;
-	background: var(--bg-elevated);
+	padding: 10px;
+	background: rgba(255,255,255,0.02);
 	border: 1px dashed var(--text-soft);
-	color: var(--text);
-	border-radius: 6px;
+	color: var(--text-soft);
+	border-radius: 8px;
 	cursor: pointer;
-	margin-bottom: 10px;
-	transition: 0.2s;
+	margin-bottom: 16px;
+	transition: all 0.2s;
     font-size: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5px;
+    gap: 8px;
 }
 .btn-create-var:hover {
 	border-color: var(--accent);
 	color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.05);
 }
 
 #toolbox-vars {
     display: flex;
     flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 15px;
+    gap: 8px;
+    margin-bottom: 20px;
 }
 
+/* Стиль пилюли переменной (Glossy style) */
 .variable-pill {
-    background: #FF6D00; /* Оранжевый как в Scratch */
+    background: linear-gradient(135deg, #FF9100, #FF6D00); /* Градиент */
     color: white;
-    padding: 4px 10px;
-    border-radius: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
     font-size: 11px;
-    font-weight: bold;
+    font-weight: 700;
     cursor: grab;
     user-select: none;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 0 4px 10px rgba(255, 109, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.3);
+    border: 1px solid rgba(0,0,0,0.1);
+    transition: transform 0.1s;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+.variable-pill:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.1);
 }
 
 .variable-pill:active {

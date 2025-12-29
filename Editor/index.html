@@ -565,14 +565,52 @@
                 </div>
     
                 <div class="setting-group">
+                    <label>Стадия разработки</label>
+                    <div class="select-wrapper">
+                        <select id="set-proj-status" class="modal-input">
+                            <option value="">(Без метки)</option>
+                            <option value="Pre-Alpha">Pre-Alpha</option>
+                            <option value="Alpha">Alpha Test</option>
+                            <option value="Beta">Beta Test</option>
+                            <option value="Early Access">Early Access</option>
+                            <option value="Demo">Demo</option>
+                            <option value="Release">Release</option>
+                        </select>
+                        <i class="ri-arrow-down-s-line"></i>
+                    </div>
+                </div>
+    
+                <div class="setting-group">
+                    <label>Иконка (Favicon & Mobile)</label>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <img id="set-proj-icon-preview" src=""
+                            style="width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background: #222; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
+    
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <input type="file" id="set-proj-icon-input" accept="image/png, image/jpeg, image/jpg"
+                                style="display: none;">
+                            <button class="modal-btn secondary"
+                                onclick="document.getElementById('set-proj-icon-input').click()"
+                                style="font-size: 12px; padding: 6px 12px;">
+                                <i class="ri-upload-2-line"></i> Загрузить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="setting-group"
+                    style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                    <label style="margin:0; cursor: pointer;" for="set-disable-splash">Скрыть заставку (Splash
+                        Screen)</label>
+                    <input type="checkbox" id="set-disable-splash" style="width: 20px; height: 20px; cursor: pointer;">
+                </div>
+    
+                <div class="setting-group">
                     <label>Стартовая сцена</label>
                     <div class="select-wrapper">
                         <select id="set-start-scene" class="modal-input"></select>
                         <i class="ri-arrow-down-s-line"></i>
                     </div>
-                    <small style="color:var(--text-soft); font-size:11px; display:block; margin-top:4px;">
-                        Эта сцена загрузится первой после экспорта.
-                    </small>
                 </div>
     
                 <div class="setting-group">
@@ -654,6 +692,7 @@
     <script src="src/editor/context-menu.js"></script>
     <script src="src/editor/color-picker.js"></script>
     <script src="src/editor/menu-functions.js"></script>
+    <script src="src/editor/options.js"></script>
 
     <!-- Storage Scripts -->
     <script src="src/storage/local.js"></script>

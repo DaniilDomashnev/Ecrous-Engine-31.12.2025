@@ -342,3 +342,17 @@
 		border: 1px solid var(--border);
 	}
 }
+
+/* По умолчанию — скрыто (ПК, ноутбуки) */
+.mobile-only-btn {
+    display: none;
+}
+
+/* Мобильные устройства и планшеты */
+@media (max-width: 768px) {
+    .mobile-only-btn {
+        display: flex; /* или block, если нужно */
+        align-items: center;
+        justify-content: center;
+    }
+}

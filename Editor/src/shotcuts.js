@@ -13,9 +13,6 @@ window.addEventListener('keydown', e => {
 		e.preventDefault()
 		if (typeof saveProjectToLocal === 'function') {
 			saveProjectToLocal()
-			// Опционально: downloadProjectAsJSON();
-			if (typeof showNotification === 'function')
-				showNotification('Проект сохранён!')
 		}
 	}
 

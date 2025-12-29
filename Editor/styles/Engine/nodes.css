@@ -3,43 +3,52 @@
    ========================================= */
 .node-block {
 	position: absolute;
-	min-width: 200px;
+	min-width: 220px; /* Чуть шире */
 	background: var(--bg-elevated);
-	border-radius: 12px;
-	box-shadow: var(--shadow-soft);
-	border: 1px solid var(--border);
+	border-radius: 14px; /* Мягкие углы */
+	box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1), 0 0 0 1px var(--border); /* Сложная тень */
 	z-index: 5;
-	transition: box-shadow 0.2s, border-color 0.2s;
+	transition: box-shadow 0.2s, transform 0.1s, border-color 0.2s;
+	/* Легкая прозрачность для фона узла */
+	backdrop-filter: blur(5px);
 }
 
+/* Эффект выделения */
 .node-block.selected {
 	border-color: var(--accent);
-	box-shadow: 0 0 0 1px var(--accent), var(--shadow-soft);
+	box-shadow: 0 0 0 2px var(--accent), 0 10px 25px rgba(0, 0, 0, 0.2);
+	z-index: 10;
 }
 
 .node-header {
-	padding: 8px 12px;
+	padding: 10px 14px;
 	font-size: 12px;
 	font-weight: 700;
 	display: flex;
 	justify-content: space-between;
 	align-items: center;
-	border-radius: 12px 12px 0 0;
+	border-radius: 14px 14px 0 0;
 	color: var(--text);
 	cursor: grab;
+	/* Градиент в шапке */
 	background: linear-gradient(
-		to right,
-		var(--bg-elevated-soft),
-		var(--bg-elevated)
+		to bottom,
+		rgba(255, 255, 255, 0.05),
+		rgba(255, 255, 255, 0.01)
 	);
 	border-bottom: 1px solid var(--border);
+	letter-spacing: 0.5px;
+}
+
+.node-header:active {
+	cursor: grabbing;
 }
 
 .node-content {
-	padding: 12px;
+	padding: 14px;
 	display: flex;
 	flex-direction: column;
-	gap: 10px;
+	gap: 12px;
 }
 
 .input-row {
@@ -48,27 +57,30 @@
 	align-items: center;
 	color: var(--text-soft);
 	font-size: 12px;
-	font-weight: 500;
+	font-weight: 600;
 }
 
-/* Инпуты внутри узлов */
+/* Инпуты внутри узлов - стиль "код" */
 .node-input {
-	background: var(--code-bg);
-	border: 1px solid var(--border);
-	color: var(--text);
-	padding: 4px 8px;
+	background: rgba(0, 0, 0, 0.2); /* Темнее фона */
+	border: 1px solid transparent;
+	color: var(--accent); /* Цвет текста акцентный */
+	padding: 5px 8px;
 	border-radius: 6px;
 	text-align: right;
 	font-size: 11px;
-	font-family: monospace;
+	font-family: 'Fira Code', monospace; /* Моноширинный шрифт */
 	outline: none;
-	width: 70px;
-	transition: 0.2s;
+	width: 75px;
+	transition: all 0.2s ease;
 }
 
 .node-input:focus {
+	background: var(--bg);
 	border-color: var(--accent);
-	box-shadow: 0 0 0 2px var(--accent-soft);
+	box-shadow: 0 0 0 2px rgba(var(--accent-rgb), 0.2);
+	color: white;
+	width: 85px; /* Чуть расширяется при вводе */
 }
 
 /* Color picker */
@@ -76,16 +88,20 @@ input[type='color'] {
 	border: none;
 	background: none;
 	padding: 0;
-	width: 24px;
-	height: 24px;
+	width: 26px;
+	height: 26px;
 	cursor: pointer;
 	border-radius: 50%;
 	overflow: hidden;
+	transition: transform 0.2s;
+}
+input[type='color']:hover {
+	transform: scale(1.1);
 }
 input[type='color']::-webkit-color-swatch-wrapper {
 	padding: 0;
 }
 input[type='color']::-webkit-color-swatch {
-	border: 1px solid var(--border);
+	border: 2px solid var(--border);
 	border-radius: 50%;
 }

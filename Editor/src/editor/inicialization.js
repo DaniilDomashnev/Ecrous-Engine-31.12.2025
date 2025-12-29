@@ -664,35 +664,13 @@ function loadCustomTemplates() {
 }
 
 function initToolbox() {
-	const toolbox = document.querySelector('#toolboxContent') // Убедись, что селектор верный
+	const toolbox = document.querySelector('#toolboxContent')
 	if (!toolbox) return
 	toolbox.innerHTML = ''
 
-	// --- 1. СПЕЦИАЛЬНЫЙ РАЗДЕЛ: ПЕРЕМЕННЫЕ ---
-	const varTitle = document.createElement('div')
-	varTitle.className = 'category-title'
-	varTitle.innerText = 'ПЕРЕМЕННЫЕ'
-	toolbox.appendChild(varTitle)
+	// --- МЫ УДАЛИЛИ РАЗДЕЛ "ПЕРЕМЕННЫЕ" ПО ВАШЕЙ ПРОСЬБЕ ---
+	// Теперь блоки просто идут по категориям
 
-	// Кнопка "Создать переменную"
-	const btnCreateVar = document.createElement('button')
-	btnCreateVar.className = 'btn-create-var' // Стилизуем ниже
-	btnCreateVar.innerHTML = '<i class="ri-add-line"></i> Создать переменную'
-	btnCreateVar.onclick = createNewVariable
-	toolbox.appendChild(btnCreateVar)
-
-	// Список переменных (Пилюли)
-	if (!projectData.variables) projectData.variables = [] // Инициализация списка
-
-	const varList = document.createElement('div')
-	varList.id = 'toolbox-vars'
-	projectData.variables.forEach(varName => {
-		const pill = createVariablePill(varName)
-		varList.appendChild(pill)
-	})
-	toolbox.appendChild(varList)
-
-	// --- 2. ОСТАЛЬНЫЕ БЛОКИ ---
 	const categories = {}
 	BLOCK_DEFINITIONS.forEach(b => {
 		if (!categories[b.category]) categories[b.category] = []
@@ -700,28 +678,30 @@ function initToolbox() {
 	})
 
 	const order = [
-		'События', // Точки входа: On start, On tick, триггеры, функции
-		'Сцены', // Переходы между лэйаутами, загрузка/выгрузка сцен
-		'Данные', // Загрузка/сохранение (AJAX, Local Storage, Array и т.д.)
-		'Переменные', // Инициализация глобальных/локальных переменных и состояний
-		'Логика', // Основные условия, ветвления, циклы, математика
-		'Ввод', // Клавиатура, мышь, тач, геймпад — обработка ввода
-		'Группы', // Организация событий по модулям/сущностям
-		'Объекты', // Создание, уничтожение, спавн, семьи объектов
-		'Движение', // Перемещение (платформер, pathfinding, bullet и т.д.)
-		'Физика', // Коллизии, силы, Physics behavior
-		'Камера', // Скроллинг, следование, zoom, shake
-		'Инвентарь', // Система предметов, экипировка
-		'Задания', // Квесты, миссии, прогресс
-		'Интерфейс', // HUD, кнопки, меню, панели
-		'Текст', // Текстовые объекты, счёт, диалоги
-		'Анимация', // Анимации спрайтов, частицы
-		'Графика', // Эффекты, шейдеры, parallax, пост-обработка
-		'Звук', // Музыка, звуковые эффекты, громкость
-		'Компоненты', // Кастомные поведения и модули
-		'Окно', // Fullscreen, resize, ориентация окна
-		'Система', // Таймеры, браузер API, реклама, достижения
-		'Отладка', // Логи, дебаг-информация, тестовые события
+		'События',
+		'Сцены',
+		'Данные',
+		'Переменные', // Блоки работы с переменными (set/change) останутся тут
+		'Логика',
+		'Ввод',
+		'Группы',
+		'Объекты',
+		'Движение',
+		'Физика',
+		'Камера',
+		'Инвентарь',
+		'Задания',
+		'Интерфейс',
+		'Текст',
+		'Видео',
+		'Анимация',
+		'Графика',
+		'Звук',
+		'Компоненты',
+		'Окно',
+		'Система',
+		'Пост-процесс',
+		'Отладка',
 	]
 
 	order.forEach(cat => {

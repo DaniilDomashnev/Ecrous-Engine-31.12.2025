@@ -70,6 +70,28 @@ const BLOCK_DEFINITIONS = [
 		inputs: [{ label: 'Интервал', default: '1' }],
 	},
 
+	{
+		id: 'evt_message_send',
+		category: 'События',
+		label: 'Отправить событие',
+		desc: 'Запускает цепочки "При получении события" во всей игре.',
+		icon: 'ri-signal-tower-fill',
+		color: '#00E676',
+		inputs: [
+			{ label: 'Название события', default: 'OnDeath' },
+			{ label: 'Параметр (опц.)', default: 'player' },
+		],
+	},
+	{
+		id: 'evt_message_receive',
+		category: 'События',
+		label: 'При событии',
+		desc: 'Срабатывает, когда кто-то отправляет это событие.',
+		icon: 'ri-base-station-line',
+		color: '#00E676',
+		inputs: [{ label: 'Название события', default: 'OnDeath' }],
+	},
+
 	// --- ДВИЖЕНИЕ ---
 	{
 		id: 'mov_set_pos',
@@ -131,6 +153,20 @@ const BLOCK_DEFINITIONS = [
 		inputs: [
 			{ label: 'Объект', default: 'box1' },
 			{ label: 'Позиция', default: 'center' },
+		],
+	},
+	{
+		id: 'ai_patrol',
+		category: 'Движение',
+		label: 'Патруль (X1 -> X2)',
+		desc: 'Двигает объект туда-сюда.',
+		icon: 'ri-route-line',
+		color: '#6200EA',
+		inputs: [
+			{ label: 'Объект', default: 'enemy' },
+			{ label: 'Min X', default: '100' },
+			{ label: 'Max X', default: '500' },
+			{ label: 'Скорость', default: '2' },
 		],
 	},
 
@@ -721,6 +757,58 @@ const BLOCK_DEFINITIONS = [
 		color: '#FF8F00',
 		inputs: [{ label: 'Текст', default: 'Тут сложная логика...' }],
 	},
+	// --- БОЕВАЯ СИСТЕМА ---
+	{
+		id: 'combat_damage',
+		category: 'Логика', // Или новая категория "Бой"
+		label: 'Нанести урон',
+		desc: 'Уменьшает переменную HP у объекта (компонент).',
+		icon: 'ri-sword-fill',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Цель (Obj)', default: 'enemy' },
+			{ label: 'Кол-во', default: '10' },
+			{ label: 'Имя комп. HP', default: 'health' },
+		],
+	},
+	{
+		id: 'logic_chance',
+		category: 'Логика',
+		label: 'Вероятность (%)',
+		desc: 'Записывает 1 в переменную, если повезло.',
+		icon: 'ri-percent-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Шанс (0-100)', default: '50' },
+			{ label: 'Результат в', default: 'success' },
+		],
+	},
+
+	// --- 1. УСЛОВИЯ+ (LOGIC) ---
+	{
+		id: 'logic_obj_exists',
+		category: 'Логика',
+		label: 'Объект существует?',
+		desc: 'Проверяет, есть ли объект на сцене. Пишет 1 или 0.',
+		icon: 'ri-question-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Имя объекта', default: 'enemy1' },
+			{ label: 'Результат в', default: 'exists' },
+		],
+	},
+	{
+		id: 'logic_is_visible',
+		category: 'Логика',
+		label: 'Объект видим?',
+		desc: 'Проверяет, не скрыт ли объект (display != none).',
+		icon: 'ri-eye-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Имя объекта', default: 'enemy1' },
+			{ label: 'Результат в', default: 'is_vis' },
+		],
+	},
 
 	// --- АНИМАЦИЯ ---
 	{
@@ -888,6 +976,18 @@ const BLOCK_DEFINITIONS = [
 		color: '#ea99ddff',
 		inputs: [], // Входов нет, просто действие
 	},
+	{
+		id: 'snd_set_volume',
+		category: 'Звук',
+		label: 'Громкость звука',
+		desc: 'Установить громкость (0.0 - 1.0)',
+		icon: 'ri-volume-up-line',
+		color: '#ea99ddff',
+		inputs: [
+			{ label: 'ID звука', default: 'bg_music' },
+			{ label: 'Громкость', default: '0.5' },
+		],
+	},
 
 	// --- ИНТЕРФЕЙС (UI) ---
 	{
@@ -978,6 +1078,36 @@ const BLOCK_DEFINITIONS = [
 				default: 'toggle',
 				options: ['toggle', 'show', 'hide'],
 			}, // v[1]
+		],
+	},
+	{
+		id: 'ui_anchor',
+		category: 'Интерфейс',
+		label: 'Привязать к экрану',
+		desc: 'Закрепляет объект у края экрана (адаптивно).',
+		icon: 'ri-pushpin-2-fill',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'Объект', default: 'hp_bar' },
+			{
+				label: 'Точка',
+				type: 'select',
+				default: 'top-left',
+				options: [
+					'top-left',
+					'top-center',
+					'top-right',
+					'center-left',
+					'center',
+					'center-right',
+					'bottom-left',
+					'bottom-center',
+					'bottom-right',
+					'stretch-full', // Растянуть на весь экран
+				],
+			},
+			{ label: 'Отступ X (px)', default: '20' },
+			{ label: 'Отступ Y (px)', default: '20' },
 		],
 	},
 
@@ -1265,30 +1395,33 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 
-	// --- 1. УСЛОВИЯ+ (LOGIC) ---
+	// --- УПРАВЛЕНИЕ ИГРОЙ ---
 	{
-		id: 'logic_obj_exists',
-		category: 'Логика',
-		label: 'Объект существует?',
-		desc: 'Проверяет, есть ли объект на сцене. Пишет 1 или 0.',
-		icon: 'ri-question-line',
-		color: '#FF6D00',
-		inputs: [
-			{ label: 'Имя объекта', default: 'enemy1' },
-			{ label: 'Результат в', default: 'exists' },
-		],
+		id: 'game_pause',
+		category: 'Система',
+		label: 'Пауза игры',
+		desc: 'Останавливает физику, таймеры и апдейты.',
+		icon: 'ri-pause-circle-fill',
+		color: '#607D8B',
+		inputs: [{ label: 'Вкл/Выкл (1/0)', default: '1' }],
 	},
 	{
-		id: 'logic_is_visible',
-		category: 'Логика',
-		label: 'Объект видим?',
-		desc: 'Проверяет, не скрыт ли объект (display != none).',
-		icon: 'ri-eye-line',
-		color: '#FF6D00',
-		inputs: [
-			{ label: 'Имя объекта', default: 'enemy1' },
-			{ label: 'Результат в', default: 'is_vis' },
-		],
+		id: 'game_over_screen',
+		category: 'Система',
+		label: 'Экран Game Over',
+		desc: 'Показывает стандартный экран проигрыша с кнопкой рестарта.',
+		icon: 'ri-skull-fill',
+		color: '#607D8B',
+		inputs: [{ label: 'Заголовок', default: 'GAME OVER' }],
+	},
+	{
+		id: 'game_restart',
+		category: 'Система',
+		label: 'Перезагрузить игру',
+		desc: 'Полный рестарт текущей сцены со сбросом переменных.',
+		icon: 'ri-refresh-line',
+		color: '#607D8B',
+		inputs: [],
 	},
 
 	// --- 2. СОСТОЯНИЯ (STATE) ---
@@ -1515,31 +1648,6 @@ const BLOCK_DEFINITIONS = [
 	},
 
 	// ==========================================
-	// --- СОБЫТИЯ (EVENTS) ---
-	// ==========================================
-	{
-		id: 'evt_message_send',
-		category: 'События',
-		label: 'Отправить событие',
-		desc: 'Запускает цепочки "При получении события" во всей игре.',
-		icon: 'ri-signal-tower-fill',
-		color: '#7C4DFF',
-		inputs: [
-			{ label: 'Название события', default: 'OnDeath' },
-			{ label: 'Параметр (опц.)', default: 'player' },
-		],
-	},
-	{
-		id: 'evt_message_receive',
-		category: 'События',
-		label: 'При событии',
-		desc: 'Срабатывает, когда кто-то отправляет это событие.',
-		icon: 'ri-base-station-line',
-		color: '#7C4DFF',
-		inputs: [{ label: 'Название события', default: 'OnDeath' }],
-	},
-
-	// ==========================================
 	// --- ДИАЛОГИ И UI ---
 	// ==========================================
 	{
@@ -1658,5 +1766,148 @@ const BLOCK_DEFINITIONS = [
 			},
 			{ label: 'Сила (%)', default: '100' },
 		],
+	},
+
+	// --- ВИДЕО (НОВАЯ КАТЕГОРИЯ) ---
+	{
+		id: 'video_load',
+		category: 'Видео',
+		label: 'Загрузить видео',
+		desc: 'Создает видео-слой. Можно использовать для кат-сцен или фона.',
+		icon: 'ri-movie-2-line',
+		color: '#E91E63',
+		inputs: [
+			{ label: 'ID видео', default: 'intro_vid' },
+			{ label: 'URL / Файл', default: 'assets/video.mp4' },
+			{ label: 'Ширина (px/%s)', default: '100%' }, // Поддержка %
+			{ label: 'Высота (px/%s)', default: '100%' },
+			{ label: 'Z-Index', default: '50' }, // Поверх всего или фон
+		],
+	},
+	{
+		id: 'video_control',
+		category: 'Видео',
+		label: 'Управление видео',
+		desc: 'Play, Pause или Stop.',
+		icon: 'ri-play-mini-fill',
+		color: '#E91E63',
+		inputs: [
+			{ label: 'ID видео', default: 'intro_vid' },
+			{
+				label: 'Действие',
+				type: 'select',
+				default: 'play',
+				options: ['play', 'pause', 'stop', 'remove'],
+			},
+		],
+	},
+	{
+		id: 'video_settings',
+		category: 'Видео',
+		label: 'Настройки видео',
+		desc: 'Звук, повтор, прозрачность.',
+		icon: 'ri-settings-4-line',
+		color: '#E91E63',
+		inputs: [
+			{ label: 'ID видео', default: 'intro_vid' },
+			{ label: 'Громкость (0-1)', default: '1' },
+			{ label: 'Зациклить? (1/0)', default: '0' },
+			{ label: 'Прозрачность (0-1)', default: '1' },
+		],
+	},
+	{
+		id: 'video_on_end',
+		category: 'Видео',
+		label: 'Когда видео закончилось',
+		desc: 'Событие: запускает цепочку, когда видео доиграло до конца.',
+		icon: 'ri-movie-2-fill',
+		color: '#E91E63',
+		inputs: [{ label: 'ID видео', default: 'intro_vid' }],
+	},
+
+	// --- ПОСТ-ПРОЦЕССИНГ (НОВАЯ КАТЕГОРИЯ) ---
+	{
+		id: 'pp_filter_set',
+		category: 'Пост-процесс',
+		label: 'Цветокоррекция',
+		desc: 'Применяет фильтры к игровому миру (Blur, Grayscale, Contrast и др).',
+		icon: 'ri-palette-fill',
+		color: '#9C27B0',
+		inputs: [
+			{
+				label: 'Тип',
+				type: 'select',
+				default: 'grayscale',
+				options: [
+					'grayscale',
+					'sepia',
+					'invert',
+					'blur',
+					'contrast',
+					'brightness',
+					'saturate',
+					'hue-rotate',
+				],
+			},
+			{ label: 'Сила (0-100+)', default: '100' },
+		],
+	},
+	{
+		id: 'pp_vignette',
+		category: 'Пост-процесс',
+		label: 'Виньетка',
+		desc: 'Затемнение по краям экрана (атмосфера, хоррор).',
+		icon: 'ri-focus-3-line',
+		color: '#9C27B0',
+		inputs: [
+			{ label: 'Включить? (1/0)', default: '1' },
+			{ label: 'Сила (0-1)', default: '0.5' },
+			{ label: 'Цвет (HEX)', default: '#000000' },
+		],
+	},
+	{
+		id: 'pp_crt_effect',
+		category: 'Пост-процесс',
+		label: 'Эффект CRT (ТВ)',
+		desc: 'Добавляет скан-линии старого телевизора.',
+		icon: 'ri-tv-line',
+		color: '#9C27B0',
+		inputs: [
+			{ label: 'Включить? (1/0)', default: '1' },
+			{ label: 'Прозр. линий (0-1)', default: '0.1' },
+		],
+	},
+	{
+		id: 'pp_chromatic',
+		category: 'Пост-процесс',
+		label: 'Глитч / Сбой',
+		desc: 'Эффект хроматической аберрации (сдвиг каналов).',
+		icon: 'ri-movie-line',
+		color: '#9C27B0',
+		inputs: [
+			{ label: 'Включить? (1/0)', default: '1' },
+			{ label: 'Сила сдвига (px)', default: '2' },
+		],
+	},
+	{
+		id: 'pp_bloom_fake',
+		category: 'Пост-процесс',
+		label: 'Блум (Свечение)',
+		desc: 'Делает яркие участки еще ярче (имитация через контраст).',
+		icon: 'ri-sun-line',
+		color: '#9C27B0',
+		inputs: [
+			{ label: 'Включить? (1/0)', default: '1' },
+			{ label: 'Яркость', default: '1.2' },
+		],
+	},
+	{
+		id: 'pp_clear_all',
+		category: 'Пост-процесс',
+		label: 'Сбросить эффекты',
+		desc: 'Удаляет все фильтры и наложения.',
+		icon: 'ri-delete-back-2-line',
+		color: '#9C27B0',
+		inputs: [],
 	},
 ]

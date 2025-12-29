@@ -12,45 +12,45 @@ let activeCollisionsPair = new Set() // Чтобы событие срабаты
 window.globalCurrentSceneData = null // Ссылка на данные сцены для поиска скриптов
 
 // Переменные для драга
-let isGameWindowDragging = false;
-let gameDragOffset = { x: 0, y: 0 };
+let isGameWindowDragging = false
+let gameDragOffset = { x: 0, y: 0 }
 
 function initGameWindowDrag() {
-    const win = document.querySelector('.game-window');
-    const header = document.querySelector('.game-header');
+	const win = document.querySelector('.game-window')
+	const header = document.querySelector('.game-header')
 
-    if (!win || !header) return;
+	if (!win || !header) return
 
-    header.addEventListener('mousedown', (e) => {
-        // Игнорируем клик по кнопке закрытия
-        if(e.target.closest('.close-game-btn')) return;
-        
-        isGameWindowDragging = true;
-        
-        // Считаем смещение мыши относительно угла окна
-        const rect = win.getBoundingClientRect();
-        gameDragOffset.x = e.clientX - rect.left;
-        gameDragOffset.y = e.clientY - rect.top;
-        
-        // Убираем transform translate, чтобы управлять через top/left напрямую
-        // Но нужно сохранить текущую визуальную позицию
-        win.style.transform = 'none';
-        win.style.left = rect.left + 'px';
-        win.style.top = rect.top + 'px';
-    });
+	header.addEventListener('mousedown', e => {
+		// Игнорируем клик по кнопке закрытия
+		if (e.target.closest('.close-game-btn')) return
 
-    window.addEventListener('mousemove', (e) => {
-        if (!isGameWindowDragging) return;
-        const x = e.clientX - gameDragOffset.x;
-        const y = e.clientY - gameDragOffset.y;
-        
-        win.style.left = x + 'px';
-        win.style.top = y + 'px';
-    });
+		isGameWindowDragging = true
 
-    window.addEventListener('mouseup', () => {
-        isGameWindowDragging = false;
-    });
+		// Считаем смещение мыши относительно угла окна
+		const rect = win.getBoundingClientRect()
+		gameDragOffset.x = e.clientX - rect.left
+		gameDragOffset.y = e.clientY - rect.top
+
+		// Убираем transform translate, чтобы управлять через top/left напрямую
+		// Но нужно сохранить текущую визуальную позицию
+		win.style.transform = 'none'
+		win.style.left = rect.left + 'px'
+		win.style.top = rect.top + 'px'
+	})
+
+	window.addEventListener('mousemove', e => {
+		if (!isGameWindowDragging) return
+		const x = e.clientX - gameDragOffset.x
+		const y = e.clientY - gameDragOffset.y
+
+		win.style.left = x + 'px'
+		win.style.top = y + 'px'
+	})
+
+	window.addEventListener('mouseup', () => {
+		isGameWindowDragging = false
+	})
 }
 
 function runProject() {
@@ -59,11 +59,24 @@ function runProject() {
 
 	// UI
 	document.getElementById('game-overlay').classList.remove('hidden')
+
+	// --- ИСПРАВЛЕНИЕ: Берем размер из конфига, а не жестко 800x600 ---
 	const gameWindow = document.querySelector('.game-window')
 	if (gameWindow) {
-		gameWindow.style.width = '800px'
-		gameWindow.style.height = '600px'
+		// Если конфиг еще не создан, берем дефолт, иначе берем настроенный
+		const w =
+			window.gameConfig && window.gameConfig.width
+				? window.gameConfig.width
+				: 800
+		const h =
+			window.gameConfig && window.gameConfig.height
+				? window.gameConfig.height
+				: 600
+		gameWindow.style.width = w + 'px'
+		gameWindow.style.height = h + 'px'
 	}
+	// -----------------------------------------------------------------
+
 	document.querySelector('.game-header span').innerText = 'ИГРОВОЙ ПРОЦЕСС'
 	document.getElementById('game-console').style.display = 'block'
 
@@ -151,45 +164,45 @@ function loadRuntimeScene(sceneData) {
 			executeChain(block, owner.scripts, owner.connections)
 		})
 
-		const updateEvents = allScripts.filter(b => b.type === 'evt_update')
-		if (updateEvents.length > 0) {
-			// Подписываемся на игровой цикл
-			window.updateInterval = setInterval(() => {
-				if (!isRunning || isGamePaused) return
-				updateEvents.forEach(block => {
-					const owner = sceneData.objects.find(o =>
-						o.scripts.some(s => s.id === block.id)
-					)
-					if (owner) {
-						// Запускаем цепочку без await, чтобы не блочить рендер
-						executeChain(block, owner.scripts, owner.connections)
-					}
-				})
-			}, 16) // ~60 FPS
-		}
-
-		// Таймеры
-		const timerEvents = allScripts.filter(b => b.type === 'evt_timer')
-		timerEvents.forEach(block => {
-			const sec = parseFloat(block.values[0]) || 1
-			const interval = setInterval(() => {
-				if (!isRunning || isGamePaused) return
+	const updateEvents = allScripts.filter(b => b.type === 'evt_update')
+	if (updateEvents.length > 0) {
+		// Подписываемся на игровой цикл
+		window.updateInterval = setInterval(() => {
+			if (!isRunning || isGamePaused) return
+			updateEvents.forEach(block => {
 				const owner = sceneData.objects.find(o =>
 					o.scripts.some(s => s.id === block.id)
 				)
-				if (owner) executeChain(block, owner.scripts, owner.connections)
-			}, sec * 1000)
-			// Нужно где-то хранить интервалы, чтобы очистить при стопе (добавь window.activeTimers = [] в runProject)
-			if (!window.activeTimers) window.activeTimers = []
-			window.activeTimers.push(interval)
-		})
+				if (owner) {
+					// Запускаем цепочку без await, чтобы не блочить рендер
+					executeChain(block, owner.scripts, owner.connections)
+				}
+			})
+		}, 16) // ~60 FPS
+	}
 
-		// 2. В функцию stopGame добавь очистку:
-		if (window.updateInterval) clearInterval(window.updateInterval)
-		if (window.activeTimers) {
-			window.activeTimers.forEach(t => clearInterval(t))
-			window.activeTimers = []
-		}
+	// Таймеры
+	const timerEvents = allScripts.filter(b => b.type === 'evt_timer')
+	timerEvents.forEach(block => {
+		const sec = parseFloat(block.values[0]) || 1
+		const interval = setInterval(() => {
+			if (!isRunning || isGamePaused) return
+			const owner = sceneData.objects.find(o =>
+				o.scripts.some(s => s.id === block.id)
+			)
+			if (owner) executeChain(block, owner.scripts, owner.connections)
+		}, sec * 1000)
+		// Нужно где-то хранить интервалы, чтобы очистить при стопе (добавь window.activeTimers = [] в runProject)
+		if (!window.activeTimers) window.activeTimers = []
+		window.activeTimers.push(interval)
+	})
+
+	// 2. В функцию stopGame добавь очистку:
+	if (window.updateInterval) clearInterval(window.updateInterval)
+	if (window.activeTimers) {
+		window.activeTimers.forEach(t => clearInterval(t))
+		window.activeTimers = []
+	}
 
 	// Keys
 	const keyEvents = allScripts.filter(b => b.type === 'evt_key_press')
@@ -234,7 +247,6 @@ function loadRuntimeScene(sceneData) {
 			.addEventListener('click', currentClickHandler)
 	}
 }
-
 
 function gameLoop() {
 	if (!isRunning) return
@@ -321,8 +333,10 @@ function updatePhysics(dt) {
 
 		// Границы мира
 		if (phys.collideWorld) {
-			const gameW = 800
-			const gameH = 600
+			// --- ИСПРАВЛЕНИЕ: БЕРЕМ РАЗМЕР ИЗ КОНФИГА ИЛИ DOM ---
+			const stage = document.getElementById('game-stage')
+			const gameW = stage ? stage.offsetWidth : 800
+			const gameH = stage ? stage.offsetHeight : 600
 
 			if (obj.x < 0) {
 				obj.x = 0
@@ -444,8 +458,12 @@ function updateCamera(dt) {
 	if (cameraState.target) {
 		const targetEl = document.getElementById(cameraState.target)
 		if (targetEl) {
-			const winW = 800,
-				winH = 600
+			// --- ИСПРАВЛЕНИЕ: БЕРЕМ РАЗМЕР ИЗ КОНФИГА ИЛИ DOM ---
+			const stage = document.getElementById('game-stage')
+			const winW = stage ? stage.offsetWidth : 800
+			const winH = stage ? stage.offsetHeight : 600
+			// -----------------------------------------------------
+
 			const tX = parseFloat(targetEl.style.left) + targetEl.offsetWidth / 2
 			const tY = parseFloat(targetEl.style.top) + targetEl.offsetHeight / 2
 			const targetCamX = tX - winW / 2 / cameraState.zoom

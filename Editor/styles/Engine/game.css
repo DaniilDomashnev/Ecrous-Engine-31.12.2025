@@ -7,12 +7,18 @@
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: rgba(0, 0, 0, 0.7);
-	backdrop-filter: blur(5px);
+	background: rgba(0, 0, 0, 0.6); /* Чуть светлее для красоты блюра */
+	backdrop-filter: blur(8px); /* Сильный блюр фона */
 	z-index: 1000;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+    opacity: 0;
+    animation: fadeInOverlay 0.3s forwards;
+}
+
+@keyframes fadeInOverlay {
+    to { opacity: 1; }
 }
 
 .game-window {
@@ -22,32 +28,44 @@
 	border: 1px solid var(--border);
 	display: flex;
 	flex-direction: column;
-	border-radius: 12px;
+	border-radius: 16px; /* Большой радиус */
 	overflow: hidden;
-	box-shadow: var(--shadow-soft);
+	box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+    transform: scale(0.95);
+    animation: popInGame 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes popInGame {
+    to { transform: scale(1); }
 }
 
 .game-header {
-	height: 40px;
-	background: var(--bg-elevated);
+	height: 44px;
+	background: #111;
 	display: flex;
 	justify-content: space-between;
-	padding: 0 15px;
+	padding: 0 20px;
 	align-items: center;
-	border-bottom: 1px solid var(--border);
+	border-bottom: 1px solid #333;
 }
 
 .close-game-btn {
 	background: none;
 	border: none;
 	color: var(--text-soft);
-	font-size: 20px;
+	font-size: 22px;
 	cursor: pointer;
 	transition: 0.2s;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
 }
 .close-game-btn:hover {
-	color: var(--danger);
-	transform: rotate(90deg);
+	color: #ff4d4d;
+	background: rgba(255, 77, 77, 0.1);
 }
 
 #game-stage {
@@ -55,35 +73,48 @@
 	background: #050505;
 	position: relative;
 	overflow: hidden;
+    box-shadow: inset 0 0 50px rgba(0,0,0,0.8); /* Внутренняя тень */
 }
 
 #game-console {
-	height: 120px;
-	background: var(--code-bg);
-	color: var(--text-soft);
-	padding: 10px;
-	font-family: 'Fira Code', monospace;
+	height: 140px;
+	background: #0a0a0a; /* Очень темный фон */
+	color: #ccc;
+	padding: 12px 16px;
+	font-family: 'Fira Code', 'Consolas', monospace;
 	font-size: 12px;
+    line-height: 1.5;
 	overflow-y: auto;
-	border-top: 1px solid var(--border);
+	border-top: 1px solid #333;
 }
-.console-log { color: var(--text); }
-.console-warn { color: var(--warning); }
-.console-error { color: var(--danger); }
+/* Полоса прокрутки для консоли */
+#game-console::-webkit-scrollbar {
+    width: 8px;
+}
+#game-console::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 4px;
+}
+
+.console-log { color: #a3ffac; /* Soft Green */ }
+.console-warn { color: #ffe066; /* Soft Yellow */ }
+.console-error { color: #ff6b6b; /* Soft Red */ }
 
 /* Джойстик */
 .joystick-base {
 	position: absolute;
-	bottom: 30px;
-	left: 30px;
+	bottom: 40px;
+	left: 40px;
 	width: 120px;
 	height: 120px;
 	background: rgba(255, 255, 255, 0.05);
-	border: 2px solid rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 20px rgba(0,0,0,0.3), inset 0 0 20px rgba(0,0,0,0.3);
 	border-radius: 50%;
 	touch-action: none;
 	display: none;
 	z-index: 100;
+    backdrop-filter: blur(4px);
 }
 
 .joystick-stick {
@@ -92,9 +123,9 @@
 	left: 50%;
 	width: 50px;
 	height: 50px;
-	background: var(--accent);
+	background: radial-gradient(circle at 30% 30%, var(--accent-light, #4facfe), var(--accent));
 	border-radius: 50%;
 	transform: translate(-50%, -50%);
-	box-shadow: 0 0 15px var(--accent-soft);
+	box-shadow: 0 4px 15px rgba(0,0,0,0.4), inset 0 -4px 10px rgba(0,0,0,0.3);
 	pointer-events: none;
 }

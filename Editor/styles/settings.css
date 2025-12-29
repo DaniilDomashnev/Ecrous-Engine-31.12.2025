@@ -2,25 +2,31 @@
 
 /* Используем стили движка, добавляем только специфику */
 .settings-modal {
-    width: 450px !important; /* Чуть шире стандартного */
+    width: 450px !important;
     max-width: 90vw !important;
+    border-radius: 16px !important; /* Более мягкие углы */
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3) !important; /* Мягкая глубокая тень */
+    border: 1px solid var(--border);
+    /* Если у модалки есть фон, делаем его чуть прозрачным для эффекта стекла (опционально) */
+    backdrop-filter: blur(10px); 
 }
 
 .setting-group {
-    margin-bottom: 16px;
+    margin-bottom: 20px; /* Чуть больше воздуха */
 }
 
 .setting-group label {
     display: block;
     font-size: 11px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-soft);
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.8px; /* Чуть шире для читаемости */
+    opacity: 0.8;
 }
 
-/* Используем ваши стандартные инпуты, но добавим обертку */
+/* Обертка селекта */
 .select-wrapper {
     position: relative;
     width: 100%;
@@ -28,34 +34,53 @@
 
 .select-wrapper i {
     position: absolute;
-    right: 12px;
+    right: 14px;
     top: 50%;
     transform: translateY(-50%);
     pointer-events: none;
     color: var(--text-soft);
+    font-size: 12px;
 }
 
-/* Скрываем стандартную стрелку select */
-.setting-group select {
+/* Стилизация полей ввода и селектов */
+.setting-group select,
+.setting-group input {
     appearance: none;
     -webkit-appearance: none;
-    cursor: pointer;
-    background-color: var(--bg); /* Чтобы отличалось от фона модалки */
+    width: 100%;
+    padding: 10px 14px;
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    box-sizing: border-box; /* Важно, чтобы паддинги не ломали ширину */
 }
 
-.setting-group input {
-    background-color: var(--bg);
+/* Эффект фокуса - подсветка акцентным цветом */
+.setting-group select:focus,
+.setting-group input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft); /* Мягкое свечение */
+}
+
+.setting-group select:hover,
+.setting-group input:hover {
+    border-color: var(--text-soft);
 }
 
 /* Адаптив для мобильных устройств */
 @media (max-width: 600px) {
     .settings-modal {
         width: 95vw !important;
-        padding: 20px 15px !important;
+        padding: 24px 18px !important;
     }
     
     .modal-message {
         max-height: 60vh;
-        overflow-y: auto; /* Скролл если клавиатура перекрывает */
+        overflow-y: auto;
     }
 }
