@@ -32,8 +32,8 @@ let activeSceneId = 'scene_1'
 let activeObjectId = 'obj_1'
 let editorMode = 'stack'
 let connections = []
-window.currentSessionId = 0;   // Глобальный счетчик сессий
-window.loadedSounds = {};      // Глобальное хранилище звуков
+window.currentSessionId = 0 // Глобальный счетчик сессий
+window.loadedSounds = {} // Глобальное хранилище звуков
 let isWiring = false
 let wireStartBlock = null
 let tempWireNode = null
@@ -48,7 +48,18 @@ let customTemplates = {}
 // --- ФИЗИКА И КАМЕРА ---
 let physicsObjects = {} // Хранилище: { id: { vx, vy, mass, bounce, collideWorld } }
 let worldGravity = { x: 0, y: 0 }
-let cameraState = { x: 0, y: 0, zoom: 1, target: null, lerp: 0.1, shakeInfo: { power: 0, time: 0 } }
+let cameraState = {
+	x: 0,
+	y: 0,
+	zoom: 1,
+	target: null,
+	lerp: 0.1,
+	shakeInfo: { power: 0, time: 0 },
+}
+window.entityComponents = {}; // Хранилище: { "obj_id": { "health": 100, ... } }
+window.gameInventory = [];    // Массив строк
+window.gameQuests = {};       // Хранилище: { "quest_id": "status" }
+window.globalEvents = {};     // Для подписок (в будущем)
 
 // Runtime
 let isRunning = false
@@ -69,7 +80,7 @@ let sceneListEl = null
 let objectListEl = null
 
 // Глобальный флаг для остановки циклов
-let breakLoopFlag = false;
+let breakLoopFlag = false
 
 async function executeChain(currentBlock, allBlocks, objConnections) {
 	const mySession = window.currentSessionId
@@ -91,7 +102,7 @@ async function executeChain(currentBlock, allBlocks, objConnections) {
 	let nextBlock = null
 	let skipToBlock = null
 
-	// --- 1. ЛОГИКА IF / ELSE (САМОЕ ВАЖНОЕ) ---
+	// --- 1. ЛОГИКА IF / ELSE (РАСШИРЕННАЯ) ---
 	if (currentBlock.type === 'flow_if') {
 		const valA = resolveValue(currentBlock.values[0])
 		const op = currentBlock.values[1]
@@ -102,25 +113,24 @@ async function executeChain(currentBlock, allBlocks, objConnections) {
 		const nB = parseFloat(valB)
 		const isNum = !isNaN(nA) && !isNaN(nB)
 
+		// Стандартные
 		if (op === '=') condition = valA == valB
-		else if (op === '!=') condition = valA != valB // Новое!
 		else if (op === '>') condition = isNum ? nA > nB : valA > valB
 		else if (op === '<') condition = isNum ? nA < nB : valA < valB
-		else if (op === '>=') condition = isNum ? nA >= nB : valA >= valB // Новое!
-		else if (op === '<=') condition = isNum ? nA <= nB : valA <= valB // Новое!
-		else if (op === 'contains') condition = String(valA).includes(String(valB)) // Новое!
+		// НОВЫЕ ОПЕРАТОРЫ
+		else if (op === '!=') condition = valA != valB
+		else if (op === '>=') condition = isNum ? nA >= nB : valA >= valB
+		else if (op === '<=') condition = isNum ? nA <= nB : valA <= valB
+		else if (op === 'contains') condition = String(valA).includes(String(valB))
 
 		if (condition) {
-			// IF ИСТИНА: Идем внутрь, но нужно запомнить, что если встретим ELSE, его надо скипнуть
-			// (Это делается внутри executeBlockLogic неявно, или просто следующим шагом)
+			// IF ИСТИНА: продолжаем выполнение
 		} else {
 			// IF ЛОЖЬ: Ищем ELSE или END
 			const elseBlock = findElseBlock(currentBlock, allBlocks, objConnections)
 			if (elseBlock) {
-				// Прыгаем к ELSE
 				skipToBlock = elseBlock
 			} else {
-				// Прыгаем к END
 				skipToBlock = findClosingBlock(currentBlock, allBlocks, objConnections)
 			}
 		}
@@ -185,78 +195,78 @@ function findElseBlock(startBlock, allBlocks, connections) {
 
 // Помощник: найти следующий блок
 function getNextBlock(block, allBlocks, connections) {
-    if (editorMode === 'nodes') {
-        const conn = connections.find(c => c.from === block.id);
-        return conn ? allBlocks.find(b => b.id === conn.to) : null;
-    } else {
-        // Stack mode: ищем ближайший снизу
-        let candidates = allBlocks.filter(b => {
-            if (b.id === block.id) return false;
-            const dy = b.y - block.y;
-            return dy > 0 && dy < 150 && Math.abs(b.x - block.x) < 50;
-        });
-        candidates.sort((a, b) => a.y - b.y);
-        return candidates[0];
-    }
+	if (editorMode === 'nodes') {
+		const conn = connections.find(c => c.from === block.id)
+		return conn ? allBlocks.find(b => b.id === conn.to) : null
+	} else {
+		// Stack mode: ищем ближайший снизу
+		let candidates = allBlocks.filter(b => {
+			if (b.id === block.id) return false
+			const dy = b.y - block.y
+			return dy > 0 && dy < 150 && Math.abs(b.x - block.x) < 50
+		})
+		candidates.sort((a, b) => a.y - b.y)
+		return candidates[0]
+	}
 }
 
 // Помощник: найти закрывающий блок (flow_end) с учетом вложенности
 function findClosingBlock(startBlock, allBlocks, connections) {
-    let depth = 1;
-    let curr = getNextBlock(startBlock, allBlocks, connections);
-    
-    // Защита от бесконечного поиска (макс 100 блоков)
-    let steps = 0;
-    while(curr && steps < 500) {
-        if (curr.type === 'flow_if' || curr.type === 'flow_repeat') depth++;
-        if (curr.type === 'flow_end') depth--;
-        
-        if (depth === 0) return curr; // Нашли пару
-        
-        curr = getNextBlock(curr, allBlocks, connections);
-        steps++;
-    }
-    return null;
+	let depth = 1
+	let curr = getNextBlock(startBlock, allBlocks, connections)
+
+	// Защита от бесконечного поиска (макс 100 блоков)
+	let steps = 0
+	while (curr && steps < 500) {
+		if (curr.type === 'flow_if' || curr.type === 'flow_repeat') depth++
+		if (curr.type === 'flow_end') depth--
+
+		if (depth === 0) return curr // Нашли пару
+
+		curr = getNextBlock(curr, allBlocks, connections)
+		steps++
+	}
+	return null
 }
 
 // Помощник: выполнить секцию кода (для циклов)
 async function executeSection(start, end, allBlocks, conns) {
-    let curr = start;
-    while(curr && curr.id !== end.id) {
-        if (!isRunning) return;
-        // Рекурсивно вызываем executeChain для одного шага? Нет, это вызовет ад.
-        // Просто выполняем логику
-        await executeBlockLogic(curr);
-        
-        // Особая обработка вложенных IF внутри цикла (простая версия)
-        if (curr.type === 'flow_if') {
-             const valA = resolveValue(curr.values[0]);
-             const op = curr.values[1];
-             const valB = resolveValue(curr.values[2]);
-             let cond = false;
-             if (op === '=') cond = (valA == valB);
-             if (op === '>') cond = (parseFloat(valA) > parseFloat(valB));
-             if (op === '<') cond = (parseFloat(valA) < parseFloat(valB));
-             
-             if (!cond) {
-                 // Скип внутри цикла
-                 const closer = findClosingBlock(curr, allBlocks, conns);
-                 if (closer) curr = closer; 
-             }
-        }
-        
-        curr = getNextBlock(curr, allBlocks, conns);
-    }
+	let curr = start
+	while (curr && curr.id !== end.id) {
+		if (!isRunning) return
+		// Рекурсивно вызываем executeChain для одного шага? Нет, это вызовет ад.
+		// Просто выполняем логику
+		await executeBlockLogic(curr)
+
+		// Особая обработка вложенных IF внутри цикла (простая версия)
+		if (curr.type === 'flow_if') {
+			const valA = resolveValue(curr.values[0])
+			const op = curr.values[1]
+			const valB = resolveValue(curr.values[2])
+			let cond = false
+			if (op === '=') cond = valA == valB
+			if (op === '>') cond = parseFloat(valA) > parseFloat(valB)
+			if (op === '<') cond = parseFloat(valA) < parseFloat(valB)
+
+			if (!cond) {
+				// Скип внутри цикла
+				const closer = findClosingBlock(curr, allBlocks, conns)
+				if (closer) curr = closer
+			}
+		}
+
+		curr = getNextBlock(curr, allBlocks, conns)
+	}
 }
 
 // Помощник: разрешить переменную или значение
 function resolveValue(val) {
-    // Если это число
-    if (!isNaN(parseFloat(val)) && isFinite(val)) return val;
-    // Если переменная существует
-    if (gameVariables.hasOwnProperty(val)) return gameVariables[val];
-    // Иначе строка
-    return val;
+	// Если это число
+	if (!isNaN(parseFloat(val)) && isFinite(val)) return val
+	// Если переменная существует
+	if (gameVariables.hasOwnProperty(val)) return gameVariables[val]
+	// Иначе строка
+	return val
 }
 
 function executeBlockLogic(block) {
@@ -1359,6 +1369,445 @@ function executeBlockLogic(block) {
 					break
 				}
 
+				// --- ЛОГИКА+ ---
+				case 'logic_obj_exists': {
+					const el = document.getElementById(v[0])
+					gameVariables[v[1]] = el ? 1 : 0
+					break
+				}
+				case 'logic_is_visible': {
+					const el = document.getElementById(v[0])
+					if (!el) {
+						gameVariables[v[1]] = 0
+					} else {
+						// Проверяем display и visibility
+						const style = window.getComputedStyle(el)
+						const visible =
+							style.display !== 'none' &&
+							style.visibility !== 'hidden' &&
+							style.opacity !== '0'
+						gameVariables[v[1]] = visible ? 1 : 0
+					}
+					break
+				}
+				case 'interact_dist': {
+					const a = document.getElementById(v[0])
+					const b = document.getElementById(v[1])
+					if (a && b) {
+						// Центры объектов
+						const r1 = a.getBoundingClientRect()
+						const r2 = b.getBoundingClientRect()
+						const x1 = r1.left + r1.width / 2
+						const y1 = r1.top + r1.height / 2
+						const x2 = r2.left + r2.width / 2
+						const y2 = r2.top + r2.height / 2
+						// Дистанция
+						const dist = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2))
+						// Нормализуем относительно зума
+						gameVariables[v[2]] = dist / (window.zoomLevel || 1)
+					} else {
+						gameVariables[v[2]] = 999999
+					}
+					break
+				}
+				case 'zone_check': {
+					const me = document.getElementById(v[0])
+					const zone = document.getElementById(v[1])
+					let result = 0
+					if (me && zone) {
+						const r1 = me.getBoundingClientRect()
+						const r2 = zone.getBoundingClientRect()
+						// AABB проверка пересечения
+						if (
+							!(
+								r2.left > r1.right ||
+								r2.right < r1.left ||
+								r2.top > r1.bottom ||
+								r2.bottom < r1.top
+							)
+						) {
+							result = 1
+						}
+					}
+					gameVariables[v[2]] = result
+					break
+				}
+
+				// --- STATE / TAGS ---
+				case 'state_set': {
+					const el = document.getElementById(v[0])
+					if (el) el.dataset.state = v[1]
+					break
+				}
+				case 'state_get': {
+					const el = document.getElementById(v[0])
+					gameVariables[v[1]] = el ? el.dataset.state || '' : ''
+					break
+				}
+				case 'tag_add': {
+					const el = document.getElementById(v[0])
+					if (el) el.classList.add(`tag_${v[1]}`)
+					break
+				}
+				case 'tag_check': {
+					const el = document.getElementById(v[0])
+					const has = el && el.classList.contains(`tag_${v[1]}`)
+					gameVariables[v[2]] = has ? 1 : 0
+					break
+				}
+
+				// --- AI (Step) ---
+				case 'ai_move_to': {
+					const me = document.getElementById(v[0])
+					const target = document.getElementById(v[1])
+					const speed = parseFloat(v[2])
+					if (me && target) {
+						// Текущие позиции (без учета transform scale для простоты)
+						const mx = parseFloat(me.style.left || 0)
+						const my = parseFloat(me.style.top || 0)
+						const tx = parseFloat(target.style.left || 0)
+						const ty = parseFloat(target.style.top || 0)
+
+						// Вектор
+						const dx = tx - mx
+						const dy = ty - my
+						const dist = Math.sqrt(dx * dx + dy * dy)
+
+						if (dist > speed) {
+							me.style.left = mx + (dx / dist) * speed + 'px'
+							me.style.top = my + (dy / dist) * speed + 'px'
+						}
+					}
+					break
+				}
+				case 'ai_flee': {
+					const me = document.getElementById(v[0])
+					const target = document.getElementById(v[1])
+					const speed = parseFloat(v[2])
+					if (me && target) {
+						const mx = parseFloat(me.style.left || 0)
+						const my = parseFloat(me.style.top || 0)
+						const tx = parseFloat(target.style.left || 0)
+						const ty = parseFloat(target.style.top || 0)
+
+						// Вектор ОТ цели
+						const dx = mx - tx
+						const dy = my - ty
+						const dist = Math.sqrt(dx * dx + dy * dy)
+
+						if (dist > 0) {
+							me.style.left = mx + (dx / dist) * speed + 'px'
+							me.style.top = my + (dy / dist) * speed + 'px'
+						}
+					}
+					break
+				}
+
+				// --- INPUT AXIS ---
+				case 'input_axis': {
+					const codeMin = v[0]
+					const codeMax = v[1]
+					let val = 0
+					if (activeKeys[codeMin]) val -= 1
+					if (activeKeys[codeMax]) val += 1
+					gameVariables[v[2]] = val
+					break
+				}
+
+				// --- VFX ---
+				case 'fx_screen_color': {
+					const color = v[0]
+					const time = parseFloat(v[1]) * 1000
+
+					let overlay = document.getElementById('fx-overlay-color')
+					if (!overlay) {
+						overlay = document.createElement('div')
+						overlay.id = 'fx-overlay-color'
+						overlay.style.position = 'absolute'
+						overlay.style.top = 0
+						overlay.style.left = 0
+						overlay.style.width = '100%'
+						overlay.style.height = '100%'
+						overlay.style.pointerEvents = 'none'
+						overlay.style.zIndex = '9999'
+						overlay.style.transition = `background ${time / 2}ms`
+						document.getElementById('game-stage').appendChild(overlay)
+					}
+
+					// Вспышка
+					overlay.style.background = color
+					setTimeout(() => {
+						overlay.style.background = 'transparent'
+					}, time)
+					break
+				}
+				case 'fx_shake': {
+					const id = v[0]
+					const power = parseFloat(v[1])
+					const duration = parseFloat(v[2]) * 1000
+					const el = document.getElementById(id)
+
+					if (el) {
+						const start = Date.now()
+						const originTransform = el.style.transform
+
+						const shakeInterval = setInterval(() => {
+							const now = Date.now()
+							if (now - start > duration) {
+								clearInterval(shakeInterval)
+								el.style.transform = originTransform
+								return
+							}
+							const dx = (Math.random() - 0.5) * power
+							const dy = (Math.random() - 0.5) * power
+							el.style.transform = `${originTransform} translate(${dx}px, ${dy}px)`
+						}, 16)
+					}
+					break
+				}
+
+				// --- PREFABS (CLONE) ---
+				case 'obj_spawn_clone': {
+					const original = document.getElementById(v[0])
+					const newName = resolveValue(v[1])
+					const x = parseFloat(resolveValue(v[2]))
+					const y = parseFloat(resolveValue(v[3]))
+
+					if (original) {
+						const clone = original.cloneNode(true)
+						clone.id = newName
+						clone.style.left = x + 'px'
+						clone.style.top = y + 'px'
+						// Снимаем скрытие, если оригинал был префабом (скрытым)
+						clone.style.display = 'block'
+
+						// Удаляем класс "ui-draggable" если он был из редактора
+						clone.classList.remove('ui-draggable', 'ui-draggable-handle')
+
+						document.getElementById('game-world').appendChild(clone)
+
+						// Важно: если у объекта была физика, ее надо добавить вручную через блок "Вкл Физику",
+						// либо копировать запись из physicsObjects.
+						// Для простоты пока просто клонируем DOM.
+					}
+					break
+				}
+
+				// --- КОМПОНЕНТЫ ---
+				case 'comp_add':
+				case 'comp_set': {
+					const id = v[0]
+					const comp = v[1]
+					const val = resolveValue(v[2])
+
+					if (!window.entityComponents[id]) window.entityComponents[id] = {}
+					window.entityComponents[id][comp] = val
+					break
+				}
+				case 'comp_get': {
+					const id = v[0]
+					const comp = v[1]
+					const targetVar = v[2]
+
+					let val = 0
+					if (
+						window.entityComponents[id] &&
+						window.entityComponents[id][comp] !== undefined
+					) {
+						val = window.entityComponents[id][comp]
+					}
+					gameVariables[targetVar] = val
+					break
+				}
+				case 'comp_has': {
+					const id = v[0]
+					const comp = v[1]
+					let has =
+						window.entityComponents[id] &&
+						window.entityComponents[id][comp] !== undefined
+					gameVariables[v[2]] = has ? 1 : 0
+					break
+				}
+
+				// --- СОБЫТИЯ (MESSAGING) ---
+				case 'evt_message_send': {
+					const eventName = resolveValue(v[0])
+					const param = resolveValue(v[1])
+
+					// Сохраняем параметр глобально, чтобы получатель мог его прочитать
+					gameVariables['event_param'] = param
+
+					// ХАК: Ищем во всей сцене блоки "При событии" и запускаем их
+					// Это позволяет не менять архитектуру game.js
+					if (window.globalCurrentSceneData) {
+						const allObjs = window.globalCurrentSceneData.objects
+						allObjs.forEach(obj => {
+							if (!obj.scripts) return
+							const listeners = obj.scripts.filter(
+								b =>
+									b.type === 'evt_message_receive' && b.values[0] === eventName
+							)
+							listeners.forEach(block => {
+								// Запускаем асинхронно
+								executeChain(block, obj.scripts, obj.connections)
+							})
+						})
+					}
+					console.log(`[Event] Sent: ${eventName} (${param})`)
+					break
+				}
+
+				// --- ДИАЛОГИ ---
+				case 'ui_dialog_show': {
+					let dlg = document.getElementById('game-dialog-overlay')
+					if (!dlg) {
+						dlg = document.createElement('div')
+						dlg.id = 'game-dialog-overlay'
+						dlg.style.cssText = `
+                            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+                            width: 80%; background: rgba(0,0,0,0.85); border: 2px solid #fff;
+                            border-radius: 10px; padding: 15px; color: #fff; z-index: 10000;
+                            display: flex; gap: 15px; align-items: center; font-family: monospace;
+                        `
+						document.getElementById('game-stage').appendChild(dlg)
+					}
+
+					const name = resolveValue(v[0])
+					const text = resolveValue(v[1])
+					const avaUrl = resolveValue(v[2]) // Можно добавить картинку
+
+					dlg.innerHTML = `
+                        ${
+													avaUrl
+														? `<img src="${avaUrl}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">`
+														: ''
+												}
+                        <div style="flex:1;">
+                            <div style="color: #ff9800; font-weight: bold; margin-bottom: 5px;">${name}</div>
+                            <div style="font-size: 14px; line-height: 1.4;">${text}</div>
+                        </div>
+                        <div style="font-size: 10px; opacity: 0.7;">Нажми чтобы закрыть</div>
+                    `
+					dlg.style.display = 'flex'
+
+					// Блокируем клик, чтобы диалог не прокликивался мгновенно
+					dlg.onclick = () => {
+						dlg.style.display = 'none'
+					}
+					break
+				}
+				case 'ui_dialog_hide': {
+					const dlg = document.getElementById('game-dialog-overlay')
+					if (dlg) dlg.style.display = 'none'
+					break
+				}
+
+				// --- ИНВЕНТАРЬ ---
+				case 'inv_add': {
+					const item = resolveValue(v[0])
+					if (!window.gameInventory.includes(item)) {
+						window.gameInventory.push(item)
+					}
+					break
+				}
+				case 'inv_has': {
+					const item = resolveValue(v[0])
+					gameVariables[v[1]] = window.gameInventory.includes(item) ? 1 : 0
+					break
+				}
+
+				// --- КВЕСТЫ ---
+				case 'quest_set': {
+					const qId = v[0]
+					const stage = resolveValue(v[1])
+					window.gameQuests[qId] = stage
+					break
+				}
+
+				// --- ГРАФИКА (СВЕТ/ЭФФЕКТЫ) ---
+				case 'gfx_light_ambient': {
+					const val = parseFloat(v[0])
+					let amb = document.getElementById('gfx-ambient')
+					if (!amb) {
+						amb = document.createElement('div')
+						amb.id = 'gfx-ambient'
+						amb.style.cssText =
+							'position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:500; mix-blend-mode: multiply;'
+						document.getElementById('game-stage').appendChild(amb)
+					}
+					// Инвертируем: 1.0 ярко -> прозрачный слой, 0.0 темно -> черный слой
+					const alpha = 1.0 - val
+					amb.style.backgroundColor = `rgba(0,0,0,${alpha})`
+					break
+				}
+				case 'gfx_light_point': {
+					const el = document.getElementById(v[0])
+					if (el) {
+						const color = v[1]
+						const radius = v[2] + 'px'
+						const intensity = v[3]
+						// Используем box-shadow для симуляции света
+						el.style.boxShadow = `0 0 ${radius} ${
+							parseFloat(radius) / 4
+						}px ${color}`
+						el.style.zIndex = '501' // Поверх затенения (нужен хак с изоляцией, но для 2D сойдет)
+						// ХАК: Чтобы свет "пробивал" ambient, нужно использовать сложную структуру слоев.
+						// Для простоты пока делаем просто свечение (glow).
+					}
+					break
+				}
+				case 'gfx_particles': {
+					const x = parseFloat(v[0])
+					const y = parseFloat(v[1])
+					const color = v[2]
+					const count = parseInt(v[3])
+					const stage = document.getElementById('game-stage')
+
+					for (let i = 0; i < count; i++) {
+						const p = document.createElement('div')
+						p.style.cssText = `position:absolute; left:${x}px; top:${y}px; width:4px; height:4px; background:${color}; border-radius:50%; pointer-events:none; z-index:1000;`
+						stage.appendChild(p)
+
+						// Случайный разлет
+						const angle = Math.random() * Math.PI * 2
+						const speed = Math.random() * 50 + 20
+						const tx = Math.cos(angle) * speed
+						const ty = Math.sin(angle) * speed
+
+						// Анимация JS
+						p.animate(
+							[
+								{ transform: 'translate(0,0) scale(1)', opacity: 1 },
+								{
+									transform: `translate(${tx}px, ${ty}px) scale(0)`,
+									opacity: 0,
+								},
+							],
+							{
+								duration: 500 + Math.random() * 500,
+								easing: 'ease-out',
+							}
+						).onfinish = () => p.remove()
+					}
+					break
+				}
+				case 'gfx_filter': {
+					const type = v[0]
+					const val = v[1]
+					const stage = document.getElementById('game-stage')
+					if (type === 'none') {
+						stage.style.filter = 'none'
+					} else {
+						// Формируем строку фильтра
+						let fStr = ''
+						if (type === 'blur') fStr = `blur(${val / 10}px)`
+						else if (type === 'contrast') fStr = `contrast(${val}%)`
+						else fStr = `${type}(${val}%)`
+						stage.style.filter = fStr
+					}
+					break
+				}
+
 				// --- СИСТЕМНЫЕ ---
 				case 'flow_comment':
 				case 'flow_else':
@@ -1397,82 +1846,86 @@ function updateDynamicText() {
 
 // Инициализация кнопки (вызови это в inicialization.js или просто добавь listener здесь, если скрипт грузится последним)
 document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('btnProjectSettings');
-    if(btn) btn.onclick = openProjectSettings;
-    
-    document.getElementById('btn-save-settings').onclick = saveProjectSettings;
-});
+	const btn = document.getElementById('btnProjectSettings')
+	if (btn) btn.onclick = openProjectSettings
+
+	document.getElementById('btn-save-settings').onclick = saveProjectSettings
+})
 
 function openProjectSettings() {
-    const modal = document.getElementById('modal-project-settings');
-    const nameInp = document.getElementById('set-proj-name');
-    const authorInp = document.getElementById('set-proj-author');
-    const verInp = document.getElementById('set-proj-version');
-    const sceneSel = document.getElementById('set-start-scene');
+	const modal = document.getElementById('modal-project-settings')
+	const nameInp = document.getElementById('set-proj-name')
+	const authorInp = document.getElementById('set-proj-author')
+	const verInp = document.getElementById('set-proj-version')
+	const sceneSel = document.getElementById('set-start-scene')
 
-    // Гарантируем структуру данных
-    if (!projectData.settings) projectData.settings = {};
-    
-    // Заполняем поля
-    nameInp.value = projectData.settings.name || projectData.meta.name || 'My Awesome Game';
-    authorInp.value = projectData.settings.author || '';
-    verInp.value = projectData.settings.version || '1.0';
+	// Гарантируем структуру данных
+	if (!projectData.settings) projectData.settings = {}
 
-    // Заполняем список сцен
-    sceneSel.innerHTML = '';
-    projectData.scenes.forEach(scene => {
-        const opt = document.createElement('option');
-        opt.value = scene.id;
-        opt.innerText = scene.name;
-        // Если ID совпадает с сохраненным ИЛИ это первая сцена по умолчанию
-        if (projectData.settings.startSceneId === scene.id) {
-            opt.selected = true;
-        }
-        sceneSel.appendChild(opt);
-    });
+	// Заполняем поля
+	nameInp.value =
+		projectData.settings.name || projectData.meta.name || 'My Awesome Game'
+	authorInp.value = projectData.settings.author || ''
+	verInp.value = projectData.settings.version || '1.0'
 
-    modal.classList.remove('hidden');
-    setTimeout(() => modal.classList.add('active'), 10);
+	// Заполняем список сцен
+	sceneSel.innerHTML = ''
+	projectData.scenes.forEach(scene => {
+		const opt = document.createElement('option')
+		opt.value = scene.id
+		opt.innerText = scene.name
+		// Если ID совпадает с сохраненным ИЛИ это первая сцена по умолчанию
+		if (projectData.settings.startSceneId === scene.id) {
+			opt.selected = true
+		}
+		sceneSel.appendChild(opt)
+	})
+
+	modal.classList.remove('hidden')
+	setTimeout(() => modal.classList.add('active'), 10)
 }
 
 function saveProjectSettings() {
-    const name = document.getElementById('set-proj-name').value;
-    const author = document.getElementById('set-proj-author').value;
-    const version = document.getElementById('set-proj-version').value;
-    const startSceneId = document.getElementById('set-start-scene').value;
+	const name = document.getElementById('set-proj-name').value
+	const author = document.getElementById('set-proj-author').value
+	const version = document.getElementById('set-proj-version').value
+	const startSceneId = document.getElementById('set-start-scene').value
 
-    projectData.settings = {
-        name, author, version, startSceneId
-    };
-    
-    // Обновляем мету
-    projectData.meta.name = name;
-    document.title = `Ecrous Engine | ${name}`;
-    
-    saveProjectToLocal(); // Сохраняем сразу
-    closeProjectSettings();
+	projectData.settings = {
+		name,
+		author,
+		version,
+		startSceneId,
+	}
+
+	// Обновляем мету
+	projectData.meta.name = name
+	document.title = `Ecrous Engine | ${name}`
+
+	saveProjectToLocal() // Сохраняем сразу
+	closeProjectSettings()
 }
 
 function closeProjectSettings() {
-    const modal = document.getElementById('modal-project-settings');
-    modal.classList.remove('active');
-    setTimeout(() => modal.classList.add('hidden'), 200);
+	const modal = document.getElementById('modal-project-settings')
+	modal.classList.remove('active')
+	setTimeout(() => modal.classList.add('hidden'), 200)
 }
 
 // Добавить это где-то в инициализации
 window.addEventListener('mousemove', e => {
-    // Конвертация в координаты игры (800x600)
-    const stage = document.getElementById('game-stage');
-    if(stage) {
-        const rect = stage.getBoundingClientRect();
-        const scaleX = 800 / rect.width;
-        const scaleY = 600 / rect.height;
-        window.mouseX = (e.clientX - rect.left) * scaleX;
-        window.mouseY = (e.clientY - rect.top) * scaleY;
-    }
-});
-window.addEventListener('touchstart', () => window.isTouching = true);
-window.addEventListener('touchend', () => window.isTouching = false);
+	// Конвертация в координаты игры (800x600)
+	const stage = document.getElementById('game-stage')
+	if (stage) {
+		const rect = stage.getBoundingClientRect()
+		const scaleX = 800 / rect.width
+		const scaleY = 600 / rect.height
+		window.mouseX = (e.clientX - rect.left) * scaleX
+		window.mouseY = (e.clientY - rect.top) * scaleY
+	}
+})
+window.addEventListener('touchstart', () => (window.isTouching = true))
+window.addEventListener('touchend', () => (window.isTouching = false))
 
 function resolveValue(val) {
 	if (typeof val !== 'string') return val
@@ -1492,19 +1945,19 @@ function resolveValue(val) {
 
 // Поиск данных ассета по его ID или URL
 function getAssetUrl(input) {
-    if (!input) return '';
-    
-    // 1. Если это ID из нашего списка ассетов
-    if (projectData.assets) {
-        const asset = projectData.assets.find(a => a.id === input);
-        if (asset) return asset.data; // Возвращаем Base64
-    }
+	if (!input) return ''
 
-    // 2. Если переменная {var} (уже обработано resolveValue, но на всякий случай)
-    if (input.startsWith('{') && input.endsWith('}')) {
-        return resolveValue(input);
-    }
+	// 1. Если это ID из нашего списка ассетов
+	if (projectData.assets) {
+		const asset = projectData.assets.find(a => a.id === input)
+		if (asset) return asset.data // Возвращаем Base64
+	}
 
-    // 3. Иначе считаем, что это прямая ссылка (https://...)
-    return input;
+	// 2. Если переменная {var} (уже обработано resolveValue, но на всякий случай)
+	if (input.startsWith('{') && input.endsWith('}')) {
+		return resolveValue(input)
+	}
+
+	// 3. Иначе считаем, что это прямая ссылка (https://...)
+	return input
 }

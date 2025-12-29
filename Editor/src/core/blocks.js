@@ -1264,4 +1264,399 @@ const BLOCK_DEFINITIONS = [
 			},
 		],
 	},
+
+	// --- 1. УСЛОВИЯ+ (LOGIC) ---
+	{
+		id: 'logic_obj_exists',
+		category: 'Логика',
+		label: 'Объект существует?',
+		desc: 'Проверяет, есть ли объект на сцене. Пишет 1 или 0.',
+		icon: 'ri-question-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Имя объекта', default: 'enemy1' },
+			{ label: 'Результат в', default: 'exists' },
+		],
+	},
+	{
+		id: 'logic_is_visible',
+		category: 'Логика',
+		label: 'Объект видим?',
+		desc: 'Проверяет, не скрыт ли объект (display != none).',
+		icon: 'ri-eye-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Имя объекта', default: 'enemy1' },
+			{ label: 'Результат в', default: 'is_vis' },
+		],
+	},
+
+	// --- 2. СОСТОЯНИЯ (STATE) ---
+	{
+		id: 'state_set',
+		category: 'Переменные',
+		label: 'Задать состояние',
+		desc: 'Устанавливает текстовое состояние объекта (например: idle, run).',
+		icon: 'ri-price-tag-3-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Состояние', default: 'idle' },
+		],
+	},
+	{
+		id: 'state_get',
+		category: 'Переменные',
+		label: 'Взять состояние',
+		desc: 'Записывает текущее состояние объекта в переменную.',
+		icon: 'ri-price-tag-3-fill',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Результат в', default: 'p_state' },
+		],
+	},
+
+	// --- 3. ТЕГИ (TAGS) ---
+	{
+		id: 'tag_add',
+		category: 'Группы',
+		label: 'Добавить тег',
+		desc: 'Вешает метку на объект (например: enemy).',
+		icon: 'ri-bookmark-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Тег', default: 'enemy' },
+		],
+	},
+	{
+		id: 'tag_check',
+		category: 'Группы',
+		label: 'Имеет тег?',
+		desc: 'Проверяет наличие тега (1 или 0).',
+		icon: 'ri-bookmark-fill',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Тег', default: 'enemy' },
+			{ label: 'Результат в', default: 'has_tag' },
+		],
+	},
+
+	// --- 4. ВЗАИМОДЕЙСТВИЕ (INTERACT) ---
+	{
+		id: 'interact_dist',
+		category: 'Логика',
+		label: 'Дистанция до...',
+		desc: 'Считает расстояние между двумя объектами.',
+		icon: 'ri-ruler-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Объект А', default: 'player' },
+			{ label: 'Объект Б', default: 'door' },
+			{ label: 'Результат в', default: 'dist' },
+		],
+	},
+	{
+		id: 'zone_check',
+		category: 'Логика',
+		label: 'Внутри зоны?',
+		desc: 'Проверяет, находится ли объект внутри другого (зоны).',
+		icon: 'ri-shape-2-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Кто', default: 'player' },
+			{ label: 'Зона (Объект)', default: 'zone1' },
+			{ label: 'Результат в', default: 'in_zone' },
+		],
+	},
+
+	// --- 5. AI / ПОВЕДЕНИЕ ---
+	{
+		id: 'ai_move_to',
+		category: 'Движение',
+		label: 'Идти к объекту',
+		desc: 'Делает шаг в сторону цели (для Update).',
+		icon: 'ri-footprint-line',
+		color: '#6200EA',
+		inputs: [
+			{ label: 'Кто', default: 'enemy' },
+			{ label: 'Цель', default: 'player' },
+			{ label: 'Скорость', default: '2' },
+		],
+	},
+	{
+		id: 'ai_flee',
+		category: 'Движение',
+		label: 'Убегать от',
+		desc: 'Делает шаг от цели (для Update).',
+		icon: 'ri-run-line',
+		color: '#6200EA',
+		inputs: [
+			{ label: 'Кто', default: 'civilian' },
+			{ label: 'От кого', default: 'zombie' },
+			{ label: 'Скорость', default: '3' },
+		],
+	},
+
+	// --- 7. ВВОД (ADVANCED) ---
+	{
+		id: 'input_axis',
+		category: 'Ввод',
+		label: 'Ось (Axis)',
+		desc: 'Возвращает -1, 0 или 1 в зависимости от нажатых клавиш (напр. A и D).',
+		icon: 'ri-gamepad-line',
+		color: '#607D8B',
+		inputs: [
+			{ label: 'Кнопка Минус', default: 'KeyA' },
+			{ label: 'Кнопка Плюс', default: 'KeyD' },
+			{ label: 'Результат в', default: 'axis_x' },
+		],
+	},
+
+	// --- 8. ВИЗУАЛ (VFX) ---
+	{
+		id: 'fx_screen_color',
+		category: 'Окно',
+		label: 'FX: Цвет экрана',
+		desc: 'Накладывает цвет поверх игры (вспышка, затемнение).',
+		icon: 'ri-contrast-drop-2-line',
+		color: '#00B0FF',
+		inputs: [
+			{ label: 'Цвет (rgba)', default: 'rgba(255,0,0,0.5)' },
+			{ label: 'Время (сек)', default: '0.5' },
+		],
+	},
+	{
+		id: 'fx_shake',
+		category: 'Окно',
+		label: 'FX: Тряска (CSS)',
+		desc: 'Трясет указанный объект или UI.',
+		icon: 'ri-vibration-line',
+		color: '#00B0FF',
+		inputs: [
+			{ label: 'Объект', default: 'game-stage' },
+			{ label: 'Сила (px)', default: '10' },
+			{ label: 'Время (сек)', default: '0.5' },
+		],
+	},
+
+	// --- 10. ПРЕФАБЫ ---
+	{
+		id: 'obj_spawn_clone',
+		category: 'Объекты',
+		label: 'Спавн клона',
+		desc: 'Создает копию объекта в новых координатах.',
+		icon: 'ri-file-copy-2-fill',
+		color: '#2979FF',
+		inputs: [
+			{ label: 'Кого клонировать', default: 'bullet_prefab' },
+			{ label: 'Новое имя', default: 'bullet_1' },
+			{ label: 'X', default: '100' },
+			{ label: 'Y', default: '100' },
+		],
+	},
+
+	// ==========================================
+	// --- КОМПОНЕНТНАЯ СИСТЕМА (ECS) ---
+	// ==========================================
+	{
+		id: 'comp_add',
+		category: 'Компоненты',
+		label: 'Добавить компонент',
+		desc: 'Вешает на объект данные (HP, Damage и т.д.)',
+		icon: 'ri-puzzle-2-fill',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Имя комп.', default: 'health' },
+			{ label: 'Значение', default: '100' },
+		],
+	},
+	{
+		id: 'comp_get',
+		category: 'Компоненты',
+		label: 'Получить компонент',
+		desc: 'Читает данные компонента.',
+		icon: 'ri-puzzle-2-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Имя комп.', default: 'health' },
+			{ label: 'В переменную', default: 'hp_val' },
+		],
+	},
+	{
+		id: 'comp_set',
+		category: 'Компоненты',
+		label: 'Изменить компонент',
+		desc: 'Обновляет значение компонента.',
+		icon: 'ri-refresh-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Имя комп.', default: 'health' },
+			{ label: 'Новое знач.', default: '90' },
+		],
+	},
+	{
+		id: 'comp_has',
+		category: 'Компоненты',
+		label: 'Имеет компонент?',
+		desc: 'Проверяет наличие (1 или 0).',
+		icon: 'ri-question-mark',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Имя комп.', default: 'AI' },
+			{ label: 'Результат в', default: 'is_bot' },
+		],
+	},
+
+	// ==========================================
+	// --- СОБЫТИЯ (EVENTS) ---
+	// ==========================================
+	{
+		id: 'evt_message_send',
+		category: 'События',
+		label: 'Отправить событие',
+		desc: 'Запускает цепочки "При получении события" во всей игре.',
+		icon: 'ri-signal-tower-fill',
+		color: '#7C4DFF',
+		inputs: [
+			{ label: 'Название события', default: 'OnDeath' },
+			{ label: 'Параметр (опц.)', default: 'player' },
+		],
+	},
+	{
+		id: 'evt_message_receive',
+		category: 'События',
+		label: 'При событии',
+		desc: 'Срабатывает, когда кто-то отправляет это событие.',
+		icon: 'ri-base-station-line',
+		color: '#7C4DFF',
+		inputs: [{ label: 'Название события', default: 'OnDeath' }],
+	},
+
+	// ==========================================
+	// --- ДИАЛОГИ И UI ---
+	// ==========================================
+	{
+		id: 'ui_dialog_show',
+		category: 'Интерфейс',
+		label: 'Показать диалог',
+		desc: 'Показывает окно с текстом и именем говорящего.',
+		icon: 'ri-message-3-fill',
+		color: '#FF9800',
+		inputs: [
+			{ label: 'Имя', default: 'Незнакомец' },
+			{ label: 'Текст', default: 'Привет, путник!' },
+			{ label: 'Аватар (URL)', default: '' },
+		],
+	},
+	{
+		id: 'ui_dialog_hide',
+		category: 'Интерфейс',
+		label: 'Скрыть диалог',
+		desc: 'Убирает диалоговое окно.',
+		icon: 'ri-message-3-line',
+		color: '#FF9800',
+		inputs: [],
+	},
+
+	// ==========================================
+	// --- ИНВЕНТАРЬ И ЗАДАНИЯ ---
+	// ==========================================
+	{
+		id: 'inv_add',
+		category: 'Инвентарь',
+		label: 'Добавить предмет',
+		desc: 'Кладет предмет в инвентарь (строка).',
+		icon: 'ri-archive-drawer-fill',
+		color: '#795548',
+		inputs: [{ label: 'ID предмета', default: 'key_red' }],
+	},
+	{
+		id: 'inv_has',
+		category: 'Инвентарь',
+		label: 'Есть предмет?',
+		desc: 'Проверяет наличие предмета.',
+		icon: 'ri-search-eye-line',
+		color: '#795548',
+		inputs: [
+			{ label: 'ID предмета', default: 'key_red' },
+			{ label: 'Результат в', default: 'has_key' },
+		],
+	},
+	{
+		id: 'quest_set',
+		category: 'Задания',
+		label: 'Этап задания',
+		desc: 'Обновляет статус квеста.',
+		icon: 'ri-flag-2-fill',
+		color: '#FBC02D',
+		inputs: [
+			{ label: 'ID квеста', default: 'main_quest' },
+			{ label: 'Этап (число/текст)', default: '1' },
+		],
+	},
+
+	// ==========================================
+	// --- ВИЗУАЛ (СВЕТ, ЧАСТИЦЫ) ---
+	// ==========================================
+	{
+		id: 'gfx_light_ambient',
+		category: 'Графика',
+		label: 'Общий свет (Ambient)',
+		desc: 'Задает общее затемнение (0.0 - темно, 1.0 - светло).',
+		icon: 'ri-sun-fill',
+		color: '#9C27B0',
+		inputs: [{ label: 'Яркость (0-1)', default: '0.2' }],
+	},
+	{
+		id: 'gfx_light_point',
+		category: 'Графика',
+		label: 'Источник света',
+		desc: 'Создает светящуюся точку на объекте.',
+		icon: 'ri-lightbulb-flash-fill',
+		color: '#9C27B0',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Цвет', default: '#ffaa00' },
+			{ label: 'Радиус (px)', default: '150' },
+			{ label: 'Интенс. (0-1)', default: '0.8' },
+		],
+	},
+	{
+		id: 'gfx_particles',
+		category: 'Графика',
+		label: 'Спавн частиц',
+		desc: 'Простой взрыв частиц в точке.',
+		icon: 'ri-bubble-chart-fill',
+		color: '#9C27B0',
+		inputs: [
+			{ label: 'X', default: '100' },
+			{ label: 'Y', default: '100' },
+			{ label: 'Цвет', default: '#ff0000' },
+			{ label: 'Кол-во', default: '10' },
+		],
+	},
+	{
+		id: 'gfx_filter',
+		category: 'Графика',
+		label: 'Эффект (Glitch/Blur)',
+		desc: 'CSS фильтр на весь экран.',
+		icon: 'ri-blur-off-fill',
+		color: '#9C27B0',
+		inputs: [
+			{
+				label: 'Тип',
+				type: 'select',
+				default: 'none',
+				options: ['none', 'blur', 'grayscale', 'invert', 'sepia', 'contrast'],
+			},
+			{ label: 'Сила (%)', default: '100' },
+		],
+	},
 ]
