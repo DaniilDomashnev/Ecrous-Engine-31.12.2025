@@ -678,24 +678,19 @@ function initToolbox() {
 	if (!toolbox) return
 	toolbox.innerHTML = ''
 
-	// --- МЫ УДАЛИЛИ РАЗДЕЛ "ПЕРЕМЕННЫЕ" ПО ВАШЕЙ ПРОСЬБЕ ---
-	// Теперь блоки просто идут по категориям
-
+	// Группируем блоки: Категория -> [Блоки]
 	const categories = {}
-	BLOCK_DEFINITIONS.forEach(b => {
-		if (!categories[b.category]) categories[b.category] = []
-		categories[b.category].push(b)
-	})
 
 	const order = [
 		'События',
 		'Сцены',
 		'Данные',
-		'Переменные', // Блоки работы с переменными (set/change) останутся тут
+		'Переменные',
 		'Логика',
 		'Ввод',
 		'Группы',
 		'Объекты',
+		'Таблицы',
 		'Движение',
 		'Физика',
 		'Камера',
@@ -705,6 +700,7 @@ function initToolbox() {
 		'Текст',
 		'Видео',
 		'Анимация',
+		'Тайлмап',
 		'Графика',
 		'Звук',
 		'Компоненты',
@@ -714,13 +710,47 @@ function initToolbox() {
 		'Отладка',
 	]
 
+	BLOCK_DEFINITIONS.forEach(b => {
+		if (!categories[b.category]) categories[b.category] = []
+		categories[b.category].push(b)
+	})
+
 	order.forEach(cat => {
 		if (categories[cat]) {
+			// 1. Рисуем Главный Заголовок Категории
 			const title = document.createElement('div')
 			title.className = 'category-title'
 			title.innerText = cat
 			toolbox.appendChild(title)
+
+			// 2. Группируем внутри категории по subcategory
+			let currentSub = null
+
+			// Сортируем блоки, чтобы подкатегории шли вместе
+			categories[cat].sort((a, b) => {
+				const subA = a.subcategory || ''
+				const subB = b.subcategory || ''
+				return subA.localeCompare(subB)
+			})
+
 			categories[cat].forEach(def => {
+				// Если у блока есть подкатегория и она отличается от предыдущей
+				if (def.subcategory && def.subcategory !== currentSub) {
+					currentSub = def.subcategory
+
+					const subHeader = document.createElement('div')
+					subHeader.className = 'toolbox-subheader' // CSS класс ниже
+					subHeader.innerHTML = `<i class="ri-arrow-down-s-line"></i> ${currentSub}`
+					toolbox.appendChild(subHeader)
+				}
+				// Если подкатегории нет, но предыдущая была (сброс)
+				else if (!def.subcategory && currentSub !== null) {
+					currentSub = null
+					const divider = document.createElement('div')
+					divider.className = 'toolbox-divider'
+					toolbox.appendChild(divider)
+				}
+
 				createToolboxItem(def.id, def.icon, def.color, def.label, false)
 			})
 		}

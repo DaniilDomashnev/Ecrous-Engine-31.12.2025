@@ -112,3 +112,45 @@
     cursor: grabbing;
     transform: scale(0.95);
 }
+
+/* --- СТИЛИ ДЛЯ ПОДРАЗДЕЛОВ ТУЛБОКСА --- */
+
+/* Главный заголовок категории (События, Движение...) */
+.category-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--text-soft); /* Серый цвет */
+    margin-top: 15px;
+    margin-bottom: 5px;
+    padding-left: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    opacity: 0.7;
+}
+
+/* Подзаголовок (Физика, Основные, Ввод...) */
+.toolbox-subheader {
+    font-size: 11px;
+    color: var(--accent); /* Цвет акцента (синий/фиолетовый) */
+    background: rgba(255, 255, 255, 0.03);
+    padding: 4px 10px;
+    margin-top: 8px;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.toolbox-subheader i {
+    font-size: 14px;
+}
+
+/* Разделитель, если нужно отделить блоки без подкатегории */
+.toolbox-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 10px;
+    opacity: 0.3;
+}

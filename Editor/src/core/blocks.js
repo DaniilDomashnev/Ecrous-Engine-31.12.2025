@@ -2,67 +2,33 @@
 // --- КОНФИГУРАЦИЯ БЛОКОВ ---
 // ==========================================
 const BLOCK_DEFINITIONS = [
-	// --- СОБЫТИЯ ---
+	// ==========================================
+	// --- СОБЫТИЯ (С РАЗДЕЛЕНИЕМ) ---
+	// ==========================================
+
+	// --- ПОДРАЗДЕЛ: ОСНОВНЫЕ ---
 	{
 		id: 'evt_start',
 		category: 'События',
+		subcategory: 'Основные', // <--- НОВОЕ ПОЛЕ
 		label: 'При старте',
-		desc: 'Выполняет прикрепленные блоки один раз сразу после запуска сцены.',
+		desc: 'Выполняет блоки один раз при запуске.',
 		icon: 'ri-flag-fill',
 		color: '#00E676',
 	},
 	{
-		id: 'evt_object_click',
-		category: 'События',
-		label: 'Нажатие на объект',
-		desc: 'При клике мышкой на указанный объект выполняет прикрепленные блоки.',
-		icon: 'ri-cursor-fill',
-		color: '#00E676',
-		inputs: [{ label: 'Имя объекта', default: 'box1' }],
-	},
-	{
-		id: 'evt_key_press',
-		category: 'События',
-		label: 'Нажатие клавиши',
-		desc: 'При нажатии указанной клавиши выполняет прикрепленные блоки.',
-		icon: 'ri-keyboard-fill',
-		color: '#00E676',
-		inputs: [{ label: 'Клавиша (Code)', default: 'KeyW' }],
-	},
-	// --- СОБЫТИЯ ФИЗИКИ ---
-	{
-		id: 'evt_collision',
-		category: 'События',
-		label: 'При столкновении',
-		desc: 'Срабатывает, когда два объекта касаются друг друга.',
-		icon: 'ri-focus-3-fill',
-		color: '#00E676',
-		inputs: [
-			{ label: 'Объект 1', default: 'player' },
-			{ label: 'Объект 2', default: 'enemy' },
-		],
-	},
-	{
-		id: 'evt_object_click', // Обновляем существующий или оставляем как есть
-		category: 'События',
-		label: 'Клик по объекту',
-		desc: 'Срабатывает при клике/тапе на объект.',
-		icon: 'ri-cursor-fill',
-		color: '#00E676',
-		inputs: [{ label: 'Объект', default: 'btn_start' }],
-	},
-	{
 		id: 'evt_update',
 		category: 'События',
-		label: 'Каждый кадр (Update)',
-		desc: 'Выполняется постоянно (60 раз в секунду). Осторожно!',
+		subcategory: 'Основные',
+		label: 'Каждый кадр',
+		desc: 'Выполняется 60 раз в секунду.',
 		icon: 'ri-refresh-line',
 		color: '#00E676',
-		inputs: [],
 	},
 	{
 		id: 'evt_timer',
 		category: 'События',
+		subcategory: 'Основные',
 		label: 'Таймер (сек)',
 		desc: 'Выполняется каждые N секунд.',
 		icon: 'ri-time-line',
@@ -70,26 +36,89 @@ const BLOCK_DEFINITIONS = [
 		inputs: [{ label: 'Интервал', default: '1' }],
 	},
 
+	// --- ПОДРАЗДЕЛ: ВВОД И КАСАНИЯ ---
 	{
-		id: 'evt_message_send',
+		id: 'evt_object_click',
 		category: 'События',
-		label: 'Отправить событие',
-		desc: 'Запускает цепочки "При получении события" во всей игре.',
-		icon: 'ri-signal-tower-fill',
+		subcategory: 'Ввод / Касания',
+		label: 'Нажатие на объект',
+		desc: 'Клик мышкой или тап пальцем по объекту.',
+		icon: 'ri-cursor-fill',
+		color: '#00E676',
+		inputs: [{ label: 'Объект', default: 'btn_start' }],
+	},
+	{
+		id: 'evt_screen_touch',
+		category: 'События', // <--- НОВЫЙ БЛОК
+		subcategory: 'Ввод / Касания',
+		label: 'Касание экрана',
+		desc: 'Срабатывает при нажатии в любом месте экрана.',
+		icon: 'ri-fingerprint-line',
+		color: '#00E676',
+		inputs: [],
+	},
+	{
+		id: 'evt_key_press',
+		category: 'События',
+		subcategory: 'Ввод / Касания',
+		label: 'Нажатие клавиши',
+		desc: 'При нажатии кнопки на клавиатуре.',
+		icon: 'ri-keyboard-fill',
+		color: '#00E676',
+		inputs: [{ label: 'Клавиша (Code)', default: 'Space' }],
+	},
+
+	// --- ПОДРАЗДЕЛ: ФИЗИКА ---
+	{
+		id: 'evt_collision',
+		category: 'События',
+		subcategory: 'Физика',
+		label: 'Столкновение (Начало)',
+		desc: 'Когда объекты коснулись друг друга.',
+		icon: 'ri-collapse-diagonal-line',
 		color: '#00E676',
 		inputs: [
-			{ label: 'Название события', default: 'OnDeath' },
-			{ label: 'Параметр (опц.)', default: 'player' },
+			{ label: 'Объект 1', default: 'player' },
+			{ label: 'Объект 2', default: 'enemy' },
 		],
 	},
 	{
-		id: 'evt_message_receive',
-		category: 'События',
+		id: 'evt_collision_end',
+		category: 'События', // <--- НОВЫЙ БЛОК (выход из коллизии полезен)
+		subcategory: 'Физика',
+		label: 'Столкновение (Конец)',
+		desc: 'Когда объекты перестали касаться.',
+		icon: 'ri-expand-diagonal-line',
+		color: '#00E676',
+		inputs: [
+			{ label: 'Объект 1', default: 'player' },
+			{ label: 'Объект 2', default: 'enemy' },
+		],
+	},
+
+	// --- ПОДРАЗДЕЛ: ПОЛЬЗОВАТЕЛЬСКИЕ ---
+	{
+		id: 'evt_custom_trigger',
+		category: 'События', // <--- НОВЫЙ БЛОК: ВЫЗВАТЬ
+		subcategory: 'Кастомные',
+		label: 'Вызвать событие',
+		desc: 'Запускает блоки "При событии" с этим именем.',
+		icon: 'ri-signal-tower-fill',
+		color: '#00E676',
+		inputs: [
+			{ label: 'Имя события', default: 'OnWin' },
+			{ label: 'Данные (опц.)', default: '' },
+		],
+	},
+	{
+		id: 'evt_custom_receive',
+		category: 'События', // <--- НОВЫЙ БЛОК: ПРИНЯТЬ
+		subcategory: 'Кастомные',
 		label: 'При событии',
-		desc: 'Срабатывает, когда кто-то отправляет это событие.',
+		desc: 'Срабатывает, когда вызвано событие.',
 		icon: 'ri-base-station-line',
 		color: '#00E676',
-		inputs: [{ label: 'Название события', default: 'OnDeath' }],
+		inputs: [{ label: 'Имя события', default: 'OnWin' }],
 	},
 
 	// --- ДВИЖЕНИЕ ---
@@ -554,29 +583,34 @@ const BLOCK_DEFINITIONS = [
 		id: 'txt_create',
 		category: 'Текст',
 		label: 'Создать Текст',
-		desc: 'Создает текстовый элемент с заданными параметрами: имя, позиция, содержимое, размер и цвет.',
+		desc: 'Создает текст с настройкой выравнивания.',
 		icon: 'ri-text',
 		color: '#FFD600',
 		inputs: [
 			{ label: 'Имя', default: 'txt1' },
 			{ label: 'X', default: '50' },
 			{ label: 'Y', default: '50' },
-			{ label: 'Текст', default: 'Привет!' },
+			{ label: 'Текст', default: 'Hello World' },
 			{ label: 'Размер', default: '24' },
 			{ label: 'Цвет', default: '#ffffff' },
+			{
+				label: 'Выравнивание', // <--- НОВЫЙ INPUT
+				type: 'select',
+				default: 'left',
+				options: ['left', 'center', 'right'],
+			},
 		],
 	},
 	{
 		id: 'txt_modify',
 		category: 'Текст',
 		label: 'Изменить текст',
-		desc: 'Изменяет содержимое указанного текстового элемента на новый текст.',
+		desc: 'Меняет содержимое.',
 		icon: 'ri-edit-2-line',
 		color: '#FFD600',
 		inputs: [
-			{ label: 'Элемент', default: 'textScore' },
-			{ label: 'Операция', default: 'add' },
-			{ label: 'Значение', default: '1' },
+			{ label: 'Элемент', default: 'txt1' },
+			{ label: 'Текст', default: 'Новый текст' },
 		],
 	},
 	{
@@ -638,6 +672,7 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'var_set',
 		category: 'Переменные',
+		subcategory: 'Основное',
 		label: 'Установить перем.',
 		desc: 'Устанавливает указанную переменную в заданное значение.',
 		icon: 'ri-save-line',
@@ -650,6 +685,7 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'var_change',
 		category: 'Переменные',
+		subcategory: 'Основное',
 		label: 'Изменить перем.',
 		desc: 'Изменяет указанную переменную на заданное значение (прибавляет или вычитает).',
 		icon: 'ri-add-circle-line',
@@ -662,28 +698,18 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'log_print',
 		category: 'Переменные',
+		subcategory: 'Основное',
 		label: 'Вывести в консоль',
 		desc: 'Выводит указанный текст или значение переменной в консоль разработчика.',
 		icon: 'ri-terminal-line',
 		color: '#D50000',
 		inputs: [{ label: 'Текст/Перем.', default: 'Привет' }],
 	},
-	{
-		id: 'var_random',
-		category: 'Переменные',
-		label: 'Случайное число',
-		desc: 'Генерирует число от Мин до Макс.',
-		icon: 'ri-shuffle-line',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Результат в', default: 'rnd' },
-			{ label: 'Мин', default: '1' },
-			{ label: 'Макс', default: '10' },
-		],
-	},
+
 	{
 		id: 'var_math',
 		category: 'Переменные',
+		subcategory: 'Матиматика',
 		label: 'Математика',
 		desc: 'Выполняет математическую операцию.',
 		icon: 'ri-calculator-line',
@@ -732,21 +758,68 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'Число Б (если нужно)', default: '0' }, // v[3]
 		],
 	},
+	{
+		id: 'var_random',
+		category: 'Переменные',
+		subcategory: 'Матиматика',
+		label: 'Случайное число',
+		desc: 'Генерирует число от Мин до Макс.',
+		icon: 'ri-shuffle-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Результат в', default: 'rnd' },
+			{ label: 'Мин', default: '1' },
+			{ label: 'Макс', default: '10' },
+		],
+	},
 
-	// --- ЛОГИКА ---
+	// --- 2. СОСТОЯНИЯ (STATE) ---
+	{
+		id: 'state_set',
+		category: 'Переменные',
+		subcategory: 'Состояние',
+		label: 'Задать состояние',
+		desc: 'Устанавливает текстовое состояние объекта (например: idle, run).',
+		icon: 'ri-price-tag-3-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Состояние', default: 'idle' },
+		],
+	},
+	{
+		id: 'state_get',
+		category: 'Переменные',
+		subcategory: 'Состояние',
+		label: 'Взять состояние',
+		desc: 'Записывает текущее состояние объекта в переменную.',
+		icon: 'ri-price-tag-3-fill',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Результат в', default: 'p_state' },
+		],
+	},
+
+	// ==========================================
+	// --- ЛОГИКА (С ПОДКАТЕГОРИЯМИ) ---
+	// ==========================================
+
+	// --- ПОДРАЗДЕЛ: ПОТОК ---
 	{
 		id: 'evt_wait',
 		category: 'Логика',
+		subcategory: 'Поток',
 		label: 'Ждать (сек)',
 		desc: 'Приостанавливает выполнение прикрепленных блоков на указанное количество секунд.',
 		icon: 'ri-timer-line',
 		color: '#FF6D00',
 		inputs: [{ label: 'Секунды', default: '1' }],
 	},
-	// --- УПРАВЛЕНИЕ ПОТОКОМ (FLOW) ---
 	{
 		id: 'flow_if',
 		category: 'Логика',
+		subcategory: 'Поток',
 		label: 'Если (IF)',
 		desc: 'Если условие верно, выполняет блоки внутри. Иначе пропускает их до "Конец блока".',
 		icon: 'ri-question-mark',
@@ -760,6 +833,7 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'flow_repeat',
 		category: 'Логика',
+		subcategory: 'Поток',
 		label: 'Повторить N раз',
 		desc: 'Повторяет блоки внутри указанное число раз.',
 		icon: 'ri-loop-right-line',
@@ -767,18 +841,9 @@ const BLOCK_DEFINITIONS = [
 		inputs: [{ label: 'Количество', default: '5' }],
 	},
 	{
-		id: 'flow_end',
-		category: 'Логика',
-		label: 'Конец блока (End)',
-		desc: 'Закрывает If или Цикл.',
-		icon: 'ri-arrow-up-double-line',
-		color: '#FF6D00',
-		inputs: [],
-	},
-
-	{
 		id: 'flow_else',
 		category: 'Логика',
+		subcategory: 'Поток',
 		label: 'Иначе (Else)',
 		desc: 'Выполняется, если предыдущий IF был ложным.',
 		icon: 'ri-arrow-go-forward-line',
@@ -786,18 +851,31 @@ const BLOCK_DEFINITIONS = [
 		inputs: [],
 	},
 	{
+		id: 'flow_end',
+		category: 'Логика',
+		subcategory: 'Поток',
+		label: 'Конец блока (End)',
+		desc: 'Закрывает If или Цикл.',
+		icon: 'ri-arrow-up-double-line',
+		color: '#FF6D00',
+		inputs: [],
+	},
+	{
 		id: 'flow_comment',
 		category: 'Логика',
+		subcategory: 'Поток',
 		label: 'Комментарий',
 		desc: 'Заметка для разработчика (не выполняется).',
 		icon: 'ri-chat-1-line',
 		color: '#FF8F00',
 		inputs: [{ label: 'Текст', default: 'Тут сложная логика...' }],
 	},
-	// --- БОЕВАЯ СИСТЕМА ---
+
+	// --- ПОДРАЗДЕЛ: БОЙ ---
 	{
 		id: 'combat_damage',
-		category: 'Логика', // Или новая категория "Бой"
+		category: 'Логика',
+		subcategory: 'Бой',
 		label: 'Нанести урон',
 		desc: 'Уменьшает переменную HP у объекта (компонент).',
 		icon: 'ri-sword-fill',
@@ -808,9 +886,12 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'Имя комп. HP', default: 'health' },
 		],
 	},
+
+	// --- ПОДРАЗДЕЛ: ПРОВЕРКИ ---
 	{
 		id: 'logic_chance',
 		category: 'Логика',
+		subcategory: 'Проверки',
 		label: 'Вероятность (%)',
 		desc: 'Записывает 1 в переменную, если повезло.',
 		icon: 'ri-percent-line',
@@ -820,11 +901,10 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'Результат в', default: 'success' },
 		],
 	},
-
-	// --- 1. УСЛОВИЯ+ (LOGIC) ---
 	{
 		id: 'logic_obj_exists',
 		category: 'Логика',
+		subcategory: 'Проверки',
 		label: 'Объект существует?',
 		desc: 'Проверяет, есть ли объект на сцене. Пишет 1 или 0.',
 		icon: 'ri-question-line',
@@ -837,6 +917,7 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'logic_is_visible',
 		category: 'Логика',
+		subcategory: 'Проверки',
 		label: 'Объект видим?',
 		desc: 'Проверяет, не скрыт ли объект (display != none).',
 		icon: 'ri-eye-line',
@@ -847,7 +928,9 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 
-	// --- АНИМАЦИЯ ---
+	// ==========================================
+	// --- ТАЙЛМАПЫ И АНИМАЦИИ (UNITY STYLE) ---
+	// ==========================================
 	{
 		id: 'anim_move_to',
 		category: 'Анимация',
@@ -910,6 +993,68 @@ const BLOCK_DEFINITIONS = [
 		icon: 'ri-stop-circle-line',
 		color: '#D500F9',
 		inputs: [{ label: 'Объект', default: 'box1' }],
+	},
+	{
+		id: 'anim_create_sheet',
+		category: 'Анимация',
+		subcategory: 'Спрайты',
+		label: 'Спрайт-лист',
+		desc: 'Нарезает картинку на кадры (Сетка).',
+		icon: 'ri-grid-fill',
+		color: '#D500F9',
+		inputs: [
+			{ label: 'Имя анимации', default: 'run_anim' },
+			{ label: 'URL Листа', default: 'player_sheet.png' },
+			{ label: 'Кадров по X', default: '4' },
+			{ label: 'Кадров по Y', default: '1' },
+			{ label: 'Всего кадров', default: '4' },
+			{ label: 'FPS (Скорость)', default: '10' },
+		],
+	},
+	{
+		id: 'anim_play_clip',
+		category: 'Анимация',
+		subcategory: 'Управление',
+		label: 'Играть анимацию',
+		desc: 'Запускает созданную анимацию на объекте.',
+		icon: 'ri-play-circle-fill',
+		color: '#D500F9',
+		inputs: [
+			{ label: 'На объекте', default: 'player' },
+			{ label: 'Имя анимации', default: 'run_anim' },
+			{ label: 'Зациклить (1/0)', default: '1' },
+		],
+	},
+
+	// --- ТАЙЛМАПЫ ---
+	{
+		id: 'tile_create_map',
+		category: 'Тайлмап',
+		label: 'Создать сетку',
+		desc: 'Создает карту из символов (Массив строк).',
+		icon: 'ri-map-2-fill',
+		color: '#795548',
+		inputs: [
+			{ label: 'Размер клетки (px)', default: '32' },
+			{
+				label: 'Карта (через запятую)',
+				type: 'textarea', // Используем TextArea для удобства
+				default: '1,1,1,1,1\n1,0,0,0,1\n1,0,P,0,1\n1,1,1,1,1',
+			},
+		],
+	},
+	{
+		id: 'tile_define',
+		category: 'Тайлмап',
+		label: 'Назначить тайл',
+		desc: 'Говорит движку, что создавать для символа "1" или "P".',
+		icon: 'ri-image-edit-line',
+		color: '#795548',
+		inputs: [
+			{ label: 'Символ', default: '1' },
+			{ label: 'URL Картинки', default: 'wall.png' },
+			{ label: 'Твердый? (1/0)', default: '1' },
+		],
 	},
 
 	// --- ОТЛАДКА ---
@@ -1461,32 +1606,6 @@ const BLOCK_DEFINITIONS = [
 		inputs: [],
 	},
 
-	// --- 2. СОСТОЯНИЯ (STATE) ---
-	{
-		id: 'state_set',
-		category: 'Переменные',
-		label: 'Задать состояние',
-		desc: 'Устанавливает текстовое состояние объекта (например: idle, run).',
-		icon: 'ri-price-tag-3-line',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Состояние', default: 'idle' },
-		],
-	},
-	{
-		id: 'state_get',
-		category: 'Переменные',
-		label: 'Взять состояние',
-		desc: 'Записывает текущее состояние объекта в переменную.',
-		icon: 'ri-price-tag-3-fill',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Результат в', default: 'p_state' },
-		],
-	},
-
 	// --- 3. ТЕГИ (TAGS) ---
 	{
 		id: 'tag_add',
@@ -1946,5 +2065,80 @@ const BLOCK_DEFINITIONS = [
 		icon: 'ri-delete-back-2-line',
 		color: '#9C27B0',
 		inputs: [],
+	},
+
+	// ==========================================
+	// --- ТАБЛИЦЫ (TABLES / ARRAYS) ---
+	// ==========================================
+	{
+		id: 'table_create',
+		category: 'Таблицы',
+		label: 'Создать таблицу',
+		desc: 'Создает пустой список данных.',
+		icon: 'ri-table-line',
+		color: '#FF5722',
+		inputs: [{ label: 'Имя таблицы', default: 'myList' }],
+	},
+	{
+		id: 'table_add',
+		category: 'Таблицы',
+		label: 'Добавить в конец',
+		desc: 'Добавляет значение в конец таблицы.',
+		icon: 'ri-add-box-line',
+		color: '#FF5722',
+		inputs: [
+			{ label: 'Таблица', default: 'myList' },
+			{ label: 'Значение', default: 'Apple' },
+		],
+	},
+	{
+		id: 'table_get',
+		category: 'Таблицы',
+		label: 'Взять из...',
+		desc: 'Получает значение по номеру (Индекс с 0).',
+		icon: 'ri-bring-forward',
+		color: '#FF5722',
+		inputs: [
+			{ label: 'Таблица', default: 'myList' },
+			{ label: 'Индекс (0..N)', default: '0' },
+			{ label: 'Результат в', default: 'item_val' },
+		],
+	},
+	{
+		id: 'table_set',
+		category: 'Таблицы',
+		label: 'Заменить в...',
+		desc: 'Меняет значение по индексу.',
+		icon: 'ri-edit-box-line',
+		color: '#FF5722',
+		inputs: [
+			{ label: 'Таблица', default: 'myList' },
+			{ label: 'Индекс', default: '0' },
+			{ label: 'Новое знач.', default: 'Banana' },
+		],
+	},
+	{
+		id: 'table_remove',
+		category: 'Таблицы',
+		label: 'Удалить из...',
+		desc: 'Удаляет строку по индексу.',
+		icon: 'ri-delete-row',
+		color: '#FF5722',
+		inputs: [
+			{ label: 'Таблица', default: 'myList' },
+			{ label: 'Индекс', default: '0' },
+		],
+	},
+	{
+		id: 'table_length',
+		category: 'Таблицы',
+		label: 'Длина таблицы',
+		desc: 'Возвращает количество элементов.',
+		icon: 'ri-ruler-2-fill',
+		color: '#FF5722',
+		inputs: [
+			{ label: 'Таблица', default: 'myList' },
+			{ label: 'Результат в', default: 'count' },
+		],
 	},
 ]
