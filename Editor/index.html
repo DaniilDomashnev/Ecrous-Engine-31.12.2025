@@ -32,6 +32,7 @@
     <link rel="stylesheet" href="styles/Core/screenshots.css">
     <link rel="stylesheet" href="styles/Core/scrollbars.css">
     <link rel="stylesheet" href="styles/Core/ui.css">
+    <link rel="stylesheet" href="styles/Core/paint.css">
 
     <!-- Settings -->
     <link rel="stylesheet" href="styles/settings.css">
@@ -182,15 +183,21 @@
             <div class="resizer" id="sidebarResizer"></div>
             <div class="section-title">
                 <span><i class="ri-movie-line"></i> СЦЕНЫ</span>
-                <i class="ri-add-line action-icon" id="btnAddScene" title="Новая сцена"></i>
+                <div style="display:flex; gap:5px;">
+                    <i class="ri-folder-add-line action-icon" onclick="addFolder('scene')" title="Создать папку"></i>
+                    <i class="ri-add-line action-icon" id="btnAddScene" title="Новая сцена"></i>
+                </div>
             </div>
             <div class="list-container" id="sceneList"></div>
-
+            
             <div class="divider"></div>
-
+            
             <div class="section-title">
                 <span><i class="ri-box-3-line"></i> ОБЪЕКТЫ</span>
-                <i class="ri-add-line action-icon" id="btnAddObject" title="Новый объект"></i>
+                <div style="display:flex; gap:5px;">
+                    <i class="ri-folder-add-line action-icon" onclick="addFolder('object')" title="Создать папку"></i>
+                    <i class="ri-add-line action-icon" id="btnAddObject" title="Новый объект"></i>
+                </div>
             </div>
             <div class="list-container" id="objectList"></div>
 
@@ -203,7 +210,8 @@
             <div class="section-title">
                 <span><i class="ri-folder-image-line"></i> АССЕТЫ</span>
                 <div style="display:flex; gap:10px;">
-                    <i class="ri-folder-add-line action-icon" onclick="createAssetFolder()" title="Создать папку"></i>
+                    <i class="ri-brush-line action-icon" onclick="openPaintModal()" title="Нарисовать спрайт (Ecrous Paint)"></i> <i
+                        class="ri-folder-add-line action-icon" onclick="createAssetFolder()" title="Создать папку"></i>
                     <i class="ri-upload-2-line action-icon" onclick="document.getElementById('assetFileInput').click()"
                         title="Загрузить файл"></i>
                 </div>
@@ -688,8 +696,144 @@
         </div>
     </div>
 
+    <div id="modal-paint" class="modal-overlay hidden" style="background: var(--bg);">
+        <div class="paint-full-window">
+    
+            <div class="paint-header">
+                <div class="paint-brand"><i class="ri-brush-fill"></i> Ecrous Paint</div>
+    
+                <button class="icon-btn" onclick="openNewSpriteModal()" title="Новый холст"><i class="ri-file-add-line"></i></button>
+
+                <div class="divider-vertical"></div>
+
+                <div class="paint-header-controls">
+                    <button class="icon-btn" onclick="undoPaint()" title="Отменить (Ctrl+Z)"><i
+                            class="ri-arrow-go-back-line"></i></button>
+                    <div class="divider-vertical"></div>
+                    <label>Сетка: <input type="checkbox" id="chk-grid" checked onchange="toggleGrid()"></label>
+                </div>
+    
+                <div class="paint-actions">
+                    <input type="text" id="paint-filename" class="paint-name-input" placeholder="Sprite Name">
+                    <button class="modal-btn primary" onclick="savePaintSprite()">Сохранить</button>
+                    <button class="icon-btn close-btn" onclick="closePaintModal()"><i class="ri-close-line"></i></button>
+                </div>
+            </div>
+    
+            <div class="paint-main-area">
+    
+                <div class="paint-sidebar-left">
+                    <div class="tool-btn active" id="t-pencil" onclick="setPaintTool('pencil')" title="Карандаш (P)"><i
+                            class="ri-pencil-fill"></i></div>
+                    <div class="tool-btn" id="t-eraser" onclick="setPaintTool('eraser')" title="Ластик (E)"><i
+                            class="ri-eraser-fill"></i></div>
+                    <div class="tool-btn" id="t-fill" onclick="setPaintTool('fill')" title="Заливка (F)"><i
+                            class="ri-paint-fill"></i></div>
+                    <div class="tool-btn" id="t-picker" onclick="setPaintTool('picker')" title="Пипетка (I)"><i
+                            class="ri-eyedropper-fill"></i></div>
+                    <div class="tool-btn" id="t-line" onclick="setPaintTool('line')" title="Линия (L)"><i
+                            class="ri-subtract-line"></i></div>
+                    <div class="tool-btn" id="t-rect" onclick="setPaintTool('rect')" title="Квадрат (R)"><i
+                            class="ri-shape-line"></i></div>
+    
+                    <div class="divider-horizontal"></div>
+                    
+                    <div class="tool-settings" style="display:flex; flex-direction:column; gap:5px; align-items:center;">
+                        <button class="tool-btn active" id="mode-pixel" onclick="setBrushMode('pixel')" title="Пиксельный режим"
+                            style="font-size:12px;">Pix</button>
+                        <button class="tool-btn" id="mode-smooth" onclick="setBrushMode('smooth')" title="Гладкая кисть"
+                            style="font-size:12px;">Smt</button>
+                    </div>
+                    
+                    <div class="divider-horizontal"></div>
+    
+                    <div class="tool-btn" onclick="importImageToLayer()" title="Импорт фото"><i
+                            class="ri-image-add-line"></i></div>
+                    <input type="file" id="paint-file-import" style="display:none" accept="image/*">
+                </div>
+    
+                <div class="paint-viewport" id="paintViewport">
+                    <div class="canvas-stack" id="canvasStack">
+                        <div id="paint-grid-overlay"></div>
+                    </div>
+                </div>
+    
+                <div class="paint-sidebar-right">
+                    <div class="paint-panel-section">
+                        <div class="section-head">Инструмент</div>
+                        <div class="prop-row">
+                            <label>Цвет:</label>
+                            <input type="color" id="paint-color" value="#ffffff">
+                        </div>
+                        <div class="prop-row">
+                            <label>Размер:</label>
+                            <input type="range" id="paint-brush-size" min="1" max="10" value="1"
+                                oninput="updateBrushPreview()">
+                            <span id="brush-size-val">1px</span>
+                        </div>
+                        <div class="prop-row">
+                            <label>Холст:</label>
+                            <select id="paint-canvas-size" onchange="resizePaintCanvas()">
+                                <option value="16">16x16</option>
+                                <option value="32" selected>32x32</option>
+                                <option value="64">64x64</option>
+                                <option value="128">128x128</option>
+                            </select>
+                        </div>
+                    </div>
+    
+                    <div class="paint-panel-section" style="flex:1; display:flex; flex-direction:column;">
+                        <div class="section-head">
+                            <span>Слои</span>
+                            <i class="ri-add-line action-icon" onclick="addLayer()" title="Новый слой"></i>
+                        </div>
+                        <div class="layers-list" id="layersList">
+                        </div>
+                    </div>
+                </div>
+    
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-paint-new" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 320px;">
+            <div class="modal-title">
+                <i class="ri-image-add-line" style="color:var(--accent)"></i> Новый спрайт
+            </div>
+    
+            <div class="modal-message">
+                <p style="margin-bottom:15px">Выберите размер холста:</p>
+    
+                <div class="size-presets">
+                    <button class="preset-btn" onclick="setPresetSize(16, 16)">16x16</button>
+                    <button class="preset-btn active" onclick="setPresetSize(32, 32)">32x32</button>
+                    <button class="preset-btn" onclick="setPresetSize(64, 64)">64x64</button>
+                </div>
+    
+                <div class="size-inputs-row">
+                    <div class="input-group-small">
+                        <label>Ширина</label>
+                        <input type="number" id="new-sprite-w" class="modal-input" value="32" min="1" max="512">
+                    </div>
+                    <div class="input-x">✕</div>
+                    <div class="input-group-small">
+                        <label>Высота</label>
+                        <input type="number" id="new-sprite-h" class="modal-input" value="32" min="1" max="512">
+                    </div>
+                </div>
+            </div>
+    
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeNewSpriteModal()">Отмена</button>
+                <button class="modal-btn primary" onclick="confirmNewSprite()">Создать</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
     <script src="src/main.js"></script>
     <script src="src/game.js"></script>
 
@@ -699,6 +843,7 @@
     <script src="src/core/assets.js"></script>
     <script src="src/core/helps.js"></script>
     <script src="src/core/bar.js"></script>
+    <script src="src/core/paint.js"></script>
     <script src="src/core/mobile.js"></script>
 
     <!-- Editor Scripts -->

@@ -49,7 +49,9 @@ function openProjectSettings() {
     if (!projectData.settings) projectData.settings = {}
 
     // 1. Заполняем стандартные поля
-    if(nameInp) nameInp.value = projectData.settings.name || projectData.meta.name || 'My Game'
+    if (nameInp)
+			nameInp.value =
+				projectData.settings.name || projectData.meta?.name || 'My Game'
     if(authorInp) authorInp.value = projectData.settings.author || ''
     if(verInp) verInp.value = projectData.settings.version || '1.0'
     if(statusSel) statusSel.value = projectData.settings.status || ''

@@ -1168,19 +1168,38 @@ function executeBlockLogic(block) {
 				// --- ФИЗИКА ---
 				case 'phys_enable': {
 					const id = v[0]
-					const mass = parseFloat(v[1])
+					const shape = v[1] // box или circle
+					const isStatic = v[2] === '1' || v[2] === 'true'
+					const restitution = parseFloat(v[3]) || 0
+
 					const el = document.getElementById(id)
-					if (el) {
-						// Инициализируем физику для объекта
-						physicsObjects[id] = {
-							vx: 0,
-							vy: 0,
-							mass: mass, // Если 0 - объект статичен (platform)
-							bounce: 0,
-							collideWorld: false,
-							width: el.offsetWidth,
-							height: el.offsetHeight,
+					if (el && matterEngine) {
+						const x = parseFloat(el.style.left) || 0
+						const y = parseFloat(el.style.top) || 0
+						const w = el.offsetWidth
+						const h = el.offsetHeight
+
+						// Смещаем координаты к центру для Matter.js
+						const centerX = x + w / 2
+						const centerY = y + h / 2
+
+						let body
+						if (shape === 'circle') {
+							body = Matter.Bodies.circle(centerX, centerY, w / 2, {
+								isStatic: isStatic,
+								restitution: restitution,
+								label: id, // Важно для коллизий
+							})
+						} else {
+							body = Matter.Bodies.rectangle(centerX, centerY, w, h, {
+								isStatic: isStatic,
+								restitution: restitution,
+								label: id,
+							})
 						}
+
+						Matter.World.add(matterEngine.world, body)
+						bodyMap.set(id, body) // Сохраняем в map
 					}
 					break
 				}
@@ -1190,10 +1209,15 @@ function executeBlockLogic(block) {
 					break
 				}
 				case 'phys_add_force': {
-					const phys = physicsObjects[v[0]]
-					if (phys && phys.mass > 0) {
-						phys.vx += parseFloat(v[1])
-						phys.vy += parseFloat(v[2])
+					// Теперь используем Matter.Body.applyForce
+					const body = bodyMap.get(v[0])
+					if (body) {
+						const fx = parseFloat(v[1])
+						const fy = parseFloat(v[2])
+						Matter.Body.applyForce(body, body.position, {
+							x: fx * 0.001,
+							y: fy * 0.001,
+						})
 					}
 					break
 				}
@@ -2417,6 +2441,70 @@ function executeBlockLogic(block) {
 							el.style.transform = `${newTranslate} ${currentTransform}`
 						} else {
 							el.style.transform = currentTransform // Возвращаем поворот, если трансляция не нужна
+						}
+					}
+					break
+				}
+				case 'cam_set_parallax': {
+					const target = v[0]
+					const factor = v[1]
+
+					// Пытаемся найти объект
+					const el = document.getElementById(target)
+					if (el) {
+						el.dataset.parallax = factor
+					} else {
+						// Или ищем группу
+						const grp = document.querySelectorAll(`.grp_${target}`)
+						grp.forEach(item => (item.dataset.parallax = factor))
+					}
+					break
+				}
+
+				case 'ai_move_smart': {
+					const me = document.getElementById(v[0])
+					const target = document.getElementById(v[1])
+					const speed = parseFloat(v[2])
+					const mapData = gameVariables[v[3]] // Ожидаем массив [[0,1]...]
+
+					if (me && target && mapData) {
+						// Конвертируем координаты пикселей в координаты клетки
+						const tileSize = 32 // Должно совпадать с размером тайла
+
+						const myGridX = Math.floor(parseFloat(me.style.left) / tileSize)
+						const myGridY = Math.floor(parseFloat(me.style.top) / tileSize)
+						const targetGridX = Math.floor(
+							parseFloat(target.style.left) / tileSize
+						)
+						const targetGridY = Math.floor(
+							parseFloat(target.style.top) / tileSize
+						)
+
+						// Получаем путь (кэшируем, чтобы не считать каждый кадр!)
+						// ХАК: Храним путь прямо в DOM элементе, чтобы помнить его
+						if (
+							!me.currentPath ||
+							me.pathTarget !== `${targetGridX},${targetGridY}`
+						) {
+							me.currentPath = findPath(
+								mapData,
+								myGridX,
+								myGridY,
+								targetGridX,
+								targetGridY
+							)
+							me.pathTarget = `${targetGridX},${targetGridY}`
+							me.pathStep = 0
+						}
+
+						// Двигаемся к следующей точке пути
+						if (me.currentPath && me.currentPath[0]) {
+							const nextNode = me.currentPath[0]
+							const targetX = nextNode.x * tileSize
+							const targetY = nextNode.y * tileSize
+
+							// Простая логика движения к точке (как в ai_move_to)
+							// Когда дошли — me.currentPath.shift(), удаляем точку
 						}
 					}
 					break

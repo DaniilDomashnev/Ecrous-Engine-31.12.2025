@@ -10,6 +10,11 @@ let runtimeSceneId = null
 // --- НОВЫЕ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
 let activeCollisionsPair = new Set() // Чтобы событие срабатывало 1 раз при входе
 window.globalCurrentSceneData = null // Ссылка на данные сцены для поиска скриптов
+let matterEngine = null
+let matterRender = null
+let matterRunner = null
+// Map для связи ID объекта (DOM) -> Body (Matter.js)
+let bodyMap = new Map()
 
 // Переменные для драга
 let isGameWindowDragging = false
@@ -60,10 +65,28 @@ function runProject() {
 	// UI
 	document.getElementById('game-overlay').classList.remove('hidden')
 
-	// --- ИСПРАВЛЕНИЕ: Берем размер из конфига, а не жестко 800x600 ---
+	// --- ИНИЦИАЛИЗАЦИЯ MATTER.JS ---
+	const Engine = Matter.Engine,
+		World = Matter.World,
+		Runner = Matter.Runner
+
+	matterEngine = Engine.create()
+	matterEngine.world.gravity.y = 1 // Дефолтная гравитация
+
+	// Обработка коллизий Matter.js
+	Matter.Events.on(matterEngine, 'collisionStart', event => {
+		event.pairs.forEach(pair => {
+			const idA = pair.bodyA.label
+			const idB = pair.bodyB.label
+			triggerCollisionEvent(idA, idB)
+		})
+	})
+
+	bodyMap.clear()
+
+	// --- НАСТРОЙКА ОКНА ---
 	const gameWindow = document.querySelector('.game-window')
 	if (gameWindow) {
-		// Если конфиг еще не создан, берем дефолт, иначе берем настроенный
 		const w =
 			window.gameConfig && window.gameConfig.width
 				? window.gameConfig.width
@@ -75,7 +98,6 @@ function runProject() {
 		gameWindow.style.width = w + 'px'
 		gameWindow.style.height = h + 'px'
 	}
-	// -----------------------------------------------------------------
 
 	document.querySelector('.game-header span').innerText = 'ИГРОВОЙ ПРОЦЕСС'
 	document.getElementById('game-console').style.display = 'block'
@@ -102,13 +124,16 @@ function runProject() {
 	const audioUnlock = new Audio()
 	audioUnlock.play().catch(e => {})
 
+	// --- ФИНАЛЬНЫЙ ЗАПУСК (Удален дублирующий код отсюда) ---
 	isRunning = true
 	isGamePaused = false
 	showFps = false
 	fpsCounter = 0
 	lastTime = performance.now()
 
+	// Объявляем переменную один раз
 	const startScene = getActiveScene()
+
 	if (startScene) {
 		loadRuntimeScene(startScene)
 	} else {
@@ -250,21 +275,46 @@ function loadRuntimeScene(sceneData) {
 
 function gameLoop() {
 	if (!isRunning) return
-	const now = performance.now()
-	const dt = Math.min((now - lastTime) / 1000, 0.05) // Макс шаг 50мс
 
-	if (now - lastTime >= 1000) {
-		if (showFps && fpsElement) fpsElement.innerText = `FPS: ${fpsCounter}`
-		fpsCounter = 0
-	}
+	const now = performance.now()
+	const dt = Math.min(now - lastTime, 50) // мс
 
 	if (!isGamePaused) {
-		updatePhysics(dt)
-		updateCamera(dt)
+		// 1. Шаг физики Matter.js
+		Matter.Engine.update(matterEngine, dt)
+
+		// 2. Синхронизация: Matter Body -> DOM Element
+		updateDOMFromPhysics()
+
+		// 3. Камера и прочее
+		updateCamera(dt / 1000)
 	}
+
 	lastTime = now
-	fpsCounter++
 	requestAnimationFrame(gameLoop)
+}
+
+function updateDOMFromPhysics() {
+	bodyMap.forEach((body, domId) => {
+		const el = document.getElementById(domId)
+		if (!el) return
+
+		// Matter.js использует центр объекта, DOM - левый верхний угол
+		// Нам нужно учесть половину ширины/высоты, сохраненную в body.render.sprite
+		const w = body.bounds.max.x - body.bounds.min.x
+		const h = body.bounds.max.y - body.bounds.min.y
+
+		// Позиция
+		const x = body.position.x - w / 2
+		const y = body.position.y - h / 2
+
+		// Вращение (Matter.js в радианах, CSS в deg)
+		const angleDeg = body.angle * (180 / Math.PI)
+
+		el.style.left = `${x}px`
+		el.style.top = `${y}px`
+		el.style.transform = `rotate(${angleDeg}deg)`
+	})
 }
 
 // ==========================================
@@ -484,6 +534,59 @@ function updateCamera(dt) {
 	const finalY = -cameraState.y + shakeY
 	world.style.transformOrigin = 'top left'
 	world.style.transform = `scale(${cameraState.zoom}) translate(${finalX}px, ${finalY}px)`
+
+	// --- ЛОГИКА ПАРАЛЛАКСА ---
+	// Находим все объекты с параллаксом
+	const parallaxObjs = document.querySelectorAll('[data-parallax]')
+	parallaxObjs.forEach(el => {
+		const factor = parseFloat(el.dataset.parallax) || 1
+		if (factor === 1) return // Стандартное поведение
+
+		// Считаем смещение относительно камеры
+		// Если factor 0.5, объект должен двигаться в 2 раза медленнее камеры.
+		// Так как камера двигает весь мир на finalX, нам нужно сдвинуть объект ОБРАТНО на часть этого пути.
+
+		const offsetX = -finalX * (1 - factor)
+		const offsetY = -finalY * (1 - factor)
+
+		// Применяем transform, сохраняя возможный поворот из физики
+		// Примечание: Это может конфликтовать с updateDOMFromPhysics, если объект физический.
+		// Физические объекты лучше не делать параллаксом.
+		el.style.transform = `translate(${offsetX}px, ${offsetY}px)`
+	})
+}
+
+// Простейшая реализация A*
+function findPath(grid, startX, startY, endX, endY) {
+    // grid - двумерный массив, где 0 - свободно, 1 - стена
+    // Возвращает массив точек [{x,y}, {x,y}...]
+    
+    // (Тут нужен стандартный алгоритм A*, я дам сокращенный пример)
+    // Можно использовать библиотеку EasyStar.js или pathfinding.js, 
+    // но для Ecrous лучше написать мини-версию, чтобы не тащить зависимости.
+    
+    // ... Реализация BFS для простоты (для начала пойдет) ...
+    let queue = [{x: startX, y: startY, path: []}];
+    let visited = new Set([`${startX},${startY}`]);
+    
+    while(queue.length > 0) {
+        let curr = queue.shift();
+        if (curr.x === endX && curr.y === endY) return curr.path;
+        
+        const dirs = [[0,1], [1,0], [0,-1], [-1,0]];
+        for(let d of dirs) {
+            let nx = curr.x + d[0];
+            let ny = curr.y + d[1];
+            
+            if (ny >= 0 && ny < grid.length && nx >= 0 && nx < grid[0].length) {
+                if (grid[ny][nx] === 0 && !visited.has(`${nx},${ny}`)) {
+                    visited.add(`${nx},${ny}`);
+                    queue.push({x: nx, y: ny, path: [...curr.path, {x: nx, y: ny}]});
+                }
+            }
+        }
+    }
+    return []; // Путь не найден
 }
 
 function stopGame() {
@@ -500,6 +603,13 @@ function stopGame() {
 	loadedSounds = {}
 	if (currentKeyDownHandler)
 		window.removeEventListener('keydown', currentKeyDownHandler)
+	// Очистка Matter.js
+	if (matterEngine) {
+		Matter.World.clear(matterEngine.world)
+		Matter.Engine.clear(matterEngine)
+		matterEngine = null
+	}
+	bodyMap.clear()
 	if (currentClickHandler)
 		document
 			.getElementById('game-stage')

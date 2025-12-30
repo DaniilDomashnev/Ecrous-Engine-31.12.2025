@@ -286,88 +286,476 @@ function getActiveObject() {
 	return scene ? scene.objects.find(o => o.id === activeObjectId) : null
 }
 
+// ==========================================
+// --- УПРАВЛЕНИЕ ПАПКАМИ И САЙДБАРОМ ---
+// ==========================================
+
+// 1. Функция создания папки
+async function addFolder(type) {
+    const name = await showCustomPrompt('Новая папка', 'Введите название папки:', 'New Folder');
+    if (!name) return;
+
+    if (type === 'scene') {
+        // Инициализируем массив папок проекта, если нет
+        if (!projectData.sceneFolders) projectData.sceneFolders = [];
+        
+        if (!projectData.sceneFolders.includes(name)) {
+            projectData.sceneFolders.push(name);
+        } else {
+            alert('Папка с таким именем уже есть!');
+        }
+    } else if (type === 'object') {
+        const currentScene = getActiveScene();
+        if (!currentScene) return;
+
+        // Инициализируем массив папок сцены
+        if (!currentScene.objectFolders) currentScene.objectFolders = [];
+
+        if (!currentScene.objectFolders.includes(name)) {
+            currentScene.objectFolders.push(name);
+        } else {
+            alert('Папка с таким именем уже есть!');
+        }
+    }
+    
+    saveProjectToLocal();
+    renderSidebar();
+}
+
+// 2. Функция удаления папки (Только если пустая или с подтверждением)
+async function deleteFolder(type, folderName) {
+    const confirmed = await showConfirmDialog('Удаление папки', `Удалить папку "${folderName}"? Объекты внутри станут "без папки".`);
+    if (!confirmed) return;
+
+    if (type === 'scene') {
+        // Убираем папку из списка
+        projectData.sceneFolders = projectData.sceneFolders.filter(f => f !== folderName);
+        // Сбрасываем привязку у сцен внутри этой папки
+        projectData.scenes.forEach(s => {
+            if (s.folder === folderName) delete s.folder;
+        });
+    } else {
+        const scene = getActiveScene();
+        if (scene) {
+            scene.objectFolders = scene.objectFolders.filter(f => f !== folderName);
+            // Сбрасываем привязку у объектов
+            scene.objects.forEach(o => {
+                if (o.folder === folderName) delete o.folder;
+            });
+        }
+    }
+    saveProjectToLocal();
+    renderSidebar();
+}
+
+// 3. Контекстное меню для элементов (Добавляем "Переместить в папку")
+// ВАЖНО: Вызывайте эту функцию при клике ПКМ на элемент в рендере
+function showMoveContextMenu(e, id, type) {
+	if (e) e.preventDefault()
+	if (e) e.stopPropagation()
+
+	// 1. Определяем список папок
+	const folders =
+		type === 'scene'
+			? projectData.sceneFolders || []
+			: getActiveScene().objectFolders || []
+
+	// 2. Ищем текущую папку объекта
+	let currentFolder = undefined
+	if (type === 'scene') {
+		const s = projectData.scenes.find(x => x.id === id)
+		if (s) currentFolder = s.folder
+	} else {
+		const o = getActiveScene().objects.find(x => x.id === id)
+		if (o) currentFolder = o.folder
+	}
+
+	// 3. Определяем, что делать при выборе (Callback)
+	const onSelect = selectedFolder => {
+		if (type === 'scene') {
+			const scene = projectData.scenes.find(s => s.id === id)
+			if (scene) scene.folder = selectedFolder
+		} else {
+			const obj = getActiveScene().objects.find(o => o.id === id)
+			if (obj) obj.folder = selectedFolder
+		}
+		saveProjectToLocal()
+		renderSidebar()
+	}
+
+	// 4. Вызываем модальное окно с ПРАВИЛЬНЫМИ аргументами
+	showFolderSelectModal('Переместить в...', folders, currentFolder, onSelect)
+}
+
+function showFolderSelectModal(title, folders, currentFolder, onSelect) {
+	// 1. Создаем фон
+	const overlay = document.createElement('div')
+	overlay.className = 'modal-overlay active'
+	overlay.style.zIndex = '10000' // Поверх всего
+
+	// 2. Создаем окно
+	const win = document.createElement('div')
+	win.className = 'modal-window'
+	win.style.width = '300px'
+
+	// Заголовок
+	const header = document.createElement('div')
+	header.className = 'modal-title'
+	header.innerHTML = `<i class="ri-folder-shared-line"></i> ${title}`
+	win.appendChild(header)
+
+	// Контейнер списка
+	const list = document.createElement('div')
+	list.style.display = 'flex'
+	list.style.flexDirection = 'column'
+	list.style.gap = '8px'
+	list.style.marginTop = '15px'
+	list.style.maxHeight = '300px'
+	list.style.overflowY = 'auto'
+
+	// Функция создания кнопки-варианта
+	const createOption = (name, icon, isSpecial = false) => {
+		const btn = document.createElement('button')
+		btn.className = 'modal-btn'
+		// Если это текущая папка - подсветим или выключим
+		if (name === currentFolder) {
+			btn.style.opacity = '0.5'
+			btn.style.border = '1px solid var(--accent)'
+		} else {
+			btn.className = 'modal-btn secondary'
+		}
+
+		btn.style.justifyContent = 'flex-start'
+		btn.style.textAlign = 'left'
+
+		const label = name === undefined ? 'Без папки (Корень)' : name
+		btn.innerHTML = `<i class="${icon}"></i> ${label}`
+
+		btn.onclick = () => {
+			onSelect(name) // Возвращаем имя папки (или undefined)
+			document.body.removeChild(overlay)
+		}
+		list.appendChild(btn)
+	}
+
+	// 3. Добавляем вариант "В корень" (убрать из папки)
+	createOption(undefined, 'ri-home-4-line', true)
+
+	// 4. Добавляем существующие папки
+	if (folders.length > 0) {
+		const divider = document.createElement('div')
+		divider.innerText = 'Папки:'
+		divider.style.fontSize = '11px'
+		divider.style.opacity = '0.5'
+		divider.style.marginTop = '5px'
+		list.appendChild(divider)
+
+		folders.forEach(fName => {
+			createOption(fName, 'ri-folder-fill')
+		})
+	} else {
+		const empty = document.createElement('div')
+		empty.innerText = 'Нет созданных папок'
+		empty.style.fontSize = '12px'
+		empty.style.opacity = '0.5'
+		empty.style.textAlign = 'center'
+		empty.style.padding = '10px'
+		list.appendChild(empty)
+	}
+
+	win.appendChild(list)
+
+	// Кнопка Отмена
+	const footer = document.createElement('div')
+	footer.className = 'modal-buttons'
+	footer.style.marginTop = '20px'
+	const cancelBtn = document.createElement('button')
+	cancelBtn.className = 'modal-btn danger'
+	cancelBtn.innerText = 'Отмена'
+	cancelBtn.onclick = () => document.body.removeChild(overlay)
+	footer.appendChild(cancelBtn)
+	win.appendChild(footer)
+
+	overlay.appendChild(win)
+	document.body.appendChild(overlay)
+}
+
+// Функция хелпер для назначения событий на контейнер списка
+function attachDropToContainer(container, targetType) {
+    container.ondragover = (e) => {
+        e.preventDefault();
+        // Подсвечиваем только если тащим над самим контейнером, а не над папкой внутри
+        if (e.target === container) {
+            container.classList.add('drag-over');
+        }
+    };
+    container.ondragleave = () => container.classList.remove('drag-over');
+    
+    container.ondrop = (e) => {
+        e.preventDefault();
+        container.classList.remove('drag-over');
+        
+        // Если бросили прямо в контейнер (а не в папку) -> Перемещаем в КОРЕНЬ
+        if (e.target === container || e.target.classList.contains('list-item')) {
+            const draggedId = e.dataTransfer.getData('id');
+            const draggedType = e.dataTransfer.getData('type');
+
+            if (draggedType !== targetType) return;
+
+            if (targetType === 'scene') {
+                const scene = projectData.scenes.find(s => s.id === draggedId);
+                if (scene) delete scene.folder; // Удаляем папку
+            } else {
+                const obj = getActiveScene().objects.find(o => o.id === draggedId);
+                if (obj) delete obj.folder; // Удаляем папку
+            }
+
+            saveProjectToLocal();
+            renderSidebar();
+        }
+    };
+}
+
 function renderSidebar() {
-	sceneListEl.innerHTML = ''
-	objectListEl.innerHTML = ''
+    sceneListEl.innerHTML = '';
+    objectListEl.innerHTML = '';
 
-	// --- РЕНДЕР СЦЕН ---
-	projectData.scenes.forEach(scene => {
-		const el = document.createElement('div')
-		el.className = `list-item ${scene.id === activeSceneId ? 'active' : ''}`
+    // --- ПОДКЛЮЧАЕМ DROP В КОРЕНЬ ---
+    attachDropToContainer(sceneListEl, 'scene');
+    attachDropToContainer(objectListEl, 'object');
+    // --------------------------------
 
-		// Используем Flexbox для размещения иконок справа
-		el.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;">
-                <i class="ri-movie-line"></i> 
-                <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${scene.name}</span>
-            </div>
-            <div class="item-actions" style="display:flex; gap:5px; padding-left:5px;">
-                <i class="ri-edit-line action-icon rename-btn" title="Переименовать"></i>
-                <i class="ri-delete-bin-line action-icon delete-btn" style="color:var(--danger)" title="Удалить"></i>
-            </div>
-        `
+    // ... (Дальше стандартный код рендера, как был раньше) ...
+    
+    // 1. РЕНДЕР СЦЕН
+    const sceneFolders = projectData.sceneFolders || [];
+    const scenesWithoutFolder = [];
+    const scenesByFolder = {};
 
-		// Клик по всей строке - выбор сцены
-		el.onclick = e => switchScene(scene.id)
+    projectData.scenes.forEach(scene => {
+        if (scene.folder && sceneFolders.includes(scene.folder)) {
+            if (!scenesByFolder[scene.folder]) scenesByFolder[scene.folder] = [];
+            scenesByFolder[scene.folder].push(scene);
+        } else {
+            scenesWithoutFolder.push(scene);
+        }
+    });
 
-		// Кнопка переименования
-		el.querySelector('.rename-btn').onclick = e => {
-			e.stopPropagation() // Чтобы не срабатывал выбор сцены
-			renameScene(scene.id)
+    sceneFolders.forEach(folderName => {
+        renderFolderGroup(sceneListEl, folderName, scenesByFolder[folderName] || [], 'scene');
+    });
+
+    scenesWithoutFolder.forEach(scene => {
+        sceneListEl.appendChild(createSceneElement(scene));
+    });
+
+    // 2. РЕНДЕР ОБЪЕКТОВ
+    const currentScene = getActiveScene();
+    if (currentScene) {
+        const objectFolders = currentScene.objectFolders || [];
+        const objectsWithoutFolder = [];
+        const objectsByFolder = {};
+
+        currentScene.objects.forEach(obj => {
+            if (obj.folder && objectFolders.includes(obj.folder)) {
+                if (!objectsByFolder[obj.folder]) objectsByFolder[obj.folder] = [];
+                objectsByFolder[obj.folder].push(obj);
+            } else {
+                objectsWithoutFolder.push(obj);
+            }
+        });
+
+        objectFolders.forEach(folderName => {
+            renderFolderGroup(objectListEl, folderName, objectsByFolder[folderName] || [], 'object');
+        });
+
+        objectsWithoutFolder.forEach(obj => {
+            objectListEl.appendChild(createObjectElement(obj));
+        });
+    }
+
+    updateBreadcrumbs();
+}
+
+// --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ РЕНДЕРА ---
+
+function renderFolderGroup(container, name, items, type) {
+	// 1. Заголовок папки
+	const folderEl = document.createElement('div')
+	folderEl.className = 'sidebar-folder open'
+
+	// Восстановление состояния (открыта/закрыта)
+	const isClosed =
+		localStorage.getItem(`folder_closed_${type}_${name}`) === 'true'
+	if (isClosed) folderEl.classList.remove('open')
+
+	folderEl.innerHTML = `
+        <i class="ri-arrow-right-s-line folder-arrow"></i>
+        <i class="ri-folder-fill folder-icon"></i>
+        <span style="flex:1; overflow:hidden; text-overflow:ellipsis; pointer-events:none;">${name}</span>
+        <i class="ri-delete-bin-line action-icon" style="font-size:12px; opacity:0.5;" title="Удалить папку"></i>
+    `
+
+	// 2. Контейнер контента
+	const contentEl = document.createElement('div')
+	contentEl.className = 'folder-content'
+
+	// --- ЛОГИКА DRAG & DROP (ПРИЕМ ЭЛЕМЕНТОВ) ---
+	folderEl.ondragover = e => {
+		e.preventDefault() // Разрешаем сброс
+		e.stopPropagation()
+		folderEl.classList.add('drag-over')
+	}
+
+	folderEl.ondragleave = e => {
+		e.preventDefault()
+		e.stopPropagation()
+		folderEl.classList.remove('drag-over')
+	}
+
+	folderEl.ondrop = e => {
+		e.preventDefault()
+		e.stopPropagation()
+		folderEl.classList.remove('drag-over')
+
+		const draggedId = e.dataTransfer.getData('id')
+		const draggedType = e.dataTransfer.getData('type')
+
+		// Проверка: Сцены только в папки сцен, Объекты к объектам
+		if (draggedType !== type) return
+
+		// Логика перемещения
+		if (type === 'scene') {
+			const scene = projectData.scenes.find(s => s.id === draggedId)
+			if (scene) scene.folder = name
+		} else {
+			const obj = getActiveScene().objects.find(o => o.id === draggedId)
+			if (obj) obj.folder = name
 		}
 
-		// Кнопка удаления
-		el.querySelector('.delete-btn').onclick = e => {
-			e.stopPropagation()
-			deleteScene(scene.id)
-		}
+		saveProjectToLocal()
+		renderSidebar()
+	}
+	// ---------------------------------------------
 
-		sceneListEl.appendChild(el)
+	// Клик (свернуть/развернуть или удалить)
+	folderEl.onclick = e => {
+		if (e.target.classList.contains('ri-delete-bin-line')) {
+			deleteFolder(type, name)
+			return
+		}
+		folderEl.classList.toggle('open')
+		localStorage.setItem(
+			`folder_closed_${type}_${name}`,
+			!folderEl.classList.contains('open')
+		)
+	}
+
+	// Рендер элементов внутри
+	items.forEach(item => {
+		if (type === 'scene') contentEl.appendChild(createSceneElement(item))
+		else contentEl.appendChild(createObjectElement(item))
 	})
 
-	// --- РЕНДЕР ОБЪЕКТОВ ---
-	const currentScene = getActiveScene()
-	if (currentScene) {
-		currentScene.objects.forEach(obj => {
-			const el = document.createElement('div')
-			el.className = `list-item ${obj.id === activeObjectId ? 'active' : ''}`
+	container.appendChild(folderEl)
+	container.appendChild(contentEl)
+}
 
-			el.innerHTML = `
-                <div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden;">
-                    <i class="ri-cube-line"></i> 
-                    <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${obj.name}</span>
-                </div>
-                <div class="item-actions" style="display:flex; gap:5px; padding-left:5px;">
-                    <i class="ri-edit-line action-icon rename-btn" title="Переименовать"></i>
-                    <i class="ri-delete-bin-line action-icon delete-btn" style="color:var(--danger)" title="Удалить"></i>
-                </div>
-            `
+function createSceneElement(scene) {
+	const el = document.createElement('div')
+	el.className = `list-item ${scene.id === activeSceneId ? 'active' : ''}`
 
-			// Клик по всей строке - выбор объекта
-			el.onclick = () => switchObject(obj.id)
+	// --- DRAGGABLE ---
+	el.draggable = true
+	el.ondragstart = e => {
+		e.dataTransfer.setData('id', scene.id)
+		e.dataTransfer.setData('type', 'scene')
+		e.dataTransfer.effectAllowed = 'move'
+	}
+	// -----------------
 
-			// Кнопка переименования
-			el.querySelector('.rename-btn').onclick = e => {
-				e.stopPropagation()
-				renameObject(obj.id)
-			}
+	el.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden; pointer-events:none;">
+            <i class="ri-movie-line"></i> 
+            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${scene.name}</span>
+        </div>
+        <div class="item-actions" style="display:flex; gap:5px; padding-left:5px;">
+            <i class="ri-folder-shared-line action-icon move-btn" title="В папку"></i>
+            <i class="ri-edit-line action-icon rename-btn"></i>
+            <i class="ri-delete-bin-line action-icon delete-btn" style="color:var(--danger)"></i>
+        </div>
+    `
 
-			// Кнопка удаления
-			el.querySelector('.delete-btn').onclick = e => {
-				e.stopPropagation()
-				deleteObject(obj.id)
-			}
-
-			objectListEl.appendChild(el)
-		})
+	el.onclick = () => switchScene(scene.id)
+	el.querySelector('.rename-btn').onclick = e => {
+		e.stopPropagation()
+		renameScene(scene.id)
+	}
+	el.querySelector('.delete-btn').onclick = e => {
+		e.stopPropagation()
+		deleteScene(scene.id)
+	}
+	el.querySelector('.move-btn').onclick = e => {
+		showMoveContextMenu(e, scene.id, 'scene')
+	}
+	el.oncontextmenu = e => {
+		showMoveContextMenu(e, scene.id, 'scene')
 	}
 
-	// Обновляем "хлебные крошки" внизу панели
-	const objName = getActiveObject() ? getActiveObject().name : '---'
-	const ctx = document.getElementById('current-context')
-	if (ctx) {
-		ctx.innerText = `${currentScene ? currentScene.name : ''} > ${objName}`
+	return el
+}
+
+function createObjectElement(obj) {
+	const el = document.createElement('div')
+	el.className = `list-item ${obj.id === activeObjectId ? 'active' : ''}`
+
+	// --- DRAGGABLE ---
+	el.draggable = true
+	el.ondragstart = e => {
+		e.dataTransfer.setData('id', obj.id)
+		e.dataTransfer.setData('type', 'object')
+		e.dataTransfer.effectAllowed = 'move'
 	}
+	// -----------------
+
+	el.innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; flex:1; overflow:hidden; pointer-events:none;">
+            <i class="ri-cube-line"></i> 
+            <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${obj.name}</span>
+        </div>
+        <div class="item-actions" style="display:flex; gap:5px; padding-left:5px;">
+            <i class="ri-folder-shared-line action-icon move-btn" title="В папку"></i>
+            <i class="ri-edit-line action-icon rename-btn"></i>
+            <i class="ri-delete-bin-line action-icon delete-btn" style="color:var(--danger)"></i>
+        </div>
+    `
+
+	el.onclick = () => switchObject(obj.id)
+	el.querySelector('.rename-btn').onclick = e => {
+		e.stopPropagation()
+		renameObject(obj.id)
+	}
+	el.querySelector('.delete-btn').onclick = e => {
+		e.stopPropagation()
+		deleteObject(obj.id)
+	}
+	el.querySelector('.move-btn').onclick = e => {
+		showMoveContextMenu(e, obj.id, 'object')
+	}
+	el.oncontextmenu = e => {
+		showMoveContextMenu(e, obj.id, 'object')
+	}
+
+	return el
+}
+
+function updateBreadcrumbs() {
+    const objName = getActiveObject() ? getActiveObject().name : '---';
+    const ctx = document.getElementById('current-context');
+    const currentScene = getActiveScene();
+    if (ctx) {
+        ctx.innerText = `${currentScene ? currentScene.name : ''} > ${objName}`;
+    }
 }
 
 // ==========================================

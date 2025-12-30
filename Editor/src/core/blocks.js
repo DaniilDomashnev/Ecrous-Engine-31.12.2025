@@ -198,6 +198,20 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'Скорость', default: '2' },
 		],
 	},
+	{
+		id: 'ai_move_smart',
+		category: 'Движение',
+		label: 'Умное движение (A*)',
+		desc: 'Идет к цели, обходя стены (нужен Тайлмап).',
+		icon: 'ri-map-pin-user-fill',
+		color: '#6200EA',
+		inputs: [
+			{ label: 'Кто', default: 'enemy' },
+			{ label: 'Цель', default: 'player' },
+			{ label: 'Скорость', default: '2' },
+			{ label: 'ID Сетки (var)', default: 'myMap' }, // Переменная, куда сохранили карту
+		],
+	},
 
 	// --- ГРУППЫ И ОРГАНИЗАЦИЯ ---
 	{
@@ -1350,13 +1364,20 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'phys_enable',
 		category: 'Физика',
-		label: 'Вкл. Физику',
-		desc: 'Подключает объект к физическому движку (гравитация, скорость).',
+		label: 'Вкл. Физику (Matter)',
+		desc: 'Создает физическое тело. Тип: box или circle.',
 		icon: 'ri-basketball-line',
 		color: '#00BCD4',
 		inputs: [
 			{ label: 'Объект', default: 'box1' },
-			{ label: 'Масса (0=статичный)', default: '1' },
+			{
+				label: 'Тип (box/circle)',
+				default: 'box',
+				type: 'select',
+				options: ['box', 'circle'],
+			},
+			{ label: 'Статичный? (1/0)', default: '0' },
+			{ label: 'Прыгучесть (0-1)', default: '0.5' },
 		],
 	},
 	{
@@ -1369,6 +1390,18 @@ const BLOCK_DEFINITIONS = [
 		inputs: [
 			{ label: 'Сила X', default: '0' },
 			{ label: 'Сила Y', default: '0.5' },
+		],
+	},
+	{
+		id: 'phys_set_rotation',
+		category: 'Физика',
+		label: 'Вращать (сила)',
+		desc: 'Задает угловую скорость.',
+		icon: 'ri-restart-line',
+		color: '#00BCD4',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Скорость', default: '0.1' },
 		],
 	},
 	{
@@ -1487,6 +1520,18 @@ const BLOCK_DEFINITIONS = [
 		inputs: [
 			{ label: 'Зум (1=Норма)', default: '1.5' },
 			{ label: 'Время (сек)', default: '1' },
+		],
+	},
+	{
+		id: 'cam_set_parallax',
+		category: 'Камера',
+		label: 'Слой Параллакса',
+		desc: 'Задает глубину слоя. 1 = обычно, 0.5 = далеко (медленно), 0 = фон.',
+		icon: 'ri-layers-line',
+		color: '#3F51B5',
+		inputs: [
+			{ label: 'Объект/Группа', default: 'bg_mountains' },
+			{ label: 'Фактор (0-2)', default: '0.5' },
 		],
 	},
 

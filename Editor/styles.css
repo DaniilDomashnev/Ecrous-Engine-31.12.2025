@@ -522,3 +522,79 @@ header {
     word-wrap: break-word; /* Разбивает длинные слова */
     overflow-y: auto;      /* Добавляет скролл, если текста слишком много */
 }
+
+/* === СТИЛИ ПАПОК В САЙДБАРЕ === */
+
+.sidebar-folder {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px; /* Чуть больше места для пальца */
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffffff !important; /* Белый текст */
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.sidebar-folder:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.folder-icon {
+    margin-right: 8px;
+    font-size: 16px;
+    color: #ffffff !important; /* Белая иконка */
+}
+
+.folder-arrow {
+    margin-right: 4px;
+    font-size: 14px;
+    transition: transform 0.2s;
+    opacity: 0.8;
+    color: #ffffff;
+}
+
+.sidebar-folder.open .folder-arrow {
+    transform: rotate(90deg);
+}
+
+.folder-content {
+    display: none;
+    background: rgba(0, 0, 0, 0.15); /* Чуть темнее фон внутри */
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+}
+
+.sidebar-folder.open + .folder-content {
+    display: block;
+}
+
+/* Линии для вложенности */
+.folder-content .list-item {
+    padding-left: 32px !important;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === DRAG & DROP ВИЗУАЛ === */
+
+/* Когда перетаскиваем элемент над папкой */
+.sidebar-folder.drag-over {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px dashed #fff !important;
+}
+
+/* Когда перетаскиваем элемент над пустым местом (в корень) */
+.list-container.drag-over {
+    background: rgba(255, 255, 255, 0.05);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* Курсор для перетаскиваемых элементов */
+.list-item[draggable="true"] {
+    cursor: grab;
+}
+.list-item[draggable="true"]:active {
+    cursor: grabbing;
+}
