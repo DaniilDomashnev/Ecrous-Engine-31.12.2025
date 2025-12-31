@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ecrous Asset Store</title>
+  <link rel="icon" type="image/png" href="../public/vite.jpg" />
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../src/styles/scroll.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+  <header class="glass-panel">
+    <div class="logo">
+      <i class="fa-solid fa-cubes"></i> Магазин Ассетов
+    </div>
+    <nav>
+      <div id="auth-buttons">
+        <button class="btn btn-outline" onclick="openModal('login-modal')">Войти</button>
+        <button class="btn btn-primary" onclick="openModal('register-modal')">Регистрация</button>
+      </div>
+      <div id="user-panel" class="hidden">
+        <span id="user-email">user@email.com</span>
+        <button class="btn btn-accent" onclick="openModal('upload-modal')">
+          <i class="fa-solid fa-cloud-arrow-up"></i> Загрузить
+        </button>
+        <button class="btn btn-outline" id="logout-btn">Выход</button>
+      </div>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <h1>Найди лучшие ассеты</h1>
+    <p>Модели, текстуры, скрипты и звуки для твоих игр</p>
+    <div class="search-bar glass-panel">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" id="search-input" placeholder="Поиск ассетов...">
+    </div>
+  </section>
+
+  <main>
+    <aside class="categories glass-panel">
+      <h3>Категории</h3>
+      <ul>
+        <li class="active" data-cat="all">Все</li>
+        <li data-cat="3d-models">3D Models</li>
+        <li data-cat="textures">Textures</li>
+        <li data-cat="audio">Audio</li>
+        <li data-cat="scripts">Scripts</li>
+        <li data-cat="ui">UI</li>
+      </ul>
+    </aside>
+
+    <section class="assets-grid" id="assets-container">
+      <div class="loader">Загрузка ассетов...</div>
+    </section>
+  </main>
+
+  <div id="login-modal" class="modal">
+    <div class="modal-content glass-panel">
+      <span class="close" onclick="closeModal('login-modal')">&times;</span>
+      <h2>Вход</h2>
+      <form id="login-form">
+        <input type="email" id="login-email" placeholder="Email" required>
+        <input type="password" id="login-pass" placeholder="Пароль" required>
+        <button type="submit" class="btn btn-primary">Войти</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="register-modal" class="modal">
+    <div class="modal-content glass-panel">
+      <span class="close" onclick="closeModal('register-modal')">&times;</span>
+      <h2>Регистрация</h2>
+      <form id="register-form">
+        <input type="email" id="reg-email" placeholder="Email" required>
+        <input type="password" id="reg-pass" placeholder="Пароль (мин 6 символов)" required>
+        <button type="submit" class="btn btn-primary">Создать аккаунт</button>
+      </form>
+    </div>
+  </div>
+
+  <div id="upload-modal" class="modal">
+    <div class="modal-content glass-panel">
+      <span class="close" onclick="closeModal('upload-modal')">&times;</span>
+      <h2>Добавить Ассет</h2>
+      <form id="upload-form">
+        <input type="text" id="asset-name" placeholder="Название ассета" required>
+  
+        <select id="asset-category" required>
+          <option value="3d-models">3D Model</option>
+          <option value="textures">Texture</option>
+          <option value="audio">Audio</option>
+          <option value="scripts">Script</option>
+          <option value="ui">UI</option>
+        </select>
+  
+        <label>Ссылка на картинку (Imgur / Прямая ссылка):</label>
+        <input type="url" id="asset-preview" placeholder="https://..." required>
+  
+        <label>Ссылка на скачивание (Google Drive / Яндекс):</label>
+        <input type="url" id="asset-file" placeholder="https://..." required>
+  
+        <button type="submit" class="btn btn-accent" id="upload-btn">Опубликовать</button>
+        <p id="upload-status" class="status-text"></p>
+      </form>
+    </div>
+  </div>
+
+  <script type="module" src="script.js"></script>
+
+  <script>
+    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
+
+    // Закрытие по клику вне окна
+    window.onclick = function (event) {
+      if (event.target.classList.contains('modal')) {
+        event.target.style.display = "none";
+      }
+    }
+  </script>
+</body>
+
+</html>
