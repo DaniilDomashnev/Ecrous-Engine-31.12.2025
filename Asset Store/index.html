@@ -1,128 +1,191 @@
 <!DOCTYPE html>
 <html lang="ru">
-
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ecrous Asset Store</title>
-  <link rel="icon" type="image/png" href="../public/vite.jpg" />
-  <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="../src/styles/scroll.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="../public/vite.jpg" />
+    <title>Ecrous Asset Store</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
 </head>
-
 <body>
 
-  <header class="glass-panel">
-    <div class="logo">
-      <i class="fa-solid fa-cubes"></i> Магазин Ассетов
-    </div>
-    <nav>
-      <div id="auth-buttons">
-        <button class="btn btn-outline" onclick="openModal('login-modal')">Войти</button>
-        <button class="btn btn-primary" onclick="openModal('register-modal')">Регистрация</button>
-      </div>
-      <div id="user-panel" class="hidden">
-        <span id="user-email">user@email.com</span>
-        <button class="btn btn-accent" onclick="openModal('upload-modal')">
-          <i class="fa-solid fa-cloud-arrow-up"></i> Загрузить
-        </button>
-        <button class="btn btn-outline" id="logout-btn">Выход</button>
-      </div>
+    <nav class="navbar">
+        <a href="../index.html" class="icon-btn" style="text-decoration:none; margin-right: 10px;">
+            <i class="ri-home-4-line"></i>
+        </a>
+
+        <div class="nav-brand">
+            <span>Ecrous Store</span>
+        </div>
+        
+        <div class="search-container">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input type="text" id="search-input" placeholder="Поиск ассетов, скриптов, моделей...">
+        </div>
+
+        <div class="nav-auth">
+            <div id="auth-buttons">
+                <button class="btn btn-text" onclick="openModal('login-modal')">Войти</button>
+                <button class="btn btn-primary" onclick="openModal('register-modal')">Регистрация</button>
+            </div>
+            <div id="user-panel" class="hidden">
+                <div class="user-info">
+                    <i class="fa-solid fa-circle-user"></i>
+                    <span id="user-email">user@mail.com</span>
+                </div>
+                <button class="btn btn-accent" onclick="openModal('upload-modal')">
+                    <i class="fa-solid fa-plus"></i> Опубликовать
+                </button>
+                <button class="btn btn-icon" id="logout-btn" title="Выйти">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
     </nav>
-  </header>
 
-  <section class="hero">
-    <h1>Найди лучшие ассеты</h1>
-    <p>Модели, текстуры, скрипты и звуки для твоих игр</p>
-    <div class="search-bar glass-panel">
-      <i class="fa-solid fa-magnifying-glass"></i>
-      <input type="text" id="search-input" placeholder="Поиск ассетов...">
+    <div class="main-layout">
+        
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>Категории</h3>
+                <ul class="category-list">
+                    <li class="active" data-cat="all"><i class="fa-solid fa-border-all"></i> Все ассеты</li>
+                    <li data-cat="3d-models"><i class="fa-solid fa-cube"></i> 3D Модели</li>
+                    <li data-cat="textures"><i class="fa-solid fa-image"></i> Текстуры</li>
+                    <li data-cat="audio"><i class="fa-solid fa-music"></i> Аудио</li>
+                    <li data-cat="scripts"><i class="fa-solid fa-code"></i> Скрипты</li>
+                    <li data-cat="ui"><i class="fa-solid fa-layer-group"></i> Интерфейс (UI)</li>
+                </ul>
+            </div>
+            
+            <div class="sidebar-promo">
+                <h4>Ecrous Engine</h4>
+                <p>Создавайте игры быстрее с нашими инструментами.</p>
+            </div>
+        </aside>
+
+        <main class="content-area">
+            <div class="hero-banner">
+                <div class="hero-content">
+                    <h1>Лучшие ассеты недели</h1>
+                    <p>Ускорьте разработку с проверенными инструментами</p>
+                </div>
+            </div>
+
+            <div class="filter-bar">
+                <h2>Популярные ассеты</h2>
+                <span class="sort-label">Сортировка: Новые</span>
+            </div>
+
+            <section id="assets-container" class="assets-grid">
+                <div class="loader-container">
+                    <div class="spinner"></div>
+                </div>
+            </section>
+        </main>
     </div>
-  </section>
 
-  <main>
-    <aside class="categories glass-panel">
-      <h3>Категории</h3>
-      <ul>
-        <li class="active" data-cat="all">Все</li>
-        <li data-cat="3d-models">3D Models</li>
-        <li data-cat="textures">Textures</li>
-        <li data-cat="audio">Audio</li>
-        <li data-cat="scripts">Scripts</li>
-        <li data-cat="ui">UI</li>
-      </ul>
-    </aside>
-
-    <section class="assets-grid" id="assets-container">
-      <div class="loader">Загрузка ассетов...</div>
-    </section>
-  </main>
-
-  <div id="login-modal" class="modal">
-    <div class="modal-content glass-panel">
-      <span class="close" onclick="closeModal('login-modal')">&times;</span>
-      <h2>Вход</h2>
-      <form id="login-form">
-        <input type="email" id="login-email" placeholder="Email" required>
-        <input type="password" id="login-pass" placeholder="Пароль" required>
-        <button type="submit" class="btn btn-primary">Войти</button>
-      </form>
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeModal('login-modal')">&times;</span>
+            <h2>С возвращением</h2>
+            <form id="login-form">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="login-email" required>
+                </div>
+                <div class="input-group">
+                    <label>Пароль</label>
+                    <input type="password" id="login-pass" required>
+                </div>
+                <button type="submit" class="btn btn-primary full-width">Войти</button>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <div id="register-modal" class="modal">
-    <div class="modal-content glass-panel">
-      <span class="close" onclick="closeModal('register-modal')">&times;</span>
-      <h2>Регистрация</h2>
-      <form id="register-form">
-        <input type="email" id="reg-email" placeholder="Email" required>
-        <input type="password" id="reg-pass" placeholder="Пароль (мин 6 символов)" required>
-        <button type="submit" class="btn btn-primary">Создать аккаунт</button>
-      </form>
+    <div id="register-modal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeModal('register-modal')">&times;</span>
+            <h2>Создать Ecrous ID</h2>
+            <form id="register-form">
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="reg-email" required>
+                </div>
+                <div class="input-group">
+                    <label>Пароль</label>
+                    <input type="password" id="reg-pass" required>
+                </div>
+                <button type="submit" class="btn btn-primary full-width">Зарегистрироваться</button>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <div id="upload-modal" class="modal">
-    <div class="modal-content glass-panel">
-      <span class="close" onclick="closeModal('upload-modal')">&times;</span>
-      <h2>Добавить Ассет</h2>
-      <form id="upload-form">
-        <input type="text" id="asset-name" placeholder="Название ассета" required>
-  
-        <select id="asset-category" required>
-          <option value="3d-models">3D Model</option>
-          <option value="textures">Texture</option>
-          <option value="audio">Audio</option>
-          <option value="scripts">Script</option>
-          <option value="ui">UI</option>
-        </select>
-  
-        <label>Ссылка на картинку (Imgur / Прямая ссылка):</label>
-        <input type="url" id="asset-preview" placeholder="https://..." required>
-  
-        <label>Ссылка на скачивание (Google Drive / Яндекс):</label>
-        <input type="url" id="asset-file" placeholder="https://..." required>
-  
-        <button type="submit" class="btn btn-accent" id="upload-btn">Опубликовать</button>
-        <p id="upload-status" class="status-text"></p>
-      </form>
+    <div id="upload-modal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-modal" onclick="closeModal('upload-modal')">&times;</span>
+            <h2>Новый ассет</h2>
+            <form id="upload-form">
+                <div class="input-group">
+                    <label>Название</label>
+                    <input type="text" id="asset-name" required>
+                </div>
+                <div class="input-group">
+                    <label>Категория</label>
+                    <select id="asset-category" required>
+                        <option value="3d-models">3D Model</option>
+                        <option value="textures">Texture</option>
+                        <option value="audio">Audio</option>
+                        <option value="scripts">Script</option>
+                        <option value="ui">UI</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Картинка (URL)</label>
+                    <input type="url" id="asset-preview" placeholder="https://imgur.com/..." required>
+                </div>
+                <div class="input-group">
+                    <label>Ссылка на файл (URL)</label>
+                    <input type="url" id="asset-file" placeholder="Google Drive / Яндекс" required>
+                </div>
+                <button type="submit" class="btn btn-accent full-width" id="upload-btn">Опубликовать</button>
+            </form>
+        </div>
     </div>
-  </div>
 
-  <script type="module" src="script.js"></script>
+    <div id="toast-container" class="toast-container"></div>
+    
+    <div id="success-modal" class="modal-overlay">
+      <div class="modal-box success-box">
+        <div class="success-icon">
+          <i class="fa-solid fa-check"></i>
+        </div>
+        <h2>Готово!</h2>
+        <p>Ваш ассет успешно опубликован и доступен в магазине.</p>
+        <button class="btn btn-primary full-width" onclick="closeModal('success-modal')">Отлично</button>
+      </div>
+    </div>
 
-  <script>
-    window.openModal = (id) => document.getElementById(id).style.display = 'flex';
-    window.closeModal = (id) => document.getElementById(id).style.display = 'none';
-
-    // Закрытие по клику вне окна
-    window.onclick = function (event) {
-      if (event.target.classList.contains('modal')) {
-        event.target.style.display = "none";
-      }
-    }
-  </script>
+    <script type="module" src="script.js"></script>
+    <script>
+        // Простая логика открытия модалок для совместимости
+        window.openModal = (id) => {
+            document.getElementById(id).classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        window.closeModal = (id) => {
+            document.getElementById(id).classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        window.onclick = function(e) {
+            if (e.target.classList.contains('modal-overlay')) {
+                e.target.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+    </script>
 </body>
-
 </html>

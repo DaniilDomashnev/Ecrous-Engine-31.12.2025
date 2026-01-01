@@ -322,15 +322,23 @@
                     </div>
                     <div class="card-action"><i class="ri-download-line"></i></div>
                 </button>
-                <button class="export-card" id="exportIOS" style="--delay: 0.4s">
-                    <div class="card-icon ios-icon"><i class="ri-apple-fill"></i></div>
+                <button class="export-card-disable ios-muted" id="exportIOS" style="--delay: 0.4s">
+                    <div class="card-icon ios-icon">
+                        <i class="ri-apple-fill"></i>
+                    </div>
+                
                     <div class="card-info">
                         <div class="card-title">iOS (PWA)</div>
-                        <div class="card-desc">Web-сборка для запуска на iPhone/iPad.</div>
+                        <div class="card-desc">Web-сборка для запуска на iPhone / iPad.</div>
                     </div>
-                    <div class="card-action"><i class="ri-download-line"></i></div>
+                
+                    <div class="card-action">
+                        <i class="ri-download-line"></i>
+                    </div>
+                
+                    <div class="card-badge">PWA</div>
                 </button>
-                <button class="export-card" id="exportEcr" style="--delay: 0.05s">
+                <button class="export-card" id="exportEcr" style="--delay: 0.5s">
                     <div class="card-icon ecr-icon"><i class="ri-file-code-line"></i></div>
                     <div class="card-info">
                         <div class="card-title">Ecrous Project (.ecr)</div>
@@ -701,7 +709,7 @@
         <div class="paint-full-window">
     
             <div class="paint-header">
-                <div class="paint-brand"><i class="ri-brush-fill"></i> Ecrous Paint</div>
+                <div class="paint-brand"><i class="ri-brush-fill"></i> Ecrous Art</div>
     
                 <button class="icon-btn" onclick="openNewSpriteModal()" title="Новый холст"><i class="ri-file-add-line"></i></button>
 

@@ -70,6 +70,26 @@
     animation-delay: var(--delay, 0s);
 }
 
+.export-card-disable {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 16px; /* Мягкие углы */
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+    opacity: 0.4;
+    cursor: not-allowed;
+    /* Анимация появления */
+    animation: slideUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+    animation-delay: var(--delay, 0s);
+}
+
 @keyframes slideUp {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }

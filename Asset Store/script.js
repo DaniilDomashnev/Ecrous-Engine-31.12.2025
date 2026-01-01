@@ -1,5 +1,5 @@
 // ==========================================
-// 1. ИМПОРТЫ FIREBASE (БЕЗ STORAGE)
+// 1. ИМПОРТЫ FIREBASE
 // ==========================================
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'
 import {
@@ -16,6 +16,8 @@ import {
 	getDocs,
 	query,
 	orderBy,
+	deleteDoc,
+	doc,
 } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'
 
 // ==========================================
@@ -32,215 +34,330 @@ const firebaseConfig = {
 	measurementId: 'G-T47F29BTF0',
 }
 
-// Инициализация сервисов (Storage удален)
 const app = initializeApp(firebaseConfig)
 const auth = getAuth(app)
 const db = getFirestore(app)
 
 // ==========================================
-// 3. УПРАВЛЕНИЕ АВТОРИЗАЦИЕЙ
+// 3. UI УТИЛИТЫ (Toasts & Modals)
+// ==========================================
+
+// Функция показа всплывающих уведомлений
+function showToast(message, type = 'success') {
+	const container = document.getElementById('toast-container')
+	if (!container) return // Защита, если контейнера нет в HTML
+
+	const toast = document.createElement('div')
+	toast.className = `toast ${type}`
+
+	const icon = type === 'success' ? 'fa-circle-check' : 'fa-circle-exclamation'
+
+	toast.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <span>${message}</span>
+    `
+
+	container.appendChild(toast)
+
+	// Анимация исчезновения через 3 секунды
+	setTimeout(() => {
+		toast.style.animation = 'fadeOut 0.3s forwards'
+		setTimeout(() => toast.remove(), 300)
+	}, 3000)
+}
+
+// Глобальные функции для управления модалками (чтобы работали из HTML onclick)
+window.openModal = id => {
+	const modal = document.getElementById(id)
+	if (modal) {
+		modal.classList.add('active')
+		document.body.style.overflow = 'hidden' // Блокируем скролл фона
+	}
+}
+
+window.closeModal = id => {
+	const modal = document.getElementById(id)
+	if (modal) {
+		modal.classList.remove('active')
+		document.body.style.overflow = 'auto'
+	}
+}
+
+// Закрытие по клику на затемненный фон
+window.onclick = function (e) {
+	if (e.target.classList.contains('modal-overlay')) {
+		e.target.classList.remove('active')
+		document.body.style.overflow = 'auto'
+	}
+}
+
+// ==========================================
+// 4. АВТОРИЗАЦИЯ
 // ==========================================
 const userPanel = document.getElementById('user-panel')
 const authButtons = document.getElementById('auth-buttons')
 const userEmailSpan = document.getElementById('user-email')
 
+// Слушаем изменения статуса входа
 onAuthStateChanged(auth, user => {
 	if (user) {
+		// Пользователь вошел
 		authButtons.classList.add('hidden')
+		// authButtons.style.display = 'none'; // На всякий случай
+
 		userPanel.classList.remove('hidden')
+		userPanel.style.display = 'flex'
 		userEmailSpan.textContent = user.email
+
+		// Перезагружаем ассеты, чтобы показать кнопки удаления (если это владелец)
+		loadAssets()
 	} else {
+		// Пользователь вышел
 		authButtons.classList.remove('hidden')
+		authButtons.style.display = 'flex'
+
 		userPanel.classList.add('hidden')
+		userPanel.style.display = 'none'
+
+		loadAssets()
 	}
 })
 
 // Регистрация
-document.getElementById('register-form').addEventListener('submit', async e => {
-	e.preventDefault()
-	const email = document.getElementById('reg-email').value
-	const pass = document.getElementById('reg-pass').value
-
-	try {
-		await createUserWithEmailAndPassword(auth, email, pass)
-		window.closeModal('register-modal')
-		alert('Аккаунт создан!')
-	} catch (error) {
-		alert('Ошибка: ' + error.message)
-	}
-})
+const regForm = document.getElementById('register-form')
+if (regForm) {
+	regForm.addEventListener('submit', async e => {
+		e.preventDefault()
+		const email = document.getElementById('reg-email').value
+		const pass = document.getElementById('reg-pass').value
+		try {
+			await createUserWithEmailAndPassword(auth, email, pass)
+			window.closeModal('register-modal')
+			showToast('Аккаунт успешно создан!', 'success')
+		} catch (error) {
+			showToast(error.message, 'error')
+		}
+	})
+}
 
 // Вход
-document.getElementById('login-form').addEventListener('submit', async e => {
-	e.preventDefault()
-	const email = document.getElementById('login-email').value
-	const pass = document.getElementById('login-pass').value
+const loginForm = document.getElementById('login-form')
+if (loginForm) {
+	loginForm.addEventListener('submit', async e => {
+		e.preventDefault()
+		const email = document.getElementById('login-email').value
+		const pass = document.getElementById('login-pass').value
+		try {
+			await signInWithEmailAndPassword(auth, email, pass)
+			window.closeModal('login-modal')
+			showToast('Добро пожаловать!', 'success')
+		} catch (error) {
+			showToast('Ошибка входа: ' + error.message, 'error')
+		}
+	})
+}
 
-	try {
-		await signInWithEmailAndPassword(auth, email, pass)
-		window.closeModal('login-modal')
-	} catch (error) {
-		alert('Ошибка входа: ' + error.message)
-	}
-})
-
-document.getElementById('logout-btn').addEventListener('click', () => {
-	signOut(auth)
-})
+// Выход
+const logoutBtn = document.getElementById('logout-btn')
+if (logoutBtn) {
+	logoutBtn.addEventListener('click', () => {
+		signOut(auth)
+		showToast('Вы вышли из системы', 'success')
+	})
+}
 
 // ==========================================
-// 4. ЗАГРУЗКА АССЕТОВ (ТЕПЕРЬ ЭТО ПРОСТО ССЫЛКИ)
+// 5. ЗАГРУЗКА АССЕТОВ (CREATE)
 // ==========================================
 const uploadForm = document.getElementById('upload-form')
 
-uploadForm.addEventListener('submit', async e => {
-	e.preventDefault()
+if (uploadForm) {
+	uploadForm.addEventListener('submit', async e => {
+		e.preventDefault()
+		if (!auth.currentUser)
+			return showToast('Сначала войдите в систему!', 'error')
 
-	// Проверка авторизации
-	if (!auth.currentUser) {
-		alert('Сначала войдите в систему!')
-		return
-	}
+		const name = document.getElementById('asset-name').value
+		const category = document.getElementById('asset-category').value
+		const previewUrl = document.getElementById('asset-preview').value
+		const downloadUrl = document.getElementById('asset-file').value
 
-	// Получаем данные из полей
-	const name = document.getElementById('asset-name').value
-	const category = document.getElementById('asset-category').value
+		const btn = document.getElementById('upload-btn')
+		const originalText = btn.textContent
+		btn.textContent = 'Публикация...'
+		btn.disabled = true
 
-	// Теперь здесь лежат СТРОКИ (ссылки), а не файлы
-	const previewUrl = document.getElementById('asset-preview').value
-	const downloadUrl = document.getElementById('asset-file').value
+		try {
+			await addDoc(collection(db, 'assets'), {
+				name,
+				category,
+				previewUrl,
+				downloadUrl,
+				author: auth.currentUser.email,
+				createdAt: new Date(),
+			})
 
-	const btn = document.getElementById('upload-btn')
-	btn.disabled = true
-	btn.textContent = 'Публикация...'
+			// Успех: закрываем загрузку, открываем Success Modal
+			window.closeModal('upload-modal')
+			window.openModal('success-modal')
 
-	try {
-		// Мы пропускаем этап загрузки файла и сразу пишем ссылку в БД
-		await addDoc(collection(db, 'assets'), {
-			name: name,
-			category: category,
-			author: auth.currentUser.email,
-			previewUrl: previewUrl, // Ссылка, которую вставил юзер
-			downloadUrl: downloadUrl, // Ссылка, которую вставил юзер
-			createdAt: new Date(),
-		})
-
-		alert('Ассет успешно добавлен!')
-		window.closeModal('upload-modal')
-		uploadForm.reset()
-		loadAssets() // Обновить список
-	} catch (error) {
-		console.error(error)
-		alert('Ошибка при сохранении: ' + error.message)
-	} finally {
-		btn.disabled = false
-		btn.textContent = 'Опубликовать'
-	}
-})
+			uploadForm.reset()
+			loadAssets() // Обновляем список
+		} catch (error) {
+			showToast('Ошибка: ' + error.message, 'error')
+		} finally {
+			btn.textContent = originalText
+			btn.disabled = false
+		}
+	})
+}
 
 // ==========================================
-// 5. ОТОБРАЖЕНИЕ АССЕТОВ (Без изменений)
+// 6. ОТОБРАЖЕНИЕ И УДАЛЕНИЕ (READ & DELETE)
 // ==========================================
 const assetsContainer = document.getElementById('assets-container')
-let allAssets = []
+let allAssets = [] // Храним загруженные данные локально для быстрого поиска
 
 async function loadAssets(filterCategory = 'all') {
-	assetsContainer.innerHTML = '<div class="loader">Загрузка...</div>'
+	if (!assetsContainer) return
+
+	assetsContainer.innerHTML =
+		'<div class="loader-container"><div class="spinner"></div></div>'
 
 	try {
 		const q = query(collection(db, 'assets'), orderBy('createdAt', 'desc'))
 		const querySnapshot = await getDocs(q)
 
 		allAssets = []
-		assetsContainer.innerHTML = ''
-
 		querySnapshot.forEach(doc => {
-			allAssets.push(doc.data())
+			const data = doc.data()
+			data.id = doc.id // ВАЖНО: Сохраняем ID документа для удаления
+			allAssets.push(data)
 		})
 
 		renderAssets(allAssets, filterCategory)
 	} catch (error) {
-		assetsContainer.innerHTML = `<p>Ошибка загрузки: ${error.message}</p>`
+		console.error(error)
+		assetsContainer.innerHTML =
+			'<p style="text-align:center;color:#ef4444;grid-column:1/-1;">Не удалось загрузить ассеты.</p>'
 	}
 }
 
 function renderAssets(assets, category) {
 	assetsContainer.innerHTML = ''
 
+	// Фильтрация
 	const filtered =
 		category === 'all' ? assets : assets.filter(a => a.category === category)
 
 	if (filtered.length === 0) {
-		assetsContainer.innerHTML = '<p>Ассетов пока нет.</p>'
+		assetsContainer.innerHTML =
+			'<p style="text-align:center;color:#666;grid-column:1/-1;padding:40px;">В этой категории пока пусто.</p>'
 		return
 	}
+
+	// Текущий пользователь для проверки прав
+	const currentUserEmail = auth.currentUser ? auth.currentUser.email : null
 
 	filtered.forEach(asset => {
 		const card = document.createElement('article')
 		card.className = 'asset-card'
-		// Безопасность: проверяем, что ссылка на картинку существует, иначе ставим заглушку
+
+		// Проверка: автор ли текущий юзер?
+		const isOwner = currentUserEmail === asset.author
+
+		// HTML кнопки удаления (только для автора)
+		const deleteBtnHtml = isOwner
+			? `<button class="btn btn-delete delete-btn" data-id="${asset.id}" title="Удалить"><i class="fa-solid fa-trash"></i></button>`
+			: ''
+
+		// Заглушка, если нет картинки
 		const imgUrl =
 			asset.previewUrl || 'https://via.placeholder.com/300x200?text=No+Preview'
 
 		card.innerHTML = `
-            <img src="${imgUrl}" alt="${
+            <div class="card-img-wrapper">
+                <img src="${imgUrl}" alt="${
 			asset.name
 		}" class="card-img" onerror="this.src='https://via.placeholder.com/300x200?text=Error'">
-            <div class="card-content">
-                <div class="badge">${asset.category}</div>
-                <h3 class="card-title">${asset.name}</h3>
-                <p class="card-author">от ${asset.author.split('@')[0]}</p>
+            </div>
+            <div class="card-body">
+                <div class="card-category">${asset.category}</div>
+                <h3 class="card-title" title="${asset.name}">${asset.name}</h3>
+                <p class="card-author">By ${asset.author.split('@')[0]}</p>
+                
                 <div class="card-footer">
-                    <a href="${
-											asset.downloadUrl
-										}" class="btn btn-outline" target="_blank">
-                        <i class="fa-solid fa-download"></i> Скачать
-                    </a>
+                    <span class="price-tag">FREE</span>
+                    <div style="display:flex; gap: 8px; align-items: center;">
+                        ${deleteBtnHtml}
+                        <a href="${
+													asset.downloadUrl
+												}" target="_blank" class="btn btn-outline-sm">
+                            <i class="fa-solid fa-download"></i>
+                        </a>
+                    </div>
                 </div>
             </div>
         `
 		assetsContainer.appendChild(card)
 	})
+
+	// Навешиваем обработчики на кнопки удаления ПОСЛЕ рендера
+	document.querySelectorAll('.delete-btn').forEach(btn => {
+		btn.addEventListener('click', async e => {
+			e.stopPropagation() // Чтобы не сработал клик по карточке (если будет)
+
+			if (confirm('Вы уверены, что хотите удалить этот ассет?')) {
+				const id = btn.getAttribute('data-id')
+				try {
+					await deleteDoc(doc(db, 'assets', id))
+					showToast('Ассет удален', 'success')
+
+					// Удаляем визуально без перезагрузки
+					const card = btn.closest('.asset-card')
+					card.style.opacity = '0'
+					setTimeout(() => card.remove(), 300)
+
+					// Обновляем локальный массив
+					allAssets = allAssets.filter(a => a.id !== id)
+				} catch (err) {
+					showToast('Ошибка удаления: ' + err.message, 'error')
+				}
+			}
+		})
+	})
 }
 
 // ==========================================
-// 6. ФИЛЬТРАЦИЯ И ПОИСК
+// 7. ФИЛЬТРЫ И ПОИСК
 // ==========================================
 
-document.querySelectorAll('.categories li').forEach(li => {
+// Клик по категории
+document.querySelectorAll('.category-list li').forEach(li => {
 	li.addEventListener('click', () => {
-		document.querySelector('.categories li.active').classList.remove('active')
+		// UI
+		document
+			.querySelector('.category-list li.active')
+			.classList.remove('active')
 		li.classList.add('active')
+
+		// Логика
 		const cat = li.getAttribute('data-cat')
 		renderAssets(allAssets, cat)
 	})
 })
 
-document.getElementById('search-input').addEventListener('input', e => {
-	const term = e.target.value.toLowerCase()
-	const searched = allAssets.filter(a => a.name.toLowerCase().includes(term))
+// Поиск
+const searchInput = document.getElementById('search-input')
+if (searchInput) {
+	searchInput.addEventListener('input', e => {
+		const term = e.target.value.toLowerCase()
+		const searched = allAssets.filter(a => a.name.toLowerCase().includes(term))
 
-	assetsContainer.innerHTML = ''
-	if (searched.length === 0) {
-		assetsContainer.innerHTML = '<p>Ничего не найдено</p>'
-	} else {
-		searched.forEach(asset => {
-			const imgUrl = asset.previewUrl || 'https://via.placeholder.com/300x200'
-			const card = document.createElement('article')
-			card.className = 'asset-card'
-			card.innerHTML = `
-                <img src="${imgUrl}" class="card-img">
-                <div class="card-content">
-                    <h3 class="card-title">${asset.name}</h3>
-                    <div class="card-footer">
-                        <a href="${asset.downloadUrl}" class="btn btn-outline" target="_blank">Скачать</a>
-                    </div>
-                </div>
-            `
-			assetsContainer.appendChild(card)
-		})
-	}
-})
+		// При поиске игнорируем текущую категорию и ищем по всему
+		renderAssets(searched, 'all')
+	})
+}
 
-// Запуск при старте
+// Запуск при старте страницы
 loadAssets()

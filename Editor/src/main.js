@@ -646,6 +646,80 @@ function executeBlockLogic(block) {
 					if (el) el.style.border = `${v[2]}px solid ${v[1]}`
 					break
 				}
+				case 'obj_set_border_adv': {
+					const targetId = v[0] // ID объекта
+					const el = document.getElementById(targetId)
+
+					if (el) {
+						// --- 1. ПАРСИНГ ЗНАЧЕНИЙ ---
+
+						// Толщина
+						let width = parseFloat(resolveValue(v[1]))
+						if (isNaN(width)) width = 0
+
+						// Стиль (проверка на валидность)
+						let style = resolveValue(v[2])
+						const validStyles = [
+							'solid',
+							'dashed',
+							'dotted',
+							'double',
+							'groove',
+							'ridge',
+							'inset',
+							'outset',
+							'none',
+							'hidden',
+						]
+						// Если стиль пустой или невалидный - ставим solid
+						if (!style || !validStyles.includes(style)) style = 'solid'
+
+						// Цвет
+						let color = resolveValue(v[3])
+						// Защита от нулевого цвета
+						if (!color || color === '0' || color === 0) color = '#ffffff'
+
+						// Радиус
+						let radius = resolveValue(v[4])
+
+						// --- 2. ПРИМЕНЕНИЕ СТИЛЕЙ (ПО ОТДЕЛЬНОСТИ) ---
+
+						// Важно: border-box, чтобы рамка не увеличивала размер элемента внешне
+						el.style.boxSizing = 'border-box'
+
+						if (width > 0 && style !== 'none') {
+							el.style.borderWidth = width + 'px'
+							el.style.borderStyle = style
+							el.style.borderColor = color
+						} else {
+							// Если толщина 0, убираем рамку
+							el.style.borderStyle = 'none'
+							el.style.borderWidth = '0px'
+						}
+
+						// --- 3. РАДИУС (СКРУГЛЕНИЕ) ---
+						// Применяем независимо от рамки
+						if (
+							radius !== undefined &&
+							radius !== '' &&
+							radius !== '0' &&
+							radius !== 0
+						) {
+							// Если это число (например 10) -> добавляем px
+							if (!isNaN(parseFloat(radius)) && isFinite(radius)) {
+								el.style.borderRadius = radius + 'px'
+							} else {
+								// Если это строка (например "50%") -> оставляем как есть
+								el.style.borderRadius = radius
+							}
+						}
+					} else {
+						console.warn(
+							`Объект с ID "${targetId}" не найден для установки границ.`
+						)
+					}
+					break
+				}
 				case 'obj_set_texture': {
 					const el = document.getElementById(v[0])
 					if (el) {
@@ -2532,6 +2606,362 @@ function executeBlockLogic(block) {
 							// Простая логика движения к точке (как в ai_move_to)
 							// Когда дошли — me.currentPath.shift(), удаляем точку
 						}
+					}
+					break
+				}
+
+				// --- 3D МИР ---
+				case 'scene_3d_init': {
+					const perspective = v[0]
+					const stage = document.getElementById('game-stage')
+					const world = document.getElementById('game-world')
+					if (stage && world) {
+						stage.style.perspective = perspective + 'px'
+						stage.style.overflow = 'hidden' // Скрываем вылеты за экран
+						world.style.transformStyle = 'preserve-3d' // Важно для вложенных 3D объектов
+						// Центрируем мир, чтобы 0,0 был по центру экрана (опционально, но удобно для 3D)
+						world.style.width = '100%'
+						world.style.height = '100%'
+					}
+
+					// Добавляем CSS стили для куба, если их нет
+					if (!document.getElementById('css-3d-styles')) {
+						const style = document.createElement('style')
+						style.id = 'css-3d-styles'
+						style.innerHTML = `
+							.ecr-cube { position: absolute; transform-style: preserve-3d; }
+							.ecr-face { position: absolute; width: 100%; height: 100%; border: 1px solid rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; font-size:20px; color:rgba(255,255,255,0.5); }
+							.ecr-face.front  { transform: rotateY(  0deg) translateZ(calc(var(--s) / 2)); }
+							.ecr-face.back   { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
+							.ecr-face.right  { transform: rotateY( 90deg) translateZ(calc(var(--s) / 2)); }
+							.ecr-face.left   { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
+							.ecr-face.top    { transform: rotateX( 90deg) translateZ(calc(var(--s) / 2)); }
+							.ecr-face.bottom { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
+						`
+						document.head.appendChild(style)
+					}
+					break
+				}
+
+				case 'obj_3d_create_cube': {
+					const id = v[0]
+					if (document.getElementById(id)) break // Не создаем дубликат
+
+					const size = parseInt(resolveValue(v[1]))
+					const color = resolveValue(v[2])
+					const x = resolveValue(v[3])
+					const y = resolveValue(v[4])
+					const z = resolveValue(v[5])
+
+					const cube = document.createElement('div')
+					cube.id = id
+					cube.className = 'ecr-cube'
+					cube.style.width = size + 'px'
+					cube.style.height = size + 'px'
+					cube.style.setProperty('--s', size + 'px') // Для CSS переменных
+
+					// Начальная позиция
+					cube.style.transform = `translate3d(${x}px, ${y}px, ${z}px)`
+
+					// Затемнение сторон для объема
+					const darken = (col, amt) => {
+						// Простая имитация затемнения (можно улучшить)
+						return col
+					}
+
+					// Создаем 6 граней
+					const faces = ['front', 'back', 'right', 'left', 'top', 'bottom']
+					// Разные оттенки для реализма
+					const shades = [1, 0.8, 0.6, 0.6, 1.2, 0.4]
+
+					faces.forEach((face, i) => {
+						const el = document.createElement('div')
+						el.className = `ecr-face ${face}`
+						el.style.backgroundColor = color
+						el.style.filter = `brightness(${shades[i]})` // Тень
+						// Можно добавить opacity, если нужен прозрачный куб
+						el.style.opacity = '0.9'
+						cube.appendChild(el)
+					})
+
+					w.appendChild(cube)
+					break
+				}
+
+				case 'obj_3d_transform': {
+					const el = document.getElementById(v[0])
+					if (el) {
+						const x = resolveValue(v[1])
+						const y = resolveValue(v[2])
+						const z = resolveValue(v[3])
+						const rx = resolveValue(v[4])
+						const ry = resolveValue(v[5])
+						const rz = resolveValue(v[6])
+
+						// Используем translate3d для GPU ускорения
+						el.style.transform = `translate3d(${x}px, ${y}px, ${z}px) rotateX(${rx}deg) rotateY(${ry}deg) rotateZ(${rz}deg)`
+					}
+					break
+				}
+
+				case 'obj_3d_rotate_anim': {
+					const id = v[0]
+					const sx = parseFloat(resolveValue(v[1]))
+					const sy = parseFloat(resolveValue(v[2]))
+					const sz = parseFloat(resolveValue(v[3]))
+
+					// Используем глобальный объект для хранения состояния вращения 3D
+					if (!window.anim3d) window.anim3d = {}
+					if (!window.anim3d[id]) window.anim3d[id] = { rx: 0, ry: 0, rz: 0 }
+
+					// Запускаем цикл (или добавляем в GameLoop, но здесь сделаем через интервал для простоты блока)
+					// Лучше всего это делать в evt_update, но для простоты добавим data-атрибуты
+					const el = document.getElementById(id)
+					if (el) {
+						// Читаем текущую трансформацию (упрощенно)
+						// Хак: сохраняем скорость в dataset, а обновлять будем в gameLoop (если бы он поддерживал custom updates)
+						// Но мы сделаем Interval, привязанный к объекту
+
+						if (el.rotateInterval) clearInterval(el.rotateInterval)
+
+						el.rotateInterval = setInterval(() => {
+							if (!document.getElementById(id) || !isRunning) {
+								clearInterval(el.rotateInterval)
+								return
+							}
+
+							const state = window.anim3d[id]
+							state.rx += sx
+							state.ry += sy
+							state.rz += sz
+
+							// Нам нужно сохранить текущую позицию (translate), меняя только rotate
+							// Парсинг transform сложный, поэтому мы предполагаем,
+							// что этот блок используется ВМЕСТЕ с позиционированием или блокирует его.
+							// Для полноценной работы лучше использовать переменные gameVariables для координат и блок "3D Трансформация" в Update.
+
+							// УПРОЩЕННЫЙ ВАРИАНТ: Просто крутим, сбрасывая позицию (или берем из style)
+							// Чтобы было круто, лучше использовать блок "3D Трансформация" внутри события "Каждый кадр".
+							// Но если нужен авто-спиннер:
+							const currentTrans =
+								el.style.transform.match(/translate3d\([^)]+\)/)
+							const posStr = currentTrans
+								? currentTrans[0]
+								: 'translate3d(0px,0px,0px)'
+
+							el.style.transform = `${posStr} rotateX(${state.rx}deg) rotateY(${state.ry}deg) rotateZ(${state.rz}deg)`
+						}, 16)
+					}
+					break
+				}
+
+				case 'cam_3d_move': {
+					const x = resolveValue(v[0])
+					const y = resolveValue(v[1])
+					const z = resolveValue(v[2])
+					const rotY = resolveValue(v[3])
+
+					const world = document.getElementById('game-world')
+					if (world) {
+						// Двигаем МИР в противоположную сторону, чтобы создать эффект камеры
+						// translateZ двигает мир ближе/дальше
+						// rotateY вращает мир вокруг оси
+						world.style.transform = `translateZ(${z}px) rotateY(${-rotY}deg) translate3d(${-x}px, ${-y}px, 0px)`
+						// Важно: порядок трансформаций имеет значение!
+					}
+					break
+				}
+				// --- ПЛОСКОСТЬ (СТЕНА/ПОЛ) ---
+				case 'obj_3d_create_plane': {
+					const id = v[0]
+					if (document.getElementById(id)) break
+
+					const wVal = resolveValue(v[1])
+					const hVal = resolveValue(v[2])
+					const color = resolveValue(v[3])
+					const x = resolveValue(v[4])
+					const y = resolveValue(v[5])
+					const z = resolveValue(v[6])
+					const rx = resolveValue(v[7])
+
+					const plane = document.createElement('div')
+					plane.id = id
+					plane.className = 'ecr-plane' // Новый класс
+					plane.style.position = 'absolute'
+					plane.style.width = wVal + 'px'
+					plane.style.height = hVal + 'px'
+					plane.style.backgroundColor = color
+					// transform-style: preserve-3d не обязателен для листа, но полезен
+					plane.style.transform = `translate3d(${x}px, ${y}px, ${z}px) rotateX(${rx}deg)`
+
+					// Центрируем точку трансформации
+					plane.style.transformOrigin = 'center center'
+
+					document.getElementById('game-world').appendChild(plane)
+					break
+				}
+
+				// --- ЦИЛИНДР ---
+				case 'obj_3d_create_cylinder': {
+					const id = v[0]
+					if (document.getElementById(id)) break
+
+					const height = parseFloat(resolveValue(v[1]))
+					const diameter = parseFloat(resolveValue(v[2]))
+					const sides = parseInt(resolveValue(v[3])) || 8
+					const color = resolveValue(v[4])
+					const x = resolveValue(v[5])
+					const y = resolveValue(v[6])
+					const z = resolveValue(v[7])
+
+					const container = document.createElement('div')
+					container.id = id
+					container.className = 'ecr-cylinder-group'
+					container.style.position = 'absolute'
+					container.style.transformStyle = 'preserve-3d'
+					container.style.width = '0px' // Контейнер-точка
+					container.style.height = '0px'
+					container.style.transform = `translate3d(${x}px, ${y}px, ${z}px)`
+
+					// Математика цилиндра
+					const angleStep = 360 / sides
+					// Ширина одной грани (теорема косинусов или тангенс)
+					// width = 2 * R * tan(PI/sides)
+					const radius = diameter / 2
+					const stripWidth = 2 * radius * Math.tan(Math.PI / sides) // Более точная формула
+					// Или упрощенная: (diameter * Math.PI) / sides (дает небольшие щели, но проще)
+
+					// Чуть увеличим ширину, чтобы закрыть щели CSS-рендеринга
+					const finalStripWidth = stripWidth + 1
+
+					for (let i = 0; i < sides; i++) {
+						const strip = document.createElement('div')
+						strip.style.position = 'absolute'
+						strip.style.height = height + 'px'
+						strip.style.width = finalStripWidth + 'px'
+						strip.style.backgroundColor = color
+
+						// Имитация затемнения (фейковое освещение)
+						// Чем "боковее" грань, тем темнее
+						// const brightness = 0.5 + 0.5 * Math.sin((i / sides) * Math.PI);
+						// strip.style.filter = `brightness(${brightness})`;
+						// Простой вариант: чередование цвета
+						if (i % 2 === 0) strip.style.filter = 'brightness(0.9)'
+
+						const angle = i * angleStep
+						// Смещаем грань на радиус и поворачиваем
+						// translateZ выталкивает грань из центра
+						strip.style.transform = `rotateY(${angle}deg) translateZ(${radius}px)`
+
+						// Центрируем стрип по горизонтали относительно контейнера
+						strip.style.left = -finalStripWidth / 2 + 'px'
+						strip.style.top = -height / 2 + 'px'
+
+						container.appendChild(strip)
+					}
+
+					// Крышки (опционально, сложно сделать идеально круглыми в CSS, пока без них)
+
+					document.getElementById('game-world').appendChild(container)
+					break
+				}
+
+				// --- 3D СПРАЙТ (BILLBOARD) ---
+				case 'obj_3d_billboard': {
+					const id = v[0]
+					if (document.getElementById(id)) break
+
+					const url = getAssetUrl(resolveValue(v[1]))
+					const wVal = resolveValue(v[2])
+					const hVal = resolveValue(v[3])
+					const x = resolveValue(v[4])
+					const y = resolveValue(v[5])
+					const z = resolveValue(v[6])
+
+					const sprite = document.createElement('div')
+					sprite.id = id
+					sprite.style.position = 'absolute'
+					sprite.style.width = wVal + 'px'
+					sprite.style.height = hVal + 'px'
+					sprite.style.backgroundImage = `url('${url}')`
+					sprite.style.backgroundSize = 'contain'
+					sprite.style.backgroundRepeat = 'no-repeat'
+					sprite.style.backgroundPosition = 'center bottom' // Обычно персонажи стоят ногами на точке
+					sprite.style.transformStyle = 'preserve-3d'
+
+					// Важно: смещение origin вниз, чтобы Z был в ногах
+					// sprite.style.transformOrigin = 'center bottom';
+
+					// Начальная позиция
+					// Мы центрируем div по X и Y, чтобы координаты были в центре спрайта
+					sprite.style.transform = `translate3d(${x}px, ${y}px, ${z}px) translate(-50%, -100%)`
+
+					// Сохраняем "базовую позицию" в dataset, чтобы потом вращать не сбивая координаты
+					sprite.dataset.pos3d = JSON.stringify({ x, y, z })
+
+					document.getElementById('game-world').appendChild(sprite)
+					break
+				}
+
+				// --- ТЕКСТУРА ГРАНИ ---
+				case 'obj_3d_set_face': {
+					const cubeId = v[0]
+					const faceClass = v[1] // front, back...
+					const url = getAssetUrl(resolveValue(v[2]))
+
+					const cube = document.getElementById(cubeId)
+					if (cube) {
+						const face = cube.querySelector(`.ecr-face.${faceClass}`)
+						if (face) {
+							face.style.backgroundImage = `url('${url}')`
+							face.style.backgroundSize = 'cover'
+							face.style.backgroundColor = 'transparent' // Убираем цвет, чтобы видеть PNG
+							face.innerHTML = '' // Убираем отладочный текст
+							face.style.border = 'none'
+						}
+					}
+					break
+				}
+
+				// --- БИЛЛБОРДИНГ (ПОВОРОТ К КАМЕРЕ) ---
+				case 'cam_3d_look_at': {
+					const targetId = v[0]
+					const el = document.getElementById(targetId)
+					if (el) {
+						// Нам нужно знать поворот мира (камеры), чтобы повернуть объект обратно
+						// В Ecrous камера реализована через вращение мира
+						const world = document.getElementById('game-world')
+
+						// Парсим текущий поворот мира. Это сложно сделать точно из string,
+						// поэтому лучше хранить состояние камеры глобально.
+						// Предположим, вы использовали блок '3D Камера' и сохранили угол в gameVariables или window.camera3D
+
+						// ХАК: Пытаемся найти rotateY в style мира
+						let camRotY = 0
+						if (world.style.transform) {
+							const match = world.style.transform.match(
+								/rotateY\(([-\d.]+)deg\)/
+							)
+							if (match) camRotY = parseFloat(match[1])
+						}
+
+						// Чтобы смотреть на камеру, объект должен иметь поворот -camRotY
+						// Но нужно сохранить его позицию translate3d
+
+						// Если мы сохранили позицию при создании:
+						let bx = 0,
+							by = 0,
+							bz = 0
+						if (el.dataset.pos3d) {
+							const p = JSON.parse(el.dataset.pos3d)
+							bx = p.x
+							by = p.y
+							bz = p.z
+						}
+
+						// Применяем: позиция + отмена вращения камеры
+						// translate(-50%, -100%) нужен, если мы хотим Pivot в ногах (как в obj_3d_billboard)
+						el.style.transform = `translate3d(${bx}px, ${by}px, ${bz}px) rotateY(${-camRotY}deg) translate(-50%, -100%)`
 					}
 					break
 				}

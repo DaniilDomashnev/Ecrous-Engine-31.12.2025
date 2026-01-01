@@ -30,14 +30,12 @@ function setMobileTab(tabName) {
 
 // 2. Исправление добавления блоков (Touch Drag из тулбокса)
 function attachMobileDrag(el, id, isTemplate) {
-    // Добавляем CSS свойство, чтобы браузер не пытался скроллить элемент
-    el.style.touchAction = 'none';
+    el.style.touchAction = 'none'; // Важно для отключения жестов браузера
 
     el.addEventListener(
         'touchstart',
         e => {
-            // Блокируем стандартное поведение (скролл), чтобы не дергалось
-            // В Telegram Web App это критично для предотвращения закрытия свайпом
+            // Полная блокировка скролла и зума браузера
             e.preventDefault()
             e.stopPropagation()
 
@@ -48,15 +46,18 @@ function attachMobileDrag(el, id, isTemplate) {
             ghost.innerText = el.innerText
             ghost.className = 'tool-item dragging-ghost'
             ghost.style.position = 'fixed'
+            // СМЕЩЕНИЕ: Поднимаем блок на 70px выше пальца, чтобы видеть, куда ставим
+            const Y_OFFSET = 70 
             ghost.style.left = touch.clientX + 'px'
-            ghost.style.top = touch.clientY + 'px'
+            ghost.style.top = (touch.clientY - Y_OFFSET) + 'px'
+            
             ghost.style.transform = 'translate(-50%, -50%) scale(1.1)'
             ghost.style.opacity = '0.9'
-            ghost.style.pointerEvents = 'none' // Важно: чтобы ghost не мешал событию touch
+            ghost.style.pointerEvents = 'none'
             ghost.style.zIndex = '10000'
             ghost.style.background = '#333'
             ghost.style.color = '#fff'
-            ghost.style.border = '1px solid var(--accent)'
+            ghost.style.border = '2px solid var(--accent)' // Жирнее рамка для видимости
             ghost.style.padding = '8px 12px'
             ghost.style.borderRadius = '8px'
             ghost.style.boxShadow = '0 10px 20px rgba(0,0,0,0.5)'
@@ -67,11 +68,13 @@ function attachMobileDrag(el, id, isTemplate) {
 
             const moveHandler = tm => {
                 if (isDragging) {
+                    // Блокируем всё, чтобы экран не ехал
+                    tm.preventDefault() 
+                    tm.stopPropagation()
+                    
                     const t = tm.touches[0]
-                    if (tm.cancelable) tm.preventDefault()
-
                     ghost.style.left = t.clientX + 'px'
-                    ghost.style.top = t.clientY + 'px'
+                    ghost.style.top = (t.clientY - Y_OFFSET) + 'px' // Сохраняем смещение
                 }
             }
 
@@ -80,20 +83,20 @@ function attachMobileDrag(el, id, isTemplate) {
                 document.removeEventListener('touchend', endHandler)
 
                 if (isDragging && ghost) {
-                    // 1. Получаем координаты ПЕРЕД удалением
+                    // Получаем координаты пальца
                     const t = te.changedTouches[0]
                     const x = t.clientX
-                    const y = t.clientY
+                    // Важно: при создании блока учитываем тот же офсет, 
+                    // чтобы блок появился там, где был "призрак", а не под пальцем
+                    const y = t.clientY - Y_OFFSET 
 
                     ghost.remove()
 
-                    // 2. ВАЖНО: Переключаемся на канвас, чтобы увидеть результат
+                    // Переключаемся на Canvas
                     if (typeof setMobileTab === 'function') {
                         setMobileTab('canvas')
                     }
 
-                    // 3. ВАЖНО: Ждем 50мс, чтобы Canvas стал видимым (display: block)
-                    // Иначе getBoundingClientRect() вернет 0, и блок встанет криво
                     setTimeout(() => {
                         if (isTemplate) {
                             if (typeof instantiateTemplate === 'function')

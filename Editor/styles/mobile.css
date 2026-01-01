@@ -356,3 +356,86 @@
         justify-content: center;
     }
 }
+
+/* =========================================
+   АДАПТАЦИЯ ИГРОВОГО ОКНА (GAME WINDOW)
+   ========================================= */
+
+@media (max-width: 768px) {
+    /* Контейнер оверлея - центрируем */
+    #game-overlay {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        background: #000; /* Черный фон вокруг, если пропорции не совпадут */
+    }
+
+    /* Само окно игры - на весь экран */
+    .game-window {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        transform: none !important; /* Убираем центрирование через transform */
+        
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        max-height: 100% !important;
+        
+        border-radius: 0 !important; /* Убираем скругления */
+        border: none !important;
+        box-shadow: none !important;
+        
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* Шапка окна игры - делаем удобнее для пальца */
+    .game-header {
+        padding: 15px;
+        height: 50px; /* Фиксированная высота шапки */
+        background: var(--bg-elevated);
+    }
+    
+    .game-header span {
+        font-size: 14px;
+        text-transform: uppercase;
+        font-weight: 700;
+    }
+
+    /* Кнопка закрытия - крупнее */
+    .close-game-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 24px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+    }
+
+    /* Сцена игры - занимает всё оставшееся место */
+    #game-stage {
+        width: 100% !important;
+        height: calc(100% - 50px) !important; /* Высота экрана минус шапка */
+        background-color: #000;
+        border-radius: 0 !important;
+    }
+
+    /* Скрываем ресайзер (изменение размера) на телефоне */
+    .game-window-resizer {
+        display: none !important;
+    }
+
+    /* Консоль игры внизу - делаем полупрозрачной поверх игры или скрываем */
+    #game-console {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        max-height: 150px;
+        background: rgba(0, 0, 0, 0.7);
+        pointer-events: none; /* Чтобы можно было кликать сквозь консоль */
+        font-size: 10px;
+        z-index: 9999;
+    }
+}

@@ -60,6 +60,24 @@ function createBlock(typeId, clientX, clientY, restoreData = null) {
                               style="width:100%; min-width:180px; font-family:'Courier New', monospace; font-size:11px; background:rgba(0,0,0,0.3); border:1px solid var(--border); color:#a5d6a7; resize:vertical; border-radius:4px; padding:5px;"
                               oninput="this.innerHTML = this.value">${val}</textarea>
                 </div>`
+			} else if (inp.type === 'select') {
+				let optionsHtml = ''
+				if (inp.options) {
+					inp.options.forEach(opt => {
+						const selected = opt === val ? 'selected' : ''
+						optionsHtml += `<option value="${opt}" ${selected}>${opt}</option>`
+					})
+				}
+				inputsHTML += `
+                <div class="input-row">
+                    <span>${inp.label || inp.name}</span>
+                    <div class="select-wrapper">
+                        <select class="node-input" onchange="this.setAttribute('value', this.value)">
+                            ${optionsHtml}
+                        </select>
+                        <i class="ri-arrow-down-s-line"></i>
+                    </div>
+                </div>`
 			}
 			// -------------------------------------------
 			else {
@@ -185,22 +203,27 @@ function createBlock(typeId, clientX, clientY, restoreData = null) {
 			// Локальный обработчик движения для конкретного блока
 			const touchMoveBlock = tm => {
 				if (!draggedBlock) return
-				tm.preventDefault() // Стоп скролл
+
+				// ЖЕСТКАЯ БЛОКИРОВКА СКРОЛЛА
+				tm.preventDefault()
+				tm.stopPropagation()
+
 				const t = tm.touches[0]
 
-				// Конвертируем экранные координаты в координаты канваса
 				const containerRect = container.getBoundingClientRect()
 
-				// Формула: (ПозицияПальца - ПозицияКонтейнера - СдвигПана) / Зум - СмещениеВнутриБлока
+				// Добавляем проверку на NaN, чтобы блок не исчезал при ошибках зума
+				let zoom = window.zoomLevel || 1
+				if (zoom < 0.1) zoom = 0.1
+
 				const newX =
-					(t.clientX - containerRect.left - panX) / zoomLevel - dragOffset.x
+					(t.clientX - containerRect.left - panX) / zoom - dragOffset.x
 				const newY =
-					(t.clientY - containerRect.top - panY) / zoomLevel - dragOffset.y
+					(t.clientY - containerRect.top - panY) / zoom - dragOffset.y
 
 				draggedBlock.style.left = newX + 'px'
 				draggedBlock.style.top = newY + 'px'
 
-				// Обновляем связи (провода)
 				if (typeof updateAllConnections === 'function') updateAllConnections()
 			}
 
