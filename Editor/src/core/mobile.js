@@ -28,93 +28,125 @@ function setMobileTab(tabName) {
 	}
 }
 
-// 2. Исправление добавления блоков (Touch Drag из тулбокса)
+// 2. Исправленная логика Drag & Drop для мобильных (Long Press)
 function attachMobileDrag(el, id, isTemplate) {
-    el.style.touchAction = 'none'; // Важно для отключения жестов браузера
+    // Разрешаем браузеру обрабатывать вертикальные свайпы (скролл),
+    // но запрещаем зум и горизонтальные жесты на элементах
+    el.style.touchAction = 'pan-y'; 
 
-    el.addEventListener(
-        'touchstart',
-        e => {
-            // Полная блокировка скролла и зума браузера
-            e.preventDefault()
-            e.stopPropagation()
+    let dragTimer = null;
+    let isDragging = false;
+    let ghost = null;
+    
+    // Координаты начала касания
+    let startX = 0;
+    let startY = 0;
+    
+    // Смещение призрака, чтобы палец его не перекрывал
+    const Y_OFFSET = 70; 
 
-            const touch = e.touches[0]
-            const ghost = document.createElement('div')
+    // Функция начала перетаскивания (вызывается по таймеру)
+    const startDrag = (touch) => {
+        isDragging = true;
+        
+        // Вибрация для тактильного отклика (понятно, что схватили)
+        if (navigator.vibrate) navigator.vibrate(50);
 
-            // Стилизация призрака
-            ghost.innerText = el.innerText
-            ghost.className = 'tool-item dragging-ghost'
-            ghost.style.position = 'fixed'
-            // СМЕЩЕНИЕ: Поднимаем блок на 70px выше пальца, чтобы видеть, куда ставим
-            const Y_OFFSET = 70 
-            ghost.style.left = touch.clientX + 'px'
-            ghost.style.top = (touch.clientY - Y_OFFSET) + 'px'
-            
-            ghost.style.transform = 'translate(-50%, -50%) scale(1.1)'
-            ghost.style.opacity = '0.9'
-            ghost.style.pointerEvents = 'none'
-            ghost.style.zIndex = '10000'
-            ghost.style.background = '#333'
-            ghost.style.color = '#fff'
-            ghost.style.border = '2px solid var(--accent)' // Жирнее рамка для видимости
-            ghost.style.padding = '8px 12px'
-            ghost.style.borderRadius = '8px'
-            ghost.style.boxShadow = '0 10px 20px rgba(0,0,0,0.5)'
+        // Создаем призрака
+        ghost = document.createElement('div');
+        ghost.innerText = el.innerText;
+        ghost.className = 'tool-item dragging-ghost';
+        ghost.style.position = 'fixed';
+        ghost.style.left = touch.clientX + 'px';
+        ghost.style.top = (touch.clientY - Y_OFFSET) + 'px';
+        
+        ghost.style.transform = 'translate(-50%, -50%) scale(1.1)';
+        ghost.style.opacity = '0.9';
+        ghost.style.pointerEvents = 'none';
+        ghost.style.zIndex = '10000';
+        ghost.style.background = '#333';
+        ghost.style.color = '#fff';
+        ghost.style.border = '2px solid var(--accent)';
+        ghost.style.padding = '8px 12px';
+        ghost.style.borderRadius = '8px';
+        ghost.style.boxShadow = '0 10px 20px rgba(0,0,0,0.5)';
 
-            document.body.appendChild(ghost)
+        document.body.appendChild(ghost);
+    };
 
-            let isDragging = true
+    el.addEventListener('touchstart', e => {
+        // НЕ вызываем preventDefault сразу, чтобы дать возможность скроллить список!
+        // e.preventDefault(); 
+        
+        const touch = e.touches[0];
+        startX = touch.clientX;
+        startY = touch.clientY;
+        isDragging = false;
 
-            const moveHandler = tm => {
-                if (isDragging) {
-                    // Блокируем всё, чтобы экран не ехал
-                    tm.preventDefault() 
-                    tm.stopPropagation()
-                    
-                    const t = tm.touches[0]
-                    ghost.style.left = t.clientX + 'px'
-                    ghost.style.top = (t.clientY - Y_OFFSET) + 'px' // Сохраняем смещение
-                }
+        // Запускаем таймер: если палец задержится на 250мс, начнется драг
+        dragTimer = setTimeout(() => {
+            startDrag(touch);
+        }, 250); 
+    }, { passive: false });
+
+    el.addEventListener('touchmove', e => {
+        const t = e.touches[0];
+        
+        if (!isDragging) {
+            // Если мы еще не в режиме драга (таймер тикает)
+            // Проверяем, сдвинул ли пользователь палец
+            const dx = Math.abs(t.clientX - startX);
+            const dy = Math.abs(t.clientY - startY);
+
+            // Если палец сдвинулся больше чем на 10px, считаем это скроллом
+            if (dx > 10 || dy > 10) {
+                clearTimeout(dragTimer); // Отменяем драг, это скролл
+                dragTimer = null;
+            }
+        } else {
+            // Если мы УЖЕ в режиме драга -> двигаем призрака и блокируем скролл
+            if (e.cancelable) e.preventDefault(); // Блокируем скролл страницы
+            e.stopPropagation();
+
+            if (ghost) {
+                ghost.style.left = t.clientX + 'px';
+                ghost.style.top = (t.clientY - Y_OFFSET) + 'px';
+            }
+        }
+    }, { passive: false });
+
+    el.addEventListener('touchend', e => {
+        // Очищаем таймер (если просто тапнули и убрали палец)
+        if (dragTimer) clearTimeout(dragTimer);
+
+        if (isDragging && ghost) {
+            // Если мы тащили блок -> спавним его
+            const t = e.changedTouches[0];
+            const x = t.clientX;
+            const y = t.clientY - Y_OFFSET;
+
+            ghost.remove();
+            ghost = null;
+
+            // Переключаемся на вкладку Canvas
+            if (typeof setMobileTab === 'function') {
+                setMobileTab('canvas');
             }
 
-            const endHandler = te => {
-                document.removeEventListener('touchmove', moveHandler)
-                document.removeEventListener('touchend', endHandler)
-
-                if (isDragging && ghost) {
-                    // Получаем координаты пальца
-                    const t = te.changedTouches[0]
-                    const x = t.clientX
-                    // Важно: при создании блока учитываем тот же офсет, 
-                    // чтобы блок появился там, где был "призрак", а не под пальцем
-                    const y = t.clientY - Y_OFFSET 
-
-                    ghost.remove()
-
-                    // Переключаемся на Canvas
-                    if (typeof setMobileTab === 'function') {
-                        setMobileTab('canvas')
-                    }
-
-                    setTimeout(() => {
-                        if (isTemplate) {
-                            if (typeof instantiateTemplate === 'function')
-                                instantiateTemplate(id, x, y)
-                        } else {
-                            if (typeof createBlock === 'function') 
-                                createBlock(id, x, y)
-                        }
-                    }, 50)
+            // Создаем блок с небольшой задержкой
+            setTimeout(() => {
+                if (isTemplate) {
+                    if (typeof instantiateTemplate === 'function')
+                        instantiateTemplate(id, x, y);
+                } else {
+                    if (typeof createBlock === 'function') 
+                        createBlock(id, x, y);
                 }
-                isDragging = false
-            }
-
-            document.addEventListener('touchmove', moveHandler, { passive: false })
-            document.addEventListener('touchend', endHandler, { passive: false })
-        },
-        { passive: false }
-    )
+            }, 50);
+        }
+        
+        isDragging = false;
+    }, { passive: false });
 }
 
 // 3. ДОЛГОЕ НАЖАТИЕ (ПКМ НА ТЕЛЕФОНЕ)
