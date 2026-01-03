@@ -96,6 +96,9 @@ window.changeLanguage = function (lang) {
 		const sel = document.getElementById('languageSelect')
 		if (sel) lang = sel.value
 	}
+	if (window.initChangelog) {
+		window.initChangelog()
+	}
 	if (lang) loadLanguage(lang)
 }
 

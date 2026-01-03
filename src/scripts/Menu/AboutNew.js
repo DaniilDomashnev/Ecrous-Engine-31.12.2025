@@ -1,108 +1,112 @@
-/**
- * КОНФИГУРАЦИЯ ОБНОВЛЕНИЯ
- * Меняйте эту переменную при каждом обновлении движка.
- */
+/* ==========================================
+   AboutNew.js - Исправленная версия
+========================================== */
+
 const UPDATE_CONFIG = {
-	version: 'ECX 2025.01.01', // Должно совпадать с тем, что в HTML
-	// new | fix | update
+	version: 'ECX 2025.03.01',
 	changes: [
 		{
-			type: 'new',
-			label: 'Новое',
-			text: 'Добавлен новый блок обводки (Расшир.)',
-		},
-		{
-			type: 'new',
-			label: 'Новое',
-			text: 'Новый раздело блоков "3д"',
-		},
-		{
 			type: 'fix',
-			label: 'Исправлено',
-			text: 'Исправлен баг с отображением обводки',
-		},
-		{
-			type: 'fix',
-			label: 'Исправлено',
-			text: 'Исправлен баг с центрированием игрового окна, изменение размера и перемещением',
-		},
-		{
-			type: 'fix',
-			label: 'Исправлено',
-			text: 'Устранена ошибка вылета при импорте больших спрайтов',
-		},
-		{
-			type: 'fix',
-			label: 'Исправлено',
-			text: 'Блоки на телефоне работают нормально',
-		},
-		{
-			type: 'fix',
-			label: 'Исправлено',
-			text: 'Закрыты экспорты в IOS PWA (Техническое обслуживание)',
-		},
-		{
-			type: 'fix',
-			label: 'Исправлено',
-			text: 'Анимация карточки билда .ecr была исправлена с 0.04s до 0.5s',
-		},
-		{
-			type: 'fix',
-			label: 'Исправлено',
-			text: 'В Asset Store можно загрузить свой ассет',
+			text: {
+				ru: 'Блоки на телефоне работают нормально',
+				en: 'Blocks work correctly on mobile',
+				uk: 'Блоки на телефоні працюють нормально',
+				kz: 'Телефонда блоктар дұрыс жұмыс істейді',
+			},
 		},
 		{
 			type: 'update',
-			label: 'Улучшено',
-			text: 'Ecrous Paint теперь Ecrous Art. Так же был улучшен в лучшую сторону',
+			text: {
+				ru: 'Перетаскивание блоков на телефонах теперь имеет задержку в 200мс, чтобы вы случайно не задели блоки.',
+				en: 'Dragging blocks on phones now has a 200ms delay to prevent accidental touches.',
+				uk: 'Перетягування блоків на телефонах тепер має затримку 200мс, щоб ви випадково не зачепили блоки.',
+				kz: 'Телефонда блоктарды сүйреу енді кездейсоқ тиіп кетпес үшін 200мс кідіріске ие.',
+			},
 		},
 		{
 			type: 'update',
-			label: 'Улучшено',
-			text: 'Улучшен дизайн Asset Store',
+			text: {
+				ru: 'Обновлены языки, теперь появился немецский язык, а так же отображение языков работает корректно',
+				en: 'Languages updated, German added, and language display works correctly',
+				uk: "Оновлено мови, тепер з'явилася німецька мова, а також відображення мов працює коректно",
+				kz: 'Тілдер жаңартылды, енді неміс тілі қосылды, сондай-ақ тілдердің көрсетілуі дұрыс жұмыс істейді',
+			},
 		},
 		{
 			type: 'update',
-			label: 'Улучшено',
-			text: 'Новый участники в пункте благодарности',
+			text: {
+				ru: 'Новые участники в пункте благодарности',
+				en: 'New members in the Credits section',
+				uk: 'Нові учасники в розділі подяк',
+				kz: 'Алғыс білдіру бөлімінде жаңа қатысушылар',
+			},
 		},
 	],
 }
 
-// Ключ для LocalStorage
 const STORAGE_KEY_VERSION = 'EcrousEngine_LastViewedVersion'
 
-document.addEventListener('DOMContentLoaded', () => {
-	// 1. Инициализируем контент
-	initChangelog()
+// Словари для бейджей
+const BADGE_KEYS = {
+	new: 'badgeNew',
+	fix: 'badgeFix',
+	update: 'badgeUpdate',
+}
+const BADGE_FALLBACKS = {
+	ru: { new: 'Новое', fix: 'Исправлено', update: 'Улучшено' },
+	en: { new: 'New', fix: 'Fixed', update: 'Improved' },
+	uk: { new: 'Нове', fix: 'Виправлено', update: 'Покращено' },
+	kz: { new: 'Жаңа', fix: 'Түзетілді', update: 'Жақсартылды' },
+}
 
-	// 2. Проверяем, нужно ли показывать окно автоматически
+document.addEventListener('DOMContentLoaded', () => {
+	initChangelog()
 	checkAndShowUpdate()
 })
+
+// === ВАЖНО: Делаем функцию глобальной, чтобы Language.js мог её вызвать ===
+window.initChangelog = initChangelog
+
+function getCurrentLanguage() {
+	let lang = localStorage.getItem('language')
+	if (!lang) lang = 'ru' // Язык по умолчанию
+	return lang
+}
 
 function initChangelog() {
 	const container = document.getElementById('changelogContainer')
 	const versionSpan = document.getElementById('newVersionNumber')
+	const currentLang = getCurrentLanguage()
 
 	if (versionSpan) versionSpan.innerText = UPDATE_CONFIG.version
 	if (!container) return
 
-	// Очищаем контейнер
 	container.innerHTML = ''
 
-	// Генерируем HTML на основе массива changes
 	UPDATE_CONFIG.changes.forEach(item => {
 		const row = document.createElement('div')
 		row.className = 'changelog-item'
 
-		// Определяем класс бейджа
 		const badgeClass = `badge ${item.type}`
 
-		row.innerHTML = `
-            <div class="${badgeClass}">${item.label}</div>
-            <div class="change-text">${item.text}</div>
-        `
+		// 1. Текст бейджа
+		const dict = BADGE_FALLBACKS[currentLang] || BADGE_FALLBACKS['ru']
+		const badgeText = dict[item.type] || item.type
 
+		// 2. Текст обновления
+		// Ищем перевод, если нет - берем русский, если нет - берем первый доступный или пустую строку
+		const updateText =
+			item.text[currentLang] ||
+			item.text['ru'] ||
+			Object.values(item.text)[0] ||
+			''
+
+		row.innerHTML = `
+            <div class="${badgeClass}" data-translate="${
+			BADGE_KEYS[item.type]
+		}">${badgeText}</div>
+            <div class="change-text">${updateText}</div>
+        `
 		container.appendChild(row)
 	})
 }
@@ -110,13 +114,11 @@ function initChangelog() {
 function openAboutNew() {
 	const panel = document.getElementById('aboutNewPanel')
 	if (!panel) return
-
+	initChangelog() // Обновляем перед открытием
 	try {
 		document.documentElement.style.overflow = 'hidden'
 	} catch (e) {}
-
 	panel.style.display = 'flex'
-	// Используем анимацию из About.css
 	panel.style.animation =
 		'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
 }
@@ -124,28 +126,18 @@ function openAboutNew() {
 function closeAboutNew() {
 	const panel = document.getElementById('aboutNewPanel')
 	if (!panel) return
-
 	panel.style.animation = 'fadeOut 0.3s forwards'
-
 	setTimeout(() => {
 		panel.style.display = 'none'
 		panel.style.animation = ''
 		document.documentElement.style.overflow = ''
-
-		// Когда пользователь закрывает окно, мы считаем, что он ознакомился с версией
 		markVersionAsViewed()
 	}, 300)
 }
 
-/**
- * Проверяет LocalStorage.
- * Если сохраненная версия отличается от текущей UPDATE_CONFIG.version -> показывает окно.
- */
 function checkAndShowUpdate() {
 	const lastViewed = localStorage.getItem(STORAGE_KEY_VERSION)
-
 	if (lastViewed !== UPDATE_CONFIG.version) {
-		// Небольшая задержка, чтобы сайт успел прогрузиться визуально
 		setTimeout(() => {
 			openAboutNew()
 		}, 1000)
