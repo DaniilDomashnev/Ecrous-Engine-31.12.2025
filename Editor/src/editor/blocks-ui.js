@@ -493,3 +493,4 @@ function findNextBlock(currentId) {
 	const conn = connections.find(c => c.from === currentId)
 	return conn ? conn.to : null
 }
+

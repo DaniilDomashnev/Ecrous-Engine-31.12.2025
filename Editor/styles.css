@@ -6,6 +6,18 @@
 		Helvetica, Arial, sans-serif;
 }
 
+/* ГАРАНТИРОВАННЫЕ ПЕРЕМЕННЫЕ ДЛЯ НОЧНОЙ ТЕМЫ (На случай если в themes.css ошибка) */
+body.theme-night {
+    --bg: #000000;
+    --bg-elevated: #111111;
+    --bg-elevated-soft: #1f1f1f;
+    --text: #e0e0e0;
+    --text-soft: #888888;
+    --border: #333333;
+    --accent: #7c4dff;
+    --accent-soft: rgba(124, 77, 255, 0.2);
+}
+
 body {
 	background-color: var(--bg);
 	color: var(--text);
@@ -20,14 +32,33 @@ body {
 }
 
 /* =========================================
+   GLOBAL FORM STYLES (Исправление исчезающего текста в инпутах)
+   ========================================= */
+input, select, textarea, .modal-input, .ui-input {
+    background-color: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 10px;
+    outline: none;
+    font-family: var(--font-main);
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: var(--accent);
+}
+
+/* Цвет иконки календаря/стрелок в select для Webkit */
+::-webkit-calendar-picker-indicator {
+    filter: invert(0.5); /* Делает иконки видимыми и на темном, и на светлом */
+}
+
+/* =========================================
    HEADER (ВЕРХНЯЯ ПАНЕЛЬ)
    ========================================= */
 header {
 	height: var(--nav-height);
-	background: var(
-		--bg-elevated
-	); /* Убедись, что этот цвет имеет альфа-канал или замени на rgba */
-	/* Добавляем эффект матового стекла */
+	background: var(--bg-elevated);
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
 	border-bottom: 1px solid var(--border);
@@ -36,11 +67,11 @@ header {
 	padding: 0 20px;
 	justify-content: space-between;
 	z-index: 20;
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03); /* Очень легкая тень */
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
 }
 
 .brand {
-	font-weight: 800; /* Жирнее для солидности */
+	font-weight: 800;
 	display: flex;
 	align-items: center;
 	gap: 12px;
@@ -64,10 +95,10 @@ header {
 .icon-btn {
 	background: transparent;
 	border: 1px solid transparent;
-	color: var(--text-soft);
-	width: 38px; /* Чуть крупнее кликабельная область */
+	color: var(--text-soft); /* Если пропадают иконки - проверить эту переменную */
+	width: 38px;
 	height: 38px;
-	border-radius: 10px; /* Более современные скругления */
+	border-radius: 10px;
 	cursor: pointer;
 	transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 	display: flex;
@@ -78,18 +109,18 @@ header {
 .icon-btn:hover {
 	background: var(--bg-elevated-soft);
 	color: var(--text);
-	transform: translateY(-2px); /* Легкий подъем */
+	transform: translateY(-2px);
 }
 
 .icon-btn:active {
-	transform: translateY(0) scale(0.95); /* Эффект нажатия */
+	transform: translateY(0) scale(0.95);
 }
 
 .play-btn {
 	background: var(--accent);
-	color: #fff;
+	color: #fff; /* Всегда белый на акцентном цвете */
 	border: none;
-	padding: 0 24px; /* Шире кнопка */
+	padding: 0 24px;
 	height: 38px;
 	border-radius: 10px;
 	font-weight: 600;
@@ -103,7 +134,6 @@ header {
 	overflow: hidden;
 }
 
-/* Блик на кнопке Play */
 .play-btn::after {
 	content: '';
 	position: absolute;
@@ -121,7 +151,7 @@ header {
 
 .play-btn:hover {
 	transform: translateY(-2px);
-	box-shadow: 0 8px 25px var(--accent-soft); /* Усиливаем свечение */
+	box-shadow: 0 8px 25px var(--accent-soft);
 	filter: brightness(1.05);
 }
 .play-btn:active {
@@ -157,14 +187,14 @@ header {
 
 .menu-dropdown {
 	position: absolute;
-	top: calc(100% + 8px); /* Отступ от кнопки */
+	top: calc(100% + 8px);
 	left: 0;
-	background: var(--bg-elevated);
-	backdrop-filter: blur(10px); /* Стекло в меню */
+	background: var(--bg-elevated); /* Исправлено: жесткая привязка к переменной */
+	backdrop-filter: blur(10px);
 	border: 1px solid var(--border);
 	border-radius: 12px;
 	min-width: 240px;
-	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15); /* Мягкая тень */
+	box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); /* Чуть темнее тень для контраста */
 	display: none;
 	flex-direction: column;
 	padding: 8px;
@@ -193,7 +223,7 @@ header {
 	gap: 12px;
 	padding: 10px 12px;
 	font-size: 13px;
-	color: var(--text);
+	color: var(--text); /* Явно задаем цвет текста */
 	border-radius: 8px;
 	cursor: pointer;
 	transition: 0.15s;
@@ -210,7 +240,7 @@ header {
 .menu-entry:hover {
 	background: var(--accent);
 	color: #fff;
-	transform: translateX(2px); /* Легкий сдвиг вправо при наведении */
+	transform: translateX(2px);
 }
 .menu-entry:hover span {
 	color: rgba(255, 255, 255, 0.9);
@@ -254,7 +284,7 @@ header {
 	height: 85%;
 	background: var(--bg-elevated);
 	border: 1px solid var(--border);
-	border-radius: 20px; /* Сильнее скругление */
+	border-radius: 20px;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
@@ -292,7 +322,8 @@ header {
 	gap: 8px;
 }
 .lib-cat-item:hover {
-	background: rgba(255, 255, 255, 0.02);
+	background: var(--bg-elevated-soft);
+    color: var(--text);
 }
 .lib-cat-item.active {
 	background: var(--bg-elevated-soft);
@@ -302,7 +333,7 @@ header {
 
 .lib-content {
 	background: var(--bg);
-	padding: 20px !important; /* Добавил отступ контенту */
+	padding: 20px !important;
 }
 
 .lib-block-card {
@@ -364,10 +395,12 @@ header {
 	margin-left: auto;
 	transition: 0.2s;
 	opacity: 0.6;
+    color: var(--text-soft);
 }
 .toggle-btn:hover {
-	background: rgba(255, 255, 255, 0.1);
+	background: var(--bg-elevated-soft);
 	opacity: 1;
+    color: var(--text);
 }
 
 /* Состояние: СВЕРНУТ (Collapsed) */
@@ -390,7 +423,7 @@ header {
 	position: absolute;
 	top: -8px;
 	right: -8px;
-	background: #ff4757; /* Более приятный красный */
+	background: var(--danger, #ff4d4d);
 	color: white;
 	font-size: 10px;
 	font-weight: 800;
@@ -400,48 +433,41 @@ header {
 	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-/* Находим и обновляем .game-window */
+/* Game Window */
 .game-window {
-    position: absolute;
-    /* Центрирование по умолчанию */
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    
-    background: #000;
-    display: flex;
-    flex-direction: column;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    overflow: hidden;
-    
-    /* Дефолтные размеры, если JS не задал */
-    width: 800px; 
-    height: 600px;
-    min-width: 320px;
-    min-height: 240px;
-    
-    /* Важно для ресайзера */
-    resize: none; 
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: #000;
+	display: flex;
+	flex-direction: column;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6),
+		0 0 0 1px rgba(255, 255, 255, 0.05);
+	border-radius: 12px;
+	overflow: hidden;
+	width: 800px;
+	height: 600px;
+	min-width: 320px;
+	min-height: 240px;
+	resize: none;
 }
 
-/* НОВОЕ: Стили для уголка изменения размера */
 .game-window-resizer {
-    width: 15px;
-    height: 15px;
-    background: linear-gradient(135deg, transparent 50%, var(--accent) 50%);
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    cursor: nwse-resize;
-    z-index: 20;
-    opacity: 0.7;
+	width: 15px;
+	height: 15px;
+	background: linear-gradient(135deg, transparent 50%, var(--accent) 50%);
+	position: absolute;
+	right: 0;
+	bottom: 0;
+	cursor: nwse-resize;
+	z-index: 20;
+	opacity: 0.7;
 }
 .game-window-resizer:hover {
-    opacity: 1;
+	opacity: 1;
 }
 
-/* Обновляем заголовок игры */
 .game-header {
 	background: #1a1a1a;
 	padding: 10px 16px;
@@ -468,155 +494,217 @@ header {
 }
 
 .sidebar {
-    position: relative; /* <--- ВАЖНО */
-    width: 280px; 
-    min-width: 200px; 
-    max-width: 600px; 
-    display: flex;
-    flex-direction: column;
-    background: var(--bg-elevated);
-    border-right: 1px solid var(--border);
-    flex-shrink: 0;
+	position: relative;
+	width: 280px;
+	min-width: 200px;
+	max-width: 600px;
+	display: flex;
+	flex-direction: column;
+	background: var(--bg-elevated);
+	border-right: 1px solid var(--border);
+	flex-shrink: 0;
 }
 
-/* Полностью обновляем стили разделителя */
 .resizer {
-    position: absolute; /* Вырываем из потока flex-column */
-    right: 0;           /* Прижимаем к правому краю */
-    top: 0;
-    bottom: 0;          /* Растягиваем на всю высоту */
-    width: 6px;         /* Ширина зоны захвата */
-    cursor: col-resize;
-    z-index: 100;
-    transition: background-color 0.2s;
-    user-select: none;
-    /* Делаем его прозрачным, чтобы не перекрывал бордер, но реагировал на мышь */
-    background-color: transparent; 
+	position: absolute;
+	right: 0;
+	top: 0;
+	bottom: 0;
+	width: 6px;
+	cursor: col-resize;
+	z-index: 100;
+	transition: background-color 0.2s;
+	user-select: none;
+	background-color: transparent;
 }
 
-/* Подсветка при наведении или перетаскивании */
-.resizer:hover, .resizer.active {
-    background-color: var(--accent);
-    opacity: 0.5;
+.resizer:hover,
+.resizer.active {
+	background-color: var(--accent);
+	opacity: 0.5;
 }
 
-/* Обновляем toolbox */
 .toolbox {
-    position: relative; /* Важно для позиционирования ресайзера */
-    width: 260px;       /* Начальная ширина */
-    min-width: 200px;
-    max-width: 500px;
-    background: var(--bg-elevated);
-    border-left: 1px solid var(--border); /* Граница слева */
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
+	position: relative;
+	width: 260px;
+	min-width: 200px;
+	max-width: 500px;
+	background: var(--bg-elevated);
+	border-left: 1px solid var(--border);
+	display: flex;
+	flex-direction: column;
+	flex-shrink: 0;
 }
 
-/* Стандартный ресайзер (для левого сайдбара - полоска справа) */
-.resizer {
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 6px;
-    cursor: col-resize;
-    z-index: 100;
-    transition: background-color 0.2s;
-    background-color: transparent;
-    user-select: none;
-}
-
-/* НОВЫЙ КЛАСС: Ресайзер слева (для правого тулбокса) */
 .resizer.resizer-left {
-    right: auto; /* Отменяем right */
-    left: 0;     /* Прижимаем влево */
+	right: auto;
+	left: 0;
 }
 
-/* Подсветка */
-.resizer:hover, .resizer.active {
-    background-color: var(--accent);
-    opacity: 0.5;
-}
-
-.dialog-text {
-    white-space: pre-wrap; /* Сохраняет переносы строк и переносит длинные слова */
-    word-wrap: break-word; /* Разбивает длинные слова */
-    overflow-y: auto;      /* Добавляет скролл, если текста слишком много */
-}
-
-/* === СТИЛИ ПАПОК В САЙДБАРЕ === */
+/* === ИСПРАВЛЕННЫЕ СТИЛИ ПАПОК (SIDEBAR & LISTS) === */
+/* Объединил дублирующиеся стили для чистоты и правильной работы темы */
 
 .sidebar-folder {
-    display: flex;
-    align-items: center;
-    padding: 8px 10px; /* Чуть больше места для пальца */
-    background: rgba(255, 255, 255, 0.05);
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    color: #ffffff !important; /* Белый текст */
-    user-select: none;
-    transition: background 0.2s;
+	display: flex;
+	align-items: center;
+	padding: 8px 10px;
+	background: transparent;
+	border-bottom: 1px solid var(--border);
+	cursor: pointer;
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--text) !important; /* Важно: использует переменную темы */
+	user-select: none;
+	transition: background 0.2s, color 0.2s;
 }
 
 .sidebar-folder:hover {
-    background: rgba(255, 255, 255, 0.1);
+	background: var(--bg-elevated-soft);
 }
 
 .folder-icon {
-    margin-right: 8px;
-    font-size: 16px;
-    color: #ffffff !important; /* Белая иконка */
+	margin-right: 8px;
+	font-size: 16px;
+	color: var(--text-soft) !important;
+}
+
+.sidebar-folder.drag-over {
+	background: var(--bg-elevated-soft) !important;
+	border: 1px dashed var(--accent) !important;
 }
 
 .folder-arrow {
-    margin-right: 4px;
-    font-size: 14px;
-    transition: transform 0.2s;
-    opacity: 0.8;
-    color: #ffffff;
+	margin-right: 4px;
+	font-size: 14px;
+	transition: transform 0.2s;
+	opacity: 0.8;
+	color: var(--text-soft);
 }
 
 .sidebar-folder.open .folder-arrow {
-    transform: rotate(90deg);
+	transform: rotate(90deg);
 }
 
 .folder-content {
-    display: none;
-    background: rgba(0, 0, 0, 0.15); /* Чуть темнее фон внутри */
-    box-shadow: inset 0 3px 5px rgba(0,0,0,0.2);
+	display: none;
+	background: var(--bg); 
+	box-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.05);
 }
 
 .sidebar-folder.open + .folder-content {
-    display: block;
+	display: block;
 }
 
-/* Линии для вложенности */
 .folder-content .list-item {
-    padding-left: 32px !important;
-    border-left: 2px solid rgba(255, 255, 255, 0.1);
+	padding-left: 32px !important;
+	border-left: 2px solid var(--border);
 }
 
-/* === DRAG & DROP ВИЗУАЛ === */
-
-/* Когда перетаскиваем элемент над папкой */
-.sidebar-folder.drag-over {
-    background: rgba(255, 255, 255, 0.2) !important;
-    border: 1px dashed #fff !important;
+/* Список элементов (проектов, объектов) */
+.list-item {
+    color: var(--text);
+    padding: 8px 10px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+.list-item:hover {
+    background-color: var(--bg-elevated-soft);
 }
 
-/* Когда перетаскиваем элемент над пустым местом (в корень) */
+.list-item i {
+    color: var(--text-soft);
+    margin-right: 8px;
+}
+
 .list-container.drag-over {
-    background: rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+	background: var(--bg-elevated-soft);
+	box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Курсор для перетаскиваемых элементов */
-.list-item[draggable="true"] {
-    cursor: grab;
+.list-item[draggable='true'] {
+	cursor: grab;
 }
-.list-item[draggable="true"]:active {
-    cursor: grabbing;
+.list-item[draggable='true']:active {
+	cursor: grabbing;
 }
+
+/* --- СТИЛИ ДЛЯ ВЫБОРА ТЕМЫ В ШАПКЕ И ПРОЧИЕ SELECT --- */
+.header-theme-select {
+    background: var(--bg-elevated-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    outline: none;
+    margin-right: 8px;
+    transition: 0.2s;
+    appearance: none; 
+    -webkit-appearance: none;
+    text-align: center;
+}
+
+.header-theme-select:hover {
+    border-color: var(--accent);
+    background: var(--bg);
+}
+
+.header-theme-select option {
+    background: var(--bg-elevated);
+    color: var(--text);
+}
+
+/* Шаблоны (кнопки внизу сайдбара) */
+.template-controls {
+    padding: 10px;
+}
+
+.template-controls p {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    opacity: 0.8;
+}
+
+.template-controls button {
+    background: var(--bg-elevated-soft);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    width: 100%;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.template-controls button:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--bg-elevated);
+}
+
+/* Исправление для модальных окон при темных темах */
+.modal-window {
+    background: var(--bg-elevated);
+    color: var(--text);
+    border: 1px solid var(--border);
+}
+
+.modal-title {
+    color: var(--text);
+}
+
+.modal-message {
+    color: var(--text-soft);
+}
+

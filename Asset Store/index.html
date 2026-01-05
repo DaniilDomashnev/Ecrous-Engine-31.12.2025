@@ -6,7 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="../public/vite.jpg" />
     <title data-translate="storeTitle">Ecrous Asset Store</title>
+
+    <link rel="stylesheet" href="../src/styles/themes.css">
     <link rel="stylesheet" href="styles.css">
+
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.3.0/fonts/remixicon.css" rel="stylesheet">
@@ -17,7 +20,7 @@
     <nav class="navbar">
         <div style="display:flex; align-items:center;">
             <a href="../index.html" class="icon-btn"
-                style="text-decoration:none; margin-right: 10px; color: var(--text-muted);">
+                style="text-decoration:none; margin-right: 10px; color: var(--text-soft);">
                 <i class="ri-home-4-line"></i>
             </a>
             <div class="nav-brand">
@@ -32,12 +35,6 @@
         </div>
 
         <div class="nav-auth">
-            <select id="languageSelect" onchange="changeLanguage(this.value)" class="lang-select">
-                <option value="ru">RU</option>
-                <option value="en">EN</option>
-                <option value="kz">KZ</option>
-                <option value="uk">UA</option>
-            </select>
 
             <div id="auth-buttons">
                 <button class="btn btn-text" onclick="openModal('login-modal')" data-translate="loginBtn">Войти</button>
@@ -60,7 +57,6 @@
     </nav>
 
     <div class="main-layout">
-
         <aside class="sidebar">
             <div class="sidebar-section">
                 <h3 data-translate="categoriesTitle">Категории</h3>
@@ -78,6 +74,13 @@
                     <li data-cat="ui"><i class="fa-solid fa-layer-group"></i> <span data-translate="catUI">Интерфейс
                             (UI)</span></li>
                 </ul>
+            </div>
+
+            <div style="padding: 0 20px; margin-bottom: 20px;">
+                <button class="btn btn-outline-sm full-width" onclick="openModal('verification-modal')"
+                    style="border-color: var(--info); color: var(--info);">
+                    <i class="fa-solid fa-circle-check"></i> Получить галочку
+                </button>
             </div>
 
             <div class="sidebar-promo">
@@ -181,11 +184,11 @@
 
     <div id="success-modal" class="modal-overlay">
         <div class="modal-box success-box" style="text-align: center;">
-            <div class="success-icon" style="font-size: 3rem; color: #10b981; margin-bottom: 20px;">
+            <div class="success-icon" style="font-size: 3rem; color: var(--success); margin-bottom: 20px;">
                 <i class="fa-solid fa-check-circle"></i>
             </div>
             <h2 data-translate="modalSuccessTitle">Готово!</h2>
-            <p data-translate="modalSuccessText" style="color: #9ca3af; margin-bottom: 20px;">Ваш ассет успешно
+            <p data-translate="modalSuccessText" style="color: var(--text-soft); margin-bottom: 20px;">Ваш ассет успешно
                 опубликован и доступен в магазине.</p>
             <button class="btn btn-primary full-width" onclick="closeModal('success-modal')"
                 data-translate="awesomeBtn">Отлично</button>
@@ -226,8 +229,105 @@
         </div>
     </div>
 
+    <div id="verification-modal" class="modal-overlay">
+        <div class="modal-box" style="text-align: center; border: 1px solid rgba(59, 130, 246, 0.4);">
+            <span class="close-modal" onclick="closeModal('verification-modal')">&times;</span>
+
+            <div style="margin-bottom: 20px;">
+                <i class="fa-solid fa-circle-check"
+                    style="font-size: 3rem; color: var(--info); filter: drop-shadow(0 0 10px rgba(59,130,246,0.5));"></i>
+            </div>
+
+            <h2 style="margin-bottom: 10px;">Верификация автора</h2>
+            <p style="color: var(--text-soft); margin-bottom: 20px;">Станьте проверенным создателем контента и получите
+                знак доверия.
+            </p>
+
+            <div
+                style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 12px; text-align: left; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 10px; color: var(--text);">Требования:</h4>
+                <ul style="list-style: none; padding: 0; color: var(--text-soft); font-size: 0.95rem;">
+                    <li style="margin-bottom: 8px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-check" style="color: var(--success);"></i> Загрузить более <strong>10
+                            ассетов</strong>
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fa-solid fa-star" style="color: var(--warning);"></i> Рейтинг выше
+                        <strong>4.4</strong>
+                    </li>
+                </ul>
+            </div>
+
+            <a href="https://t.me/DanyaTebyaEbet" target="_blank" style="text-decoration: none;">
+                <button class="btn-tg" style="padding: 12px; font-size: 1rem;">
+                    <i class="fa-brands fa-telegram"></i> Написать администратору
+                </button>
+            </a>
+        </div>
+    </div>
+
+    <div id="details-modal" class="modal-overlay">
+        <div class="modal-box" style="width: 800px; max-width: 95%;">
+            <span class="close-modal" onclick="closeModal('details-modal')">&times;</span>
+
+            <div class="details-content">
+                <div class="details-left">
+                    <img id="detail-img" src="" class="details-img">
+                    <h2 id="detail-title" style="margin-bottom: 5px;">Asset Name</h2>
+                    <div class="card-category" id="detail-category">Category</div>
+                    <div style="margin: 10px 0;">
+                        Автор: <span id="detail-author" style="color: var(--text); font-weight: 600;">User</span>
+                        <span id="detail-verified"></span>
+                    </div>
+
+                    <div class="rating-display">
+                        <span id="detail-stars"></span>
+                        <span id="detail-rating-val" style="color: var(--text); font-weight: bold;">0.0</span>
+                        <span class="rating-count">(<span id="detail-reviews-count">0</span> отзывов)</span>
+                    </div>
+
+                    <a id="detail-download" href="#" target="_blank" class="btn btn-primary full-width">
+                        <i class="fa-solid fa-download"></i> Скачать
+                    </a>
+                </div>
+
+                <div class="details-right">
+                    <h3>Отзывы и Рейтинг</h3>
+
+                    <div id="comments-list" class="comments-list">
+                        <p style="text-align:center; color: var(--text-soft); margin-top: 20px;">Пока нет отзывов.
+                            Будьте первым!</p>
+                    </div>
+
+                    <form id="comment-form" style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;">
+                        <div class="star-rating-input">
+                            <input type="radio" name="rating" id="star5" value="5"><label for="star5"><i
+                                    class="fa-solid fa-star"></i></label>
+                            <input type="radio" name="rating" id="star4" value="4"><label for="star4"><i
+                                    class="fa-solid fa-star"></i></label>
+                            <input type="radio" name="rating" id="star3" value="3"><label for="star3"><i
+                                    class="fa-solid fa-star"></i></label>
+                            <input type="radio" name="rating" id="star2" value="2"><label for="star2"><i
+                                    class="fa-solid fa-star"></i></label>
+                            <input type="radio" name="rating" id="star1" value="1"><label for="star1"><i
+                                    class="fa-solid fa-star"></i></label>
+                        </div>
+                        <div class="input-group" style="margin-bottom: 10px;">
+                            <input type="text" id="comment-text" placeholder="Напишите комментарий..." required
+                                style="font-size: 0.9rem;">
+                        </div>
+                        <button type="submit" class="btn btn-accent full-width" style="padding: 8px;">Отправить
+                            отзыв</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="../src/scripts/Language.js"></script>
     <script type="module" src="script.js"></script>
+
+    <script src="../src/scripts/Menu/Settings.js"></script>
 
     <script>
         // Ставим правильный язык в селект при загрузке
@@ -253,4 +353,5 @@
         }
     </script>
 </body>
+
 </html>

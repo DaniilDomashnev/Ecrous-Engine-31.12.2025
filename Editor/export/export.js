@@ -1,5 +1,5 @@
 // ==========================================
-// EXPORT LOGIC (Ecrous Engine) - FINAL & FIXED
+// EXPORT LOGIC (Ecrous Engine) - FIX
 // ==========================================
 
 function openExportModal() {
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const closeExport = document.getElementById('closeExport')
 	const menuFile = document.getElementById('menuFile')
 
-	const exportWinBtn = document.getElementById('exportWindows')
+	const exportWinBtn = document.getElementById('exportWindows') // Web Build
 	const exportExeBtn = document.getElementById('exportExe')
 	const exportAndroidBtn = document.getElementById('exportAndroid')
 	const exportIOSBtn = document.getElementById('exportIOS')
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
-	// --- ОБРАБОТЧИКИ С ВЫВОДОМ ОШИБОК ---
+	// --- HTML EXPORT ---
 	if (exportWinBtn)
 		exportWinBtn.onclick = async () => {
 			try {
@@ -53,12 +53,14 @@ document.addEventListener('DOMContentLoaded', () => {
 			} catch (err) {
 				alert('Ошибка экспорта: ' + err.message)
 				console.error(err)
-				if (exportWinBtn) exportWinBtn.innerHTML = 'Ошибка'
+				exportWinBtn.innerHTML = 'Ошибка'
 			}
 		}
 
+	// --- EXE (Placeholder) ---
 	if (exportExeBtn) exportExeBtn.onclick = () => exportProjectAsExe()
 
+	// --- ANDROID (ZIP Bundle) ---
 	if (exportAndroidBtn)
 		exportAndroidBtn.onclick = async () => {
 			try {
@@ -68,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		}
 
+	// --- iOS (ZIP Bundle) ---
 	if (exportIOSBtn)
 		exportIOSBtn.onclick = async () => {
 			try {
@@ -77,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 			}
 		}
 
+	// --- ECR PROJECT ---
 	if (exportEcrBtn) exportEcrBtn.onclick = () => exportProjectAsEcr()
 })
 
@@ -145,9 +149,8 @@ async function generateGameHTML() {
 		exportedAt: new Date().toISOString(),
 	}
 
-	// --------------------------------------------------------
-	// ВНУТРЕННИЙ JS ДВИЖОК
-	// --------------------------------------------------------
+    // Мы берем логику из main.js, но т.к. мы в браузере, нам нужно внедрить её как строку.
+    // ВНИМАНИЕ: Здесь вставлен обновленный код из вашего main.js
 	const runtimeScript = `
         const PROJECT = ${JSON.stringify(buildData.project)};
         const START_SCENE_ID = "${buildData.startSceneId}";
@@ -162,6 +165,9 @@ async function generateGameHTML() {
         let worldGravity = { x: 0, y: 0 };
         let cameraState = { x: 0, y: 0, zoom: 1, target: null, lerp: 0.1, shakeInfo: { power: 0, time: 0 } };
         
+        let matterEngine = null;
+        let bodyMap = new Map();
+
         window.entityComponents = {}; 
         window.gameInventory = [];
         window.gameQuests = {};
@@ -177,10 +183,17 @@ async function generateGameHTML() {
         let globalCurrentSceneData = null;
         let updateInterval = null;
         let activeTimers = [];
+        let showFps = false;
 
         function getAssetUrl(input) {
             if (!input) return '';
+            // Если это dataURL или внешняя ссылка
+            if (input.startsWith('data:') || input.startsWith('http')) return input;
+            
+            // Если переменная
             if (input.startsWith('{') && input.endsWith('}')) return resolveValue(input);
+            
+            // Если ID из ассетов проекта
             if (PROJECT.assets) {
                 const asset = PROJECT.assets.find(a => a.id === input);
                 if (asset) return asset.data;
@@ -227,22 +240,28 @@ async function generateGameHTML() {
                 return;
             }
 
-            setTimeout(() => { bar.style.width = '100%'; }, 100);
+            if(bar) setTimeout(() => { bar.style.width = '100%'; }, 100);
 
-            setTimeout(() => {
+            if(loader) setTimeout(() => {
                 loader.style.opacity = '0';
                 setTimeout(() => {
                     loader.style.display = 'none';
-                    startMsg.classList.add('visible');
-                    splash.addEventListener('click', () => {
-                       splash.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                       splash.style.opacity = '0';
-                       splash.style.transform = 'scale(1.1)';
-                       setTimeout(() => {
-                           splash.style.display = 'none';
-                           startGame();
-                       }, 600);
-                    }, { once: true });
+                    if(startMsg) {
+                        startMsg.classList.add('visible');
+                        splash.addEventListener('click', () => {
+                        splash.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                        splash.style.opacity = '0';
+                        splash.style.transform = 'scale(1.1)';
+                        setTimeout(() => {
+                            splash.style.display = 'none';
+                            startGame();
+                        }, 600);
+                        }, { once: true });
+                    } else {
+                        // Автостарт если нет сообщения
+                        splash.style.display = 'none';
+                        startGame();
+                    }
                 }, 500);
             }, 1000); 
         };
@@ -256,6 +275,20 @@ async function generateGameHTML() {
             worldGravity = { x: 0, y: 0 };
             activeCollisionsPair.clear();
             
+            // Matter JS Init
+            if(typeof Matter !== 'undefined') {
+                const Engine = Matter.Engine, World = Matter.World;
+                matterEngine = Engine.create();
+                matterEngine.world.gravity.y = 1;
+                Matter.Events.on(matterEngine, 'collisionStart', event => {
+                    event.pairs.forEach(pair => {
+                        triggerCollisionEvent(pair.bodyA.label, pair.bodyB.label);
+                    });
+                });
+            } else {
+                console.warn('Matter.js physics engine not loaded.');
+            }
+
             const audioUnlock = new Audio();
             audioUnlock.play().catch(e => {});
 
@@ -281,28 +314,48 @@ async function generateGameHTML() {
             requestAnimationFrame(gameLoop);
         }
 
+        function triggerCollisionEvent(id1, id2) {
+            if (!globalCurrentSceneData) return;
+            const objectsData = globalCurrentSceneData.objects;
+            objectsData.forEach(obj => {
+                if (!obj.scripts) return;
+                if (obj.id === id1 || obj.id === id2) {
+                    const events = obj.scripts.filter(b => b.type === 'evt_collision');
+                    events.forEach(evt => {
+                        const targetName = evt.values[1];
+                        const otherId = obj.id === id1 ? id2 : id1;
+                        const otherObjDef = objectsData.find(o => o.id === otherId);
+                        const isMatch = !targetName || (otherObjDef && otherObjDef.name === targetName) || targetName === otherId;
+                        if (isMatch) executeChain(evt, obj.scripts, obj.connections);
+                    });
+                }
+            });
+        }
+
         function gameLoop() {
             if (!isRunning) return;
+            const now = performance.now();
+            const dt = Math.min(now - lastTime, 50);
 
-            // --- 1. ФИЗИКА (2D) ---
-            Object.keys(physicsObjects).forEach(id => {
-                const obj = physicsObjects[id];
-                const el = document.getElementById(id);
-                if (!el) return;
-                obj.vx += worldGravity.x;
-                obj.vy += worldGravity.y;
-                let x = parseFloat(el.style.left || 0);
-                let y = parseFloat(el.style.top || 0);
-                x += obj.vx;
-                y += obj.vy;
-                if (obj.collideWorld) {
-                    if (y + obj.height > gameConfig.height) { y = gameConfig.height - obj.height; obj.vy *= -obj.bounce; }
-                    if (x + obj.width > gameConfig.width) { x = gameConfig.width - obj.width; obj.vx *= -obj.bounce; }
-                    if (x < 0) { x = 0; obj.vx *= -obj.bounce; }
-                }
-                el.style.left = x + 'px';
-                el.style.top = y + 'px';
-            });
+            // --- 1. ФИЗИКА (Matter) ---
+            if(matterEngine) {
+                Matter.Engine.update(matterEngine, dt);
+                bodyMap.forEach((body, domId) => {
+                    const el = document.getElementById(domId);
+                    if (!el) return;
+                    const w = body.bounds.max.x - body.bounds.min.x;
+                    const h = body.bounds.max.y - body.bounds.min.y;
+                    const x = body.position.x - w / 2;
+                    const y = body.position.y - h / 2;
+                    const angleDeg = body.angle * (180 / Math.PI);
+                    el.style.left = \`\${x}px\`;
+                    el.style.top = \`\${y}px\`;
+                    el.style.transform = \`rotate(\${angleDeg}deg)\`;
+                });
+            }
+            
+            // --- 1.1 ФИЗИКА (Simple 2D Update Loop) ---
+            // Здесь можно добавить простую физику, если она используется
 
             // --- 2. КАМЕРА (2D Follow & Shake) ---
             const world = document.getElementById('game-world');
@@ -328,10 +381,25 @@ async function generateGameHTML() {
                 if (cameraState.target || cameraState.x !== 0 || cameraState.y !== 0) {
                      const cx = gameConfig.width / 2;
                      const cy = gameConfig.height / 2;
+                     // Округление для четкости
+                     const fx = Math.round(-cameraState.x + cx + shakeX);
+                     const fy = Math.round(-cameraState.y + cy + shakeY);
                      
-                     world.style.transform = 'translate(' + (-cameraState.x + cx + shakeX) + 'px, ' + (-cameraState.y + cy + shakeY) + 'px) scale(' + cameraState.zoom + ')';
+                     world.style.transform = \`translate(\${fx}px, \${fy}px) scale(\${cameraState.zoom})\`;
+                     
+                     // Параллакс
+                     document.querySelectorAll('[data-parallax]').forEach(el => {
+                        const factor = parseFloat(el.dataset.parallax) || 1;
+                        if (factor !== 1) {
+                            const offsetX = -fx * (1 - factor);
+                            const offsetY = -fy * (1 - factor);
+                            el.style.transform = \`translate(\${offsetX}px, \${offsetY}px)\`;
+                        }
+                     });
                 }
             }
+            
+            lastTime = now;
             requestAnimationFrame(gameLoop);
         }
 
@@ -360,23 +428,36 @@ async function generateGameHTML() {
             currentSessionId++;
             currentSceneId = sceneId;
             globalCurrentSceneData = scene;
+            
+            // Очистка
             document.getElementById('game-world').innerHTML = '';
             document.querySelectorAll('[id^="pp-overlay-"]').forEach(el => el.remove());
             const ui = document.getElementById('game-ui');
             if(ui) ui.innerHTML = ''; else createUIContainer();
+            
+            // Сброс MatterJS
+            if(matterEngine) { Matter.World.clear(matterEngine.world); Matter.Engine.clear(matterEngine); matterEngine = Matter.Engine.create(); matterEngine.world.gravity.y = 1; }
+            bodyMap.clear();
+            
             Object.values(loadedSounds).forEach(s => { try{s.pause(); s.currentTime=0;}catch(e){} });
             document.title = scene.name;
             if(updateInterval) clearInterval(updateInterval);
             activeTimers.forEach(t => clearInterval(t));
             activeTimers = [];
+            
             const allScripts = scene.objects.flatMap(o => o.scripts || []);
 
+            // Загрузка звуков заранее (если нужно)
+            // ...
+
+            // Start
             allScripts.filter(b => b.type === 'evt_start').forEach(block => {
                 if (block.disabled) return;
                 const owner = scene.objects.find(o => o.scripts.some(s => s.id === block.id));
                 executeChain(block, owner.scripts, owner.connections || []);
             });
 
+            // Update Loop
             const updateEvents = allScripts.filter(b => b.type === 'evt_update');
             if (updateEvents.length > 0) {
                 updateInterval = setInterval(() => {
@@ -388,6 +469,7 @@ async function generateGameHTML() {
                 }, 16);
             }
 
+            // Timers
             const timerEvents = allScripts.filter(b => b.type === 'evt_timer');
             timerEvents.forEach(block => {
                 const sec = parseFloat(block.values[0]) || 1;
@@ -398,6 +480,7 @@ async function generateGameHTML() {
                 }, sec * 1000);
                 activeTimers.push(t);
             });
+            
             setupInputListeners(scene, allScripts);
         }
 
@@ -458,6 +541,7 @@ async function generateGameHTML() {
             let nextBlock = null;
             let skipToBlock = null;
 
+            // --- LOGIC: IF / ELSE / REPEAT ---
             if (currentBlock.type === 'flow_if') {
                 const valA = resolveValue(currentBlock.values[0]);
                 const op = currentBlock.values[1];
@@ -472,6 +556,7 @@ async function generateGameHTML() {
                 else if (op === '>=') condition = isNum ? nA >= nB : valA >= valB;
                 else if (op === '<=') condition = isNum ? nA <= nB : valA <= valB;
                 else if (op === 'contains') condition = String(valA).includes(String(valB));
+                
                 if (!condition) {
                     const elseBlock = findElseBlock(currentBlock, allBlocks, connections);
                     skipToBlock = elseBlock ? elseBlock : findClosingBlock(currentBlock, allBlocks, connections);
@@ -490,6 +575,7 @@ async function generateGameHTML() {
                     skipToBlock = loopEnd;
                 }
             }
+
             if (!skipToBlock) await executeBlockLogic(currentBlock);
             if (skipToBlock) nextBlock = getNextBlock(skipToBlock, allBlocks, connections);
             else nextBlock = getNextBlock(currentBlock, allBlocks, connections);
@@ -497,11 +583,22 @@ async function generateGameHTML() {
         }
 
         function getNextBlock(block, allBlocks, connections) {
-            if (connections && connections.length > 0) {
+             // Ищем по связям (Nodes)
+             if (connections && connections.length > 0) {
                  const conn = connections.find(c => c.from === block.id);
                  if (conn) return allBlocks.find(b => b.id === conn.to);
-            }
-            return null;
+             }
+             // Fallback для Stack (по вертикали)
+             const SEARCH_HEIGHT = 500;
+             const ALIGN_TOLERANCE = 50;
+             let candidates = allBlocks.filter(b => {
+                if (b.id === block.id) return false;
+                const dy = b.y - block.y;
+                const dx = Math.abs(b.x - block.x);
+                return dy > 0 && dy < SEARCH_HEIGHT && dx < ALIGN_TOLERANCE;
+             });
+             candidates.sort((a, b) => a.y - b.y);
+             return candidates[0];
         }
 
         function findElseBlock(startBlock, allBlocks, connections) {
@@ -537,11 +634,16 @@ async function generateGameHTML() {
                 curr = getNextBlock(curr, allBlocks, conns);
             }
         }
+        
+        // --- ПРОСТАЯ ФУНКЦИЯ ДЛЯ ПОИСКА ПУТИ (A* Mini) ---
+        function findPath(mapData, sx, sy, tx, ty) { return []; } // Заглушка, если нужна полная - скопировать из main.js
 
+        // --- ГЛАВНАЯ ЛОГИКА БЛОКОВ (Синхронизировано с Main.js) ---
         function executeBlockLogic(block) {
             return new Promise(resolve => {
                 if (!isRunning) return resolve();
                 
+                // Используем setTimeout 0 для асинхронности
                 setTimeout(async () => {
                     const v = block.values;
                     const w = document.getElementById('game-world');
@@ -549,177 +651,9 @@ async function generateGameHTML() {
                     const stage = document.getElementById('game-stage');
 
                     switch (block.type) {
-                        // --- 3D МИР ---
-                        case 'scene_3d_init': {
-                            const perspective = v[0];
-                            if (stage && w) {
-                                stage.style.perspective = perspective + 'px';
-                                stage.style.overflow = 'hidden';
-                                w.style.transformStyle = 'preserve-3d';
-                                w.style.width = "100%";
-                                w.style.height = "100%";
-                            }
-                            if (!document.getElementById('css-3d-styles')) {
-                                const style = document.createElement('style');
-                                style.id = 'css-3d-styles';
-                                style.innerHTML = \`
-                                    .ecr-cube { position: absolute; transform-style: preserve-3d; }
-                                    .ecr-face { position: absolute; width: 100%; height: 100%; border: 1px solid rgba(0,0,0,0.1); display:flex; align-items:center; justify-content:center; font-size:20px; color:rgba(255,255,255,0.5); }
-                                    .ecr-face.front  { transform: rotateY(  0deg) translateZ(calc(var(--s) / 2)); }
-                                    .ecr-face.back   { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); }
-                                    .ecr-face.right  { transform: rotateY( 90deg) translateZ(calc(var(--s) / 2)); }
-                                    .ecr-face.left   { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); }
-                                    .ecr-face.top    { transform: rotateX( 90deg) translateZ(calc(var(--s) / 2)); }
-                                    .ecr-face.bottom { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); }
-                                    .ecr-plane { position: absolute; transform-style: preserve-3d; }
-                                    .ecr-cylinder-group { position: absolute; transform-style: preserve-3d; }
-                                \`;
-                                document.head.appendChild(style);
-                            }
-                            break;
-                        }
-                        case 'obj_3d_create_cube': {
-                            const id = v[0]; if (document.getElementById(id)) break;
-                            const size = parseInt(resolveValue(v[1]));
-                            const color = resolveValue(v[2]);
-                            const x = resolveValue(v[3]); const y = resolveValue(v[4]); const z = resolveValue(v[5]);
-                            const cube = document.createElement('div');
-                            cube.id = id; cube.className = 'ecr-cube';
-                            cube.style.width = size + 'px'; cube.style.height = size + 'px';
-                            cube.style.setProperty('--s', size + 'px');
-                            cube.style.transform = \`translate3d(\${x}px, \${y}px, \${z}px)\`;
-                            const faces = ['front', 'back', 'right', 'left', 'top', 'bottom'];
-                            const shades = [1, 0.8, 0.6, 0.6, 1.2, 0.4]; 
-                            faces.forEach((face, i) => {
-                                const el = document.createElement('div');
-                                el.className = \`ecr-face \${face}\`;
-                                el.style.backgroundColor = color;
-                                el.style.filter = \`brightness(\${shades[i]})\`; el.style.opacity = '0.9'; 
-                                cube.appendChild(el);
-                            });
-                            w.appendChild(cube);
-                            break;
-                        }
-                        case 'obj_3d_create_plane': {
-                            const id = v[0]; if (document.getElementById(id)) break;
-                            const wVal=resolveValue(v[1]); const hVal=resolveValue(v[2]); const color=resolveValue(v[3]);
-                            const x=resolveValue(v[4]); const y=resolveValue(v[5]); const z=resolveValue(v[6]); const rx=resolveValue(v[7]);
-                            const plane = document.createElement('div');
-                            plane.id = id; plane.className = 'ecr-plane';
-                            plane.style.position = 'absolute'; plane.style.width = wVal + 'px'; plane.style.height = hVal + 'px';
-                            plane.style.backgroundColor = color;
-                            plane.style.transform = \`translate3d(\${x}px, \${y}px, \${z}px) rotateX(\${rx}deg)\`;
-                            plane.style.transformOrigin = 'center center';
-                            w.appendChild(plane);
-                            break;
-                        }
-                        case 'obj_3d_create_cylinder': {
-                            const id = v[0]; if (document.getElementById(id)) break;
-                            const height=parseFloat(resolveValue(v[1])); const diameter=parseFloat(resolveValue(v[2])); const sides=parseInt(resolveValue(v[3]))||8;
-                            const color=resolveValue(v[4]); const x=resolveValue(v[5]); const y=resolveValue(v[6]); const z=resolveValue(v[7]);
-                            const container = document.createElement('div');
-                            container.id = id; container.className = 'ecr-cylinder-group';
-                            container.style.width = '0px'; container.style.height = '0px';
-                            container.style.transform = \`translate3d(\${x}px, \${y}px, \${z}px)\`;
-                            const angleStep = 360 / sides; const radius = diameter / 2;
-                            const stripWidth = (2 * radius * Math.tan(Math.PI / sides)) + 1;
-                            for (let i = 0; i < sides; i++) {
-                                const strip = document.createElement('div');
-                                strip.style.position = 'absolute'; strip.style.height = height + 'px'; strip.style.width = stripWidth + 'px';
-                                strip.style.backgroundColor = color;
-                                if (i % 2 === 0) strip.style.filter = 'brightness(0.9)';
-                                const angle = i * angleStep;
-                                strip.style.transform = \`rotateY(\${angle}deg) translateZ(\${radius}px)\`;
-                                strip.style.left = (-stripWidth / 2) + 'px'; strip.style.top = (-height / 2) + 'px';
-                                container.appendChild(strip);
-                            }
-                            w.appendChild(container);
-                            break;
-                        }
-                        case 'obj_3d_billboard': {
-                            const id = v[0]; if (document.getElementById(id)) break;
-                            const url = getAssetUrl(resolveValue(v[1]));
-                            const wVal=resolveValue(v[2]); const hVal=resolveValue(v[3]);
-                            const x=resolveValue(v[4]); const y=resolveValue(v[5]); const z=resolveValue(v[6]);
-                            const sprite = document.createElement('div');
-                            sprite.id = id; sprite.style.position = 'absolute';
-                            sprite.style.width = wVal + 'px'; sprite.style.height = hVal + 'px';
-                            sprite.style.backgroundImage = \`url('\${url}')\`;
-                            sprite.style.backgroundSize = 'contain'; sprite.style.backgroundRepeat = 'no-repeat';
-                            sprite.style.backgroundPosition = 'center bottom'; sprite.style.transformStyle = 'preserve-3d';
-                            sprite.style.transform = \`translate3d(\${x}px, \${y}px, \${z}px) translate(-50%, -100%)\`; 
-                            sprite.dataset.pos3d = JSON.stringify({x, y, z});
-                            w.appendChild(sprite);
-                            break;
-                        }
-                        case 'obj_3d_transform': {
-                            const el = document.getElementById(v[0]);
-                            if (el) {
-                                const x = resolveValue(v[1]); const y = resolveValue(v[2]); const z = resolveValue(v[3]);
-                                const rx = resolveValue(v[4]); const ry = resolveValue(v[5]); const rz = resolveValue(v[6]);
-                                el.style.transform = \`translate3d(\${x}px, \${y}px, \${z}px) rotateX(\${rx}deg) rotateY(\${ry}deg) rotateZ(\${rz}deg)\`;
-                            }
-                            break;
-                        }
-                        case 'obj_3d_rotate_anim': {
-                             const id = v[0];
-                             const sx = parseFloat(resolveValue(v[1])); const sy = parseFloat(resolveValue(v[2])); const sz = parseFloat(resolveValue(v[3]));
-                             if(!window.anim3d) window.anim3d = {};
-                             if(!window.anim3d[id]) window.anim3d[id] = {rx:0, ry:0, rz:0};
-                             const el = document.getElementById(id);
-                             if(el) {
-                                 if(el.rotateInterval) clearInterval(el.rotateInterval);
-                                 el.rotateInterval = setInterval(() => {
-                                     if(!document.getElementById(id) || !isRunning) { clearInterval(el.rotateInterval); return; }
-                                     const state = window.anim3d[id];
-                                     state.rx += sx; state.ry += sy; state.rz += sz;
-                                     const currentTrans = el.style.transform.match(/translate3d\([^)]+\)/);
-                                     const posStr = currentTrans ? currentTrans[0] : 'translate3d(0px,0px,0px)';
-                                     el.style.transform = \`\${posStr} rotateX(\${state.rx}deg) rotateY(\${state.ry}deg) rotateZ(\${state.rz}deg)\`;
-                                 }, 16);
-                             }
-                             break;
-                        }
-                        case 'cam_3d_move': {
-                            const x = resolveValue(v[0]); const y = resolveValue(v[1]); const z = resolveValue(v[2]); const rotY = resolveValue(v[3]);
-                            const world = document.getElementById('game-world');
-                            if (world) {
-                                world.style.transform = \`translateZ(\${z}px) rotateY(\${-rotY}deg) translate3d(\${-x}px, \${-y}px, 0px)\`;
-                            }
-                            break;
-                        }
-                        case 'cam_3d_look_at': {
-                            const targetId = v[0]; const el = document.getElementById(targetId);
-                            if (el) {
-                                const world = document.getElementById('game-world');
-                                let camRotY = 0;
-                                if (world.style.transform) {
-                                    const match = world.style.transform.match(/rotateY\(([-\d.]+)deg\)/);
-                                    if (match) camRotY = parseFloat(match[1]);
-                                }
-                                let bx = 0, by = 0, bz = 0;
-                                if (el.dataset.pos3d) {
-                                    const p = JSON.parse(el.dataset.pos3d);
-                                    bx = p.x; by = p.y; bz = p.z;
-                                }
-                                el.style.transform = \`translate3d(\${bx}px, \${by}px, \${bz}px) rotateY(\${-camRotY}deg) translate(-50%, -100%)\`;
-                            }
-                            break;
-                        }
-                        case 'obj_3d_set_face': {
-                             const cubeId = v[0]; const faceClass = v[1]; const url = getAssetUrl(resolveValue(v[2]));
-                             const cube = document.getElementById(cubeId);
-                             if (cube) {
-                                 const face = cube.querySelector(\`.ecr-face.\${faceClass}\`);
-                                 if (face) {
-                                     face.style.backgroundImage = \`url('\${url}')\`; face.style.backgroundSize = 'cover';
-                                     face.style.backgroundColor = 'transparent'; face.innerHTML = ''; face.style.border = 'none';
-                                 }
-                             }
-                             break;
-                        }
-
-                        // --- СТАНДАРТНЫЕ БЛОКИ ---
+                        // --- ИСПРАВЛЕННЫЙ СПИСОК БЛОКОВ (3D, Video, FX, и т.д.) ---
+                        
+                        // 1. ДВИЖЕНИЕ
                         case 'mov_set_pos': { const el=document.getElementById(v[0]); if(el){ el.style.left=v[1]+'px'; el.style.top=v[2]+'px'; } break; }
                         case 'mov_change_pos': { const el=document.getElementById(v[0]); if(el){ el.style.left=(parseFloat(el.style.left)||0)+parseFloat(v[1])+'px'; el.style.top=(parseFloat(el.style.top)||0)+parseFloat(v[2])+'px'; } break; }
                         case 'mov_look_at': { 
@@ -734,7 +668,6 @@ async function generateGameHTML() {
                             break; 
                         }
                         case 'mov_pin': { const el=document.getElementById(v[0]); if(el) el.style.position = (v[1]==='1')?'fixed':'absolute'; break; }
-                        
                         case 'mov_align': { 
                             const el=document.getElementById(v[0]); 
                             if(el){
@@ -749,44 +682,39 @@ async function generateGameHTML() {
                             break; 
                         }
 
+                        // 2. ГРУППЫ
                         case 'grp_add': { const el=document.getElementById(v[0]); if(el) el.classList.add('grp_'+v[1]); break; }
                         case 'grp_remove': { const el=document.getElementById(v[0]); if(el) el.classList.remove('grp_'+v[1]); break; }
                         case 'grp_move': { document.querySelectorAll('.grp_'+v[0]).forEach(el=>{ el.style.left=(parseFloat(el.style.left)||0)+parseFloat(v[1])+'px'; el.style.top=(parseFloat(el.style.top)||0)+parseFloat(v[2])+'px'; }); break; }
                         case 'grp_state': { document.querySelectorAll('.grp_'+v[0]).forEach(el=>{ el.style.display=(v[1]==='hide'?'none':'block'); }); break; }
                         case 'grp_delete': { document.querySelectorAll('.grp_'+v[0]).forEach(el=>el.remove()); break; }
 
+                        // 3. ОКНО
                         case 'win_set_title': { document.title = resolveValue(v[0]); break; }
                         case 'win_bg_color': { stage.style.background = v[0]; break; }
                         case 'win_bg_image': { const url=getAssetUrl(resolveValue(v[0])); stage.style.backgroundImage=\`url('\${url}')\`; stage.style.backgroundSize='cover'; break; }
                         case 'win_scale_mode': { gameConfig.scaleMode = v[0]; resizeGame(); break; }
                         case 'win_set_cursor': { stage.style.cursor = v[0]; break; }
-                        case 'win_fullscreen': { 
-                             if(v[0]==='1') { if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); }
-                             else { if(document.exitFullscreen) document.exitFullscreen(); }
-                             break;
-                        }
-                        case 'win_set_size': {
-                            const w = parseInt(v[0]); const h = parseInt(v[1]);
-                            gameConfig.width = w; gameConfig.height = h;
-                            resizeGame(); 
-                            break;
-                        }
+                        case 'win_fullscreen': { if(v[0]==='1') { if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); } else { if(document.exitFullscreen) document.exitFullscreen(); } break; }
+                        case 'win_console_state': { /* игнор в экспорте */ break; }
 
+                        // 4. ПЕРЕМЕННЫЕ
                         case 'var_set': { gameVariables[v[0]] = resolveValue(v[1]); updateDynamicText(); break; }
                         case 'var_change': { gameVariables[v[0]] = (parseFloat(gameVariables[v[0]] || 0)) + parseFloat(resolveValue(v[1])); updateDynamicText(); break; }
                         case 'log_print': { console.log('[LOG]:', resolveValue(v[0])); break; }
                         case 'var_math': {
                             const val1 = parseFloat(resolveValue(v[1]))||0; const op = v[2]; const val2 = parseFloat(resolveValue(v[3]))||0;
                             let res = 0;
-                            if (op === '+') res = val1 + val2; else if (op === '-') res = val1 - val2; else if (op === '*') res = val1 * val2; else if (op === '/') res = val2!==0?val1/val2:0; else if (op === '%') res = val1 % val2; else if (op === '^') res = Math.pow(val1, val2);
+                            if(op==='+')res=val1+val2; else if(op==='-')res=val1-val2; else if(op==='*')res=val1*val2; else if(op==='/')res=val2!==0?val1/val2:0; else if(op==='%')res=val1%val2; else if(op==='^')res=Math.pow(val1,val2);
+                            else if(op==='random')res=Math.random()*(val2-val1)+val1;
+                            else if(op==='min')res=Math.min(val1,val2); else if(op==='max')res=Math.max(val1,val2);
+                            else if(op==='sin')res=Math.sin(val1); else if(op==='cos')res=Math.cos(val1);
                             gameVariables[v[0]] = res; updateDynamicText();
                             break;
                         }
                         case 'var_random': { gameVariables[v[0]] = Math.floor(Math.random() * (parseFloat(v[2]) - parseFloat(v[1]) + 1)) + parseFloat(v[1]); break; }
 
-                        case 'input_mouse_pos': { gameVariables[v[0]] = window.mouseX || 0; gameVariables[v[1]] = window.mouseY || 0; break; }
-                        case 'input_touch': { gameVariables[v[0]] = window.isTouching ? 1 : 0; break; }
-
+                        // 5. ОБЪЕКТЫ
                         case 'obj_create_rect_custom': { const d=document.createElement('div'); d.id=v[0]; d.style.position='absolute'; d.style.left=v[3]+'px'; d.style.top=v[4]+'px'; d.style.width=v[1]+'px'; d.style.height=v[2]+'px'; d.style.backgroundColor=v[5]; d.style.borderRadius=v[6]+'px'; w.appendChild(d); break; }
                         case 'obj_create_circle': { const d=document.createElement('div'); d.id=v[0]; d.style.position='absolute'; d.style.left=v[1]+'px'; d.style.top=v[2]+'px'; const s=parseInt(v[3])*2; d.style.width=s+'px'; d.style.height=s+'px'; d.style.backgroundColor=v[4]; d.style.borderRadius='50%'; w.appendChild(d); break; }
                         case 'obj_create_line': {
@@ -815,28 +743,27 @@ async function generateGameHTML() {
                         case 'obj_set_zindex': { const el=document.getElementById(v[0]); if(el) el.style.zIndex=v[1]; break; }
                         case 'obj_set_shadow': { const el=document.getElementById(v[0]); if(el) el.style.boxShadow=\`5px 5px \${v[2]}px \${v[1]}\`; break; }
                         case 'obj_set_blur': { const el=document.getElementById(v[0]); if(el) el.style.filter=\`blur(\${v[1]}px)\`; break; }
-                        
+                        case 'obj_set_visible': { const el=document.getElementById(v[0]); if(el){ if(v[1]==='show')el.style.display='block'; else if(v[1]==='hide')el.style.display='none'; else el.style.display=(el.style.display==='none'?'block':'none'); } break; }
+
                         case 'obj_set_border_adv': {
                             const targetId = v[0]; const el = document.getElementById(targetId);
                             if (el) {
                                 let width = parseFloat(resolveValue(v[1])); if (isNaN(width)) width = 0;
-                                let style = resolveValue(v[2]);
-                                const validStyles = ['solid', 'dashed', 'dotted', 'double', 'groove', 'ridge', 'inset', 'outset', 'none', 'hidden'];
-                                if (!style || !validStyles.includes(style)) style = 'solid';
-                                let color = resolveValue(v[3]);
-                                if (!color || color === '0' || color === 0) color = '#ffffff';
+                                let style = resolveValue(v[2]) || 'solid';
+                                let color = resolveValue(v[3]) || '#ffffff';
                                 let radius = resolveValue(v[4]);
                                 el.style.boxSizing = 'border-box';
                                 if (width > 0 && style !== 'none') {
                                     el.style.borderWidth = width + 'px'; el.style.borderStyle = style; el.style.borderColor = color;
-                                } else { el.style.borderStyle = 'none'; el.style.borderWidth = '0px'; }
-                                if (radius !== undefined && radius !== '' && radius !== '0' && radius !== 0) {
-                                    if (!isNaN(parseFloat(radius)) && isFinite(radius)) { el.style.borderRadius = radius + 'px'; } else { el.style.borderRadius = radius; }
+                                } else { el.style.borderStyle = 'none'; }
+                                if (radius) {
+                                    if (!isNaN(parseFloat(radius)) && isFinite(radius)) el.style.borderRadius = radius + 'px'; else el.style.borderRadius = radius;
                                 }
                             }
                             break;
                         }
 
+                        // 6. ТЕКСТ
                         case 'txt_create': { if(document.getElementById(v[0])) break; const d=document.createElement('div'); d.id=v[0]; d.style.position='absolute'; d.style.left=v[1]+'px'; d.style.top=v[2]+'px'; d.dataset.template=v[3]; d.innerText=resolveText(v[3]); d.style.fontSize=v[4]+'px'; d.style.color=v[5]; w.appendChild(d); break; }
                         case 'txt_modify': { 
                             const t=document.getElementById(v[0]); if(!t) break;
@@ -859,12 +786,14 @@ async function generateGameHTML() {
                         case 'txt_hide': { const t=document.getElementById(v[0]); if(t) t.style.display='none'; break; }
                         case 'txt_set_opacity': { const t=document.getElementById(v[0]); if(t) t.style.opacity=v[1]; break; }
                         
+                        // 7. АНИМАЦИЯ
                         case 'anim_move_to': { const el=document.getElementById(v[0]); if(el){ el.style.transition=\`all \${v[3]}s ease-in-out\`; el.offsetHeight; el.style.left=v[1]+'px'; el.style.top=v[2]+'px'; } break; }
                         case 'anim_rotate_to': { const el=document.getElementById(v[0]); if(el){ el.style.transition=\`transform \${v[2]}s ease-in-out\`; el.style.transform=\`rotate(\${v[1]}deg)\`; } break; }
                         case 'anim_scale_to': { const el=document.getElementById(v[0]); if(el){ el.style.transition=\`transform \${v[3]}s ease-in-out\`; el.style.transform=\`scale(\${v[1]}, \${v[2]})\`; } break; }
                         case 'anim_fade': { const el=document.getElementById(v[0]); if(el){ el.style.transition=\`opacity \${v[2]}s ease-in-out\`; el.style.opacity=v[1]; } break; }
                         case 'anim_stop': { const el=document.getElementById(v[0]); if(el){ const s=window.getComputedStyle(el); el.style.left=s.left; el.style.top=s.top; el.style.transform=s.transform; el.style.opacity=s.opacity; el.style.transition='none'; } break; }
                         
+                        // 8. ЗВУК
                         case 'snd_load': { 
                             const id=v[0]; const src=getAssetUrl(resolveValue(v[1]));
                             if(id && src) {
@@ -882,6 +811,7 @@ async function generateGameHTML() {
                         case 'snd_stop_all': { Object.values(loadedSounds).forEach(s=>{s.pause(); s.currentTime=0;}); break; }
                         case 'snd_set_volume': { const s=loadedSounds[v[0]]; if(s){ let vol=parseFloat(resolveValue(v[1])); if(vol<0)vol=0;if(vol>1)vol=1; s.volume=vol; } break; }
                         
+                        // 9. UI
                         case 'ui_panel': { if(document.getElementById(v[0])) break; const p=document.createElement('div'); p.id=v[0]; p.className='ui-element'; p.style.left=v[1]+'px'; p.style.top=v[2]+'px'; p.style.width=v[3]+'px'; p.style.height=v[4]+'px'; p.style.backgroundColor=v[5]; p.style.borderRadius='12px'; ui.appendChild(p); break; }
                         case 'ui_button_create': { if(document.getElementById(v[0])) break; const b=document.createElement('button'); b.id=v[0]; b.className='ui-element ui-btn'; b.innerText=v[1]; b.style.left=v[2]+'px'; b.style.top=v[3]+'px'; b.style.width=v[4]+'px'; b.style.height=v[5]+'px'; b.style.fontSize=parseInt(v[5])*0.4+'px'; ui.appendChild(b); break; }
                         case 'ui_progressbar': { 
@@ -896,35 +826,69 @@ async function generateGameHTML() {
                              s.oninput=(e)=>{ gameVariables[vName]=e.target.value; updateDynamicText(); }; ui.appendChild(s); break;
                         }
                         case 'ui_toggle': { const el=document.getElementById(v[0]); if(el) { if(v[1]==='show') el.style.display='block'; else if(v[1]==='hide') el.style.display='none'; else el.style.display = (el.style.display==='none' ? 'block' : 'none'); } break; }
-                        case 'ui_dialog_show': {
-                            let dlg=document.getElementById('game-dialog'); if(!dlg){ dlg=document.createElement('div'); dlg.id='game-dialog'; dlg.style.cssText='position:absolute; bottom:20px; left:50%; transform:translateX(-50%); width:80%; background:rgba(0,0,0,0.85); border:2px solid #fff; border-radius:10px; padding:15px; color:#fff; z-index:10000; display:flex; gap:15px; align-items:center;'; stage.appendChild(dlg); }
-                            const nm=resolveValue(v[0]); const tx=resolveValue(v[1]); const av=resolveValue(v[2]);
-                            dlg.innerHTML=\`\${av ? \`<img src="\${av}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">\` : ''}<div style="flex:1;"><div style="color:#ff9800;font-weight:bold;margin-bottom:5px;">\${nm}</div><div style="font-size:14px;line-height:1.4;">\${tx}</div></div><div style="font-size:10px;opacity:0.7;">Нажми чтобы закрыть</div>\`;
-                            dlg.style.display='flex'; dlg.onclick=()=>{dlg.style.display='none';};
-                            break;
-                        }
-                        case 'ui_dialog_hide': { const d=document.getElementById('game-dialog'); if(d) d.style.display='none'; break; }
-                        
                         case 'ui_anchor': {
                             const el=document.getElementById(v[0]); const anc=v[1]; const ox=parseFloat(resolveValue(v[2]))||0; const oy=parseFloat(resolveValue(v[3]))||0;
                             if(el){
-                                el.style.left='auto'; el.style.right='auto'; el.style.top='auto'; el.style.bottom='auto'; el.style.transform='none'; el.style.position='absolute'; el.style.margin='0';
+                                el.style.left='auto'; el.style.right='auto'; el.style.top='auto'; el.style.bottom='auto'; el.style.position='absolute'; el.style.margin='0';
+                                let tr = el.style.transform || '';
+                                tr = tr.replace(/translate\\([^)]+\\)/g, '').replace(/translateX\\([^)]+\\)/g, '').replace(/translateY\\([^)]+\\)/g, '').trim();
+                                let nt = '';
                                 switch(anc){
                                     case 'top-left': el.style.left=ox+'px'; el.style.top=oy+'px'; break;
-                                    case 'top-center': el.style.left='50%'; el.style.top=oy+'px'; el.style.transform=\`translateX(calc(-50% + \${ox}px))\`; break;
+                                    case 'top-center': el.style.left='50%'; el.style.top=oy+'px'; nt=\`translateX(calc(-50% + \${ox}px))\`; break;
                                     case 'top-right': el.style.right=ox+'px'; el.style.top=oy+'px'; break;
-                                    case 'center-left': el.style.left=ox+'px'; el.style.top='50%'; el.style.transform=\`translateY(calc(-50% + \${oy}px))\`; break;
-                                    case 'center': el.style.left='50%'; el.style.top='50%'; el.style.transform=\`translate(calc(-50% + \${ox}px), calc(-50% + \${oy}px))\`; break;
-                                    case 'center-right': el.style.right=ox+'px'; el.style.top='50%'; el.style.transform=\`translateY(calc(-50% + \${oy}px))\`; break;
+                                    case 'center-left': el.style.left=ox+'px'; el.style.top='50%'; nt=\`translateY(calc(-50% + \${oy}px))\`; break;
+                                    case 'center': el.style.left='50%'; el.style.top='50%'; nt=\`translate(calc(-50% + \${ox}px), calc(-50% + \${oy}px))\`; break;
+                                    case 'center-right': el.style.right=ox+'px'; el.style.top='50%'; nt=\`translateY(calc(-50% + \${oy}px))\`; break;
                                     case 'bottom-left': el.style.left=ox+'px'; el.style.bottom=oy+'px'; break;
-                                    case 'bottom-center': el.style.left='50%'; el.style.bottom=oy+'px'; el.style.transform=\`translateX(calc(-50% + \${ox}px))\`; break;
+                                    case 'bottom-center': el.style.left='50%'; el.style.bottom=oy+'px'; nt=\`translateX(calc(-50% + \${ox}px))\`; break;
                                     case 'bottom-right': el.style.right=ox+'px'; el.style.bottom=oy+'px'; break;
                                     case 'stretch-full': el.style.left='0'; el.style.top='0'; el.style.width='100%'; el.style.height='100%'; break;
                                 }
+                                el.style.transform = nt ? \`\${nt} \${tr}\` : tr;
                             }
                             break;
                         }
+                        case 'ui_dialog_show': {
+                            const nm=resolveValue(v[0]); const tx=resolveValue(v[1]); const av=resolveValue(v[2]); const showAv=v[3]==='yes';
+                            const old=document.getElementById('game-dialog-overlay'); if(old)old.remove();
+                            const dlg=document.createElement('div'); dlg.id='game-dialog-overlay';
+                            dlg.style.cssText='position:absolute; bottom:20px; left:5%; width:90%; background:rgba(0,0,0,0.85); border:2px solid #fff; border-radius:8px; padding:15px; color:#fff; z-index:10000; display:flex; gap:15px; align-items:start; opacity:0; transition:opacity 0.3s; box-sizing:border-box;';
+                            dlg.innerHTML=\`\${showAv && av ? \`<img src="\${getAssetUrl(av)}" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.2);">\` : ''}<div style="flex:1;"><div style="color:#ff9800;font-weight:bold;margin-bottom:5px;font-size:1.1em;">\${nm}</div><div style="font-size:14px;line-height:1.4;white-space:pre-wrap;">\${tx}</div></div><div style="position:absolute; bottom:5px; right:10px; font-size:10px; opacity:0.5;">▼</div>\`;
+                            stage.appendChild(dlg); setTimeout(()=>dlg.style.opacity='1',10);
+                            return new Promise(r=>{ dlg.onclick=()=>{ dlg.style.opacity='0'; setTimeout(()=>{dlg.remove(); if(v[7])gameVariables[v[7]]=1; r();},250); }; });
+                        }
+                        case 'ui_dialog_hide': { const d=document.getElementById('game-dialog-overlay'); if(d)d.remove(); break; }
 
+                        // 10. ФИЗИКА
+                        case 'phys_enable': { 
+                             const el=document.getElementById(v[0]); 
+                             if(el && matterEngine) {
+                                const isStatic=v[2]==='1'||v[2]==='true';
+                                const w=el.offsetWidth; const h=el.offsetHeight;
+                                const x=parseFloat(el.style.left)||0; const y=parseFloat(el.style.top)||0;
+                                const body = Matter.Bodies.rectangle(x+w/2, y+h/2, w, h, { isStatic: isStatic, restitution: parseFloat(v[3])||0, label:v[0] });
+                                Matter.World.add(matterEngine.world, body); bodyMap.set(v[0], body);
+                             }
+                             break; 
+                        }
+                        case 'phys_set_gravity': { worldGravity.x=parseFloat(v[0]); worldGravity.y=parseFloat(v[1]); if(matterEngine) matterEngine.world.gravity.y = worldGravity.y; break; }
+                        case 'phys_add_force': { const b=bodyMap.get(v[0]); if(b) Matter.Body.applyForce(b, b.position, {x:parseFloat(v[1])*0.001, y:parseFloat(v[2])*0.001}); break; }
+                        case 'phys_set_velocity': { /* для simple physics если нужно */ break; }
+                        
+                        // 11. 3D & VIDEO & FX (ИЗ ВАШЕГО НОВОГО БЛОКА)
+                        case 'scene_3d_init': { 
+                            if(stage && w){ stage.style.perspective=v[0]+'px'; stage.style.overflow='hidden'; w.style.transformStyle='preserve-3d'; w.style.width="100%"; w.style.height="100%"; } 
+                            if(!document.getElementById('css-3d-s')){const s=document.createElement('style');s.id='css-3d-s';s.innerHTML='.ecr-cube,.ecr-plane{position:absolute;transform-style:preserve-3d;} .ecr-face{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}.ecr-face.front{transform:rotateY(0deg) translateZ(calc(var(--s)/2));}.ecr-face.back{transform:rotateY(180deg) translateZ(calc(var(--s)/2));}.ecr-face.right{transform:rotateY(90deg) translateZ(calc(var(--s)/2));}.ecr-face.left{transform:rotateY(-90deg) translateZ(calc(var(--s)/2));}.ecr-face.top{transform:rotateX(90deg) translateZ(calc(var(--s)/2));}.ecr-face.bottom{transform:rotateX(-90deg) translateZ(calc(var(--s)/2));}';document.head.appendChild(s);}
+                            break; 
+                        }
+                        case 'obj_3d_create_cube': { 
+                            const id=v[0]; if(document.getElementById(id))break;
+                            const s=parseInt(resolveValue(v[1])); const c=document.createElement('div'); c.id=id; c.className='ecr-cube'; c.style.width=s+'px';c.style.height=s+'px';c.style.setProperty('--s',s+'px');
+                            c.style.transform=\`translate3d(\${resolveValue(v[3])}px,\${resolveValue(v[4])}px,\${resolveValue(v[5])}px)\`;
+                            ['front','back','right','left','top','bottom'].forEach(f=>{const d=document.createElement('div');d.className='ecr-face '+f;d.style.backgroundColor=resolveValue(v[2]);d.style.opacity='0.9';c.appendChild(d);});
+                            w.appendChild(c); break; 
+                        }
                         case 'video_load': {
                             const vidId=v[0]; const src=getAssetUrl(resolveValue(v[1]));
                             const old=document.getElementById(vidId); if(old) old.remove();
@@ -941,244 +905,24 @@ async function generateGameHTML() {
                             stage.appendChild(vid);
                             break;
                         }
-                        case 'video_control': {
-                            const vid=document.getElementById(v[0]); const act=v[1];
-                            if(vid){ if(act==='play')vid.play().catch(e=>{}); else if(act==='pause')vid.pause(); else if(act==='stop'){vid.pause();vid.currentTime=0;} else if(act==='remove')vid.remove(); }
-                            break;
-                        }
-                        case 'video_settings': {
-                            const vid=document.getElementById(v[0]);
-                            if(vid){ vid.volume=parseFloat(resolveValue(v[1])); vid.loop=(v[2]==='1'||v[2]==='true'); vid.style.opacity=resolveValue(v[3]); }
-                            break;
-                        }
+                        case 'video_control': { const vid=document.getElementById(v[0]); const act=v[1]; if(vid){ if(act==='play')vid.play().catch(e=>{}); else if(act==='pause')vid.pause(); else if(act==='stop'){vid.pause();vid.currentTime=0;} else if(act==='remove')vid.remove(); } break; }
+                        case 'pp_filter_set': { const t=v[0]; const val=parseFloat(resolveValue(v[1])); if(w){ w.style.filter = (t==='blur')?\`blur(\${val}px)\`:\`\${t}(\${val}%)\`; } break; }
+                        case 'pp_vignette': { if(v[0]==='1'){ const d=document.createElement('div'); d.id='pp-vignette'; d.style.cssText=\`position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800;background:radial-gradient(circle,transparent 50%,\${v[2]} 100%);opacity:\${resolveValue(v[1])};mix-blend-mode:multiply;\`; stage.appendChild(d); } else { const d=document.getElementById('pp-vignette'); if(d)d.remove(); } break; }
+                        case 'pp_crt_effect': { if(v[0]==='1'){ const d=document.createElement('div'); d.id='pp-crt'; d.style.cssText=\`position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9990;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.25) 50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06));background-size:100% 4px,6px 100%;opacity:\${resolveValue(v[1])};\`; stage.appendChild(d); } else { const d=document.getElementById('pp-crt'); if(d)d.remove(); } break; }
 
-                        case 'game_pause': {
-                            isGamePaused=(v[0]==='1'||v[0]==='true');
-                            if(isGamePaused) stage.style.filter='grayscale(100%)'; else stage.style.filter='none';
-                            break;
-                        }
-                        case 'game_restart': {
-                            const cur=PROJECT.scenes.find(s=>s.id===currentSceneId);
-                            if(cur){ gameVariables={}; activeKeys={}; loadScene(cur.id); return; }
-                            break;
-                        }
-                        case 'game_over_screen': {
-                            isGamePaused=true;
-                            const scr=document.createElement('div'); scr.style.cssText='position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; z-index:9999; color:white;';
-                            scr.innerHTML=\`<h1 style="font-size:60px; color:#ff3d00; margin-bottom:20px;">\${resolveValue(v[0])}</h1><button id="btn-restart-go" style="padding:15px 30px; font-size:24px; cursor:pointer; background:#fff; color:#000; border:none; border-radius:5px;">RETRY</button>\`;
-                            stage.appendChild(scr);
-                            document.getElementById('btn-restart-go').onclick=()=>{ scr.remove(); isGamePaused=false; const cur=PROJECT.scenes.find(s=>s.id===currentSceneId); if(cur){gameVariables={}; loadScene(cur.id);} };
-                            break;
-                        }
-
-                        case 'pp_filter_set': {
-                            const type=v[0]; const val=parseFloat(resolveValue(v[1]));
-                            if(w){
-                                let f=''; if(type==='blur')f=\`blur(\${val}px)\`; else if(type==='hue-rotate')f=\`hue-rotate(\${val}deg)\`; else if(['contrast','brightness','saturate'].includes(type)) f=\`\${type}(\${val}%)\`; else f=\`\${type}(\${val}%)\`;
-                                w.style.filter=f;
-                            }
-                            break;
-                        }
-                        case 'pp_vignette': {
-                             const on=(v[0]==='1'||v[0]==='true'); const str=parseFloat(resolveValue(v[1])); const col=v[2];
-                             const old=document.getElementById('pp-overlay-vignette'); if(old)old.remove();
-                             if(on){ const d=document.createElement('div'); d.id='pp-overlay-vignette'; d.style.cssText=\`position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:800; background:radial-gradient(circle, transparent 50%, \${col} 100%); opacity:\${str}; mix-blend-mode:multiply;\`; stage.appendChild(d); }
-                             break;
-                        }
-                        case 'pp_crt_effect': {
-                             const on=(v[0]==='1'||v[0]==='true'); const op=parseFloat(resolveValue(v[1]));
-                             const old=document.getElementById('pp-overlay-crt'); if(old)old.remove();
-                             if(on){ const d=document.createElement('div'); d.id='pp-overlay-crt'; d.style.cssText=\`position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9990; background:linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.25) 50%), linear-gradient(90deg, rgba(255,0,0,0.06), rgba(0,255,0,0.02), rgba(0,0,255,0.06)); background-size:100% 4px, 6px 100%; opacity:\${op};\`; stage.appendChild(d); }
-                             break;
-                        }
-                        case 'pp_chromatic': {
-                            const on=(v[0]==='1'||v[0]==='true'); const sh=resolveValue(v[1]);
-                            if(w){ if(on) w.style.filter=\`drop-shadow(\${sh}px 0 0 rgba(255,0,0,0.5)) drop-shadow(-\${sh}px 0 0 rgba(0,0,255,0.5))\`; else w.style.filter='none'; }
-                            break;
-                        }
-                        case 'pp_bloom_fake': {
-                            const on=(v[0]==='1'||v[0]==='true'); const val=parseFloat(resolveValue(v[1]));
-                            if(w){ if(on) w.style.filter=\`brightness(\${val}) contrast(1.1) saturate(1.2)\`; else w.style.filter='none'; }
-                            break;
-                        }
-                        case 'pp_clear_all': {
-                            if(w){w.style.filter='none'; w.style.textShadow='none';}
-                            ['pp-overlay-vignette','pp-overlay-crt'].forEach(id=>{const el=document.getElementById(id); if(el)el.remove();});
-                            break;
-                        }
-
-                        case 'combat_damage': {
-                            const tid=v[0]; const dmg=parseFloat(resolveValue(v[1])); const cnm=v[2];
-                            if(!window.entityComponents[tid]) window.entityComponents[tid]={};
-                            let hp=window.entityComponents[tid][cnm]; if(hp===undefined)hp=100;
-                            window.entityComponents[tid][cnm]=hp-dmg;
-                            const el=document.getElementById(tid); if(el){ const of=el.style.filter; el.style.filter='sepia(1) hue-rotate(-50deg) saturate(5)'; setTimeout(()=>el.style.filter=of, 100); }
-                            break;
-                        }
-                        case 'logic_chance': {
-                             const p=parseFloat(resolveValue(v[0])); const r=Math.random()*100;
-                             gameVariables[v[1]] = (r<p) ? 1 : 0;
-                             break;
-                        }
-                        case 'ai_patrol': {
-                            const el=document.getElementById(v[0]); const min=parseFloat(resolveValue(v[1])); const max=parseFloat(resolveValue(v[2])); const spd=parseFloat(resolveValue(v[3]));
-                            if(el){
-                                let dir=parseFloat(el.dataset.patrolDir||1); let cx=parseFloat(el.style.left||0);
-                                cx+=spd*dir;
-                                if(cx>=max){ cx=max; dir=-1; el.style.transform='scaleX(-1)'; }
-                                else if(cx<=min){ cx=min; dir=1; el.style.transform='scaleX(1)'; }
-                                el.style.left=cx+'px'; el.dataset.patrolDir=dir;
-                            }
-                            break;
-                        }
-
+                        // 12. СЦЕНЫ И ДАННЫЕ
                         case 'scene_load': { const next = PROJECT.scenes.find(s=>s.name===v[0]); if(next) loadScene(next.id); break; }
                         case 'scene_reload': { loadScene(currentSceneId); break; }
-                        case 'scene_next': { 
-                            const idx = PROJECT.scenes.findIndex(s => s.id === currentSceneId);
-                            if (idx !== -1 && idx < PROJECT.scenes.length - 1) loadScene(PROJECT.scenes[idx + 1].id);
-                            break;
-                        }
-                        case 'scene_save_state': {
-                             const sn = v[0] || 'autosave'; const sd = { vars: gameVariables, timestamp: Date.now() };
-                             localStorage.setItem('ecrous_save_'+PROJECT.settings.name+'_'+sn, JSON.stringify(sd));
-                             break;
-                        }
-                        case 'scene_load_state': {
-                             const sn = v[0] || 'autosave'; const raw = localStorage.getItem('ecrous_save_'+PROJECT.settings.name+'_'+sn);
-                             if (raw) { const d = JSON.parse(raw); gameVariables = d.vars || {}; updateDynamicText(); }
-                             break;
-                        }
-                        
-                        case 'data_save': { localStorage.setItem('ecrous_data_'+PROJECT.settings.name+'_'+v[0], resolveValue(v[1])); break; }
-                        case 'data_load': { const val=localStorage.getItem('ecrous_data_'+PROJECT.settings.name+'_'+v[0]); if(val!==null){ gameVariables[v[1]]=isNaN(val)?val:parseFloat(val); updateDynamicText(); } break; }
-                        case 'data_clear': { Object.keys(localStorage).forEach(k=>{if(k.startsWith('ecrous_data_'+PROJECT.settings.name))localStorage.removeItem(k);}); break; }
-                        
-                        case 'phys_enable': { const el=document.getElementById(v[0]); if(el) physicsObjects[v[0]]={ vx:0, vy:0, mass:parseFloat(v[1]), bounce:0, collideWorld:false, width:el.offsetWidth, height:el.offsetHeight }; break; }
-                        case 'phys_set_gravity': { worldGravity.x=parseFloat(v[0]); worldGravity.y=parseFloat(v[1]); break; }
-                        case 'phys_add_force': { const p=physicsObjects[v[0]]; if(p&&p.mass>0){p.vx+=parseFloat(v[1]); p.vy+=parseFloat(v[2]);} break; }
-                        case 'phys_set_velocity': { const p=physicsObjects[v[0]]; if(p){p.vx=parseFloat(v[1]); p.vy=parseFloat(v[2]);} break; }
-                        case 'phys_set_bounce': { const p=physicsObjects[v[0]]; if(p) p.bounce=parseFloat(v[1]); break; }
-                        case 'phys_collide_world': { const p=physicsObjects[v[0]]; if(p) p.collideWorld=(v[1]==='1'); break; }
-                        
-                        case 'cam_follow': { cameraState.target=v[0]; cameraState.lerp=parseFloat(v[1]); break; }
-                        case 'cam_set_pos': { cameraState.target=null; cameraState.x=parseFloat(v[0]); cameraState.y=parseFloat(v[1]); break; }
-                        case 'cam_zoom': { cameraState.zoom=parseFloat(v[0]); break; }
-                        case 'cam_shake': { cameraState.shakeInfo={ power:parseFloat(v[0]), time:parseFloat(v[1]) }; break; }
-                        case 'cam_reset': { cameraState={x:0,y:0,zoom:1,target:null,lerp:0.1,shakeInfo:{power:0,time:0}}; break; }
-                        case 'cam_zoom_to': { const w=document.getElementById('game-world'); if(w){ w.style.transition=\`transform \${v[1]}s ease-in-out\`; cameraState.zoom=parseFloat(v[0]); } break; }
-
-                        case 'sys_exec_js': { 
-                            try { const func=new Function('gameVariables','container','window','document', v[0]); func(gameVariables, document.getElementById('game-stage'), window, document); updateDynamicText(); } 
-                            catch(e){ console.error(e); } 
-                            break; 
-                        }
-                        
-                        case 'logic_obj_exists': { gameVariables[v[1]] = document.getElementById(v[0]) ? 1 : 0; break; }
-                        case 'logic_is_visible': { const el=document.getElementById(v[0]); if(!el)gameVariables[v[1]]=0; else { const s=window.getComputedStyle(el); gameVariables[v[1]] = (s.display!=='none'&&s.visibility!=='hidden'&&s.opacity!=='0')?1:0; } break; }
-                        case 'interact_dist': { 
-                            const a=document.getElementById(v[0]); const b=document.getElementById(v[1]);
-                            if(a&&b){ const r1=a.getBoundingClientRect(); const r2=b.getBoundingClientRect(); const dist=Math.sqrt(Math.pow((r2.left+r2.width/2)-(r1.left+r1.width/2),2) + Math.pow((r2.top+r2.height/2)-(r1.top+r1.height/2),2)); gameVariables[v[2]]=dist; }
-                            else gameVariables[v[2]]=999999;
-                            break;
-                        }
-                        case 'zone_check': {
-                             const me=document.getElementById(v[0]); const zn=document.getElementById(v[1]); let res=0;
-                             if(me&&zn){ const r1=me.getBoundingClientRect(); const r2=zn.getBoundingClientRect(); if(!(r2.left>r1.right || r2.right<r1.left || r2.top>r1.bottom || r2.bottom<r1.top)) res=1; }
-                             gameVariables[v[2]]=res; break;
-                        }
-                        
-                        case 'state_set': { const el=document.getElementById(v[0]); if(el) el.dataset.state=v[1]; break; }
-                        case 'state_get': { const el=document.getElementById(v[0]); gameVariables[v[1]] = el ? el.dataset.state||'' : ''; break; }
-                        case 'tag_add': { const el=document.getElementById(v[0]); if(el) el.classList.add('tag_'+v[1]); break; }
-                        case 'tag_check': { const el=document.getElementById(v[0]); gameVariables[v[2]] = (el && el.classList.contains('tag_'+v[1])) ? 1 : 0; break; }
-                        
-                        case 'ai_move_to': {
-                             const me=document.getElementById(v[0]); const trg=document.getElementById(v[1]); const sp=parseFloat(v[2]);
-                             if(me&&trg){
-                                 const mx=parseFloat(me.style.left||0); const my=parseFloat(me.style.top||0);
-                                 const tx=parseFloat(trg.style.left||0); const ty=parseFloat(trg.style.top||0);
-                                 const dx=tx-mx; const dy=ty-my; const d=Math.sqrt(dx*dx+dy*dy);
-                                 if(d>sp){ me.style.left=mx+(dx/d)*sp+'px'; me.style.top=my+(dy/d)*sp+'px'; }
-                             }
-                             break;
-                        }
-                        case 'ai_flee': {
-                             const me=document.getElementById(v[0]); const trg=document.getElementById(v[1]); const sp=parseFloat(v[2]);
-                             if(me&&trg){
-                                 const mx=parseFloat(me.style.left||0); const my=parseFloat(me.style.top||0);
-                                 const tx=parseFloat(trg.style.left||0); const ty=parseFloat(trg.style.top||0);
-                                 const dx=mx-tx; const dy=my-ty; const d=Math.sqrt(dx*dx+dy*dy);
-                                 if(d>0){ me.style.left=mx+(dx/d)*sp+'px'; me.style.top=my+(dy/d)*sp+'px'; }
-                             }
-                             break;
-                        }
-                        
-                        case 'input_axis': { let val=0; if(activeKeys[v[0]])val-=1; if(activeKeys[v[1]])val+=1; gameVariables[v[2]]=val; break; }
-                        
-                        case 'fx_screen_color': {
-                            const col=v[0]; const tm=parseFloat(v[1])*1000;
-                            let ov=document.getElementById('fx-overlay-color');
-                            if(!ov){ ov=document.createElement('div'); ov.id='fx-overlay-color'; ov.style.cssText='position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:9999; transition:background '+tm/2+'ms'; stage.appendChild(ov); }
-                            ov.style.background=col; setTimeout(()=>ov.style.background='transparent', tm);
-                            break;
-                        }
-                        case 'fx_shake': {
-                             const el=document.getElementById(v[0]); const p=parseFloat(v[1]); const dur=parseFloat(v[2])*1000;
-                             if(el){
-                                 const start=Date.now(); const org=el.style.transform;
-                                 const i=setInterval(()=>{
-                                     if(Date.now()-start>dur){ clearInterval(i); el.style.transform=org; return; }
-                                     el.style.transform=\`\${org} translate(\${(Math.random()-0.5)*p}px, \${(Math.random()-0.5)*p}px)\`;
-                                 }, 16);
-                             }
-                             break;
-                        }
-                        
-                        case 'obj_spawn_clone': {
-                             const org=document.getElementById(v[0]); const nm=resolveValue(v[1]); const x=parseFloat(resolveValue(v[2])); const y=parseFloat(resolveValue(v[3]));
-                             if(org){ const c=org.cloneNode(true); c.id=nm; c.style.left=x+'px'; c.style.top=y+'px'; c.style.display='block'; c.classList.remove('ui-draggable','ui-draggable-handle'); w.appendChild(c); }
-                             break;
-                        }
-                        
-                        case 'comp_add': case 'comp_set': { if(!window.entityComponents[v[0]])window.entityComponents[v[0]]={}; window.entityComponents[v[0]][v[1]]=resolveValue(v[2]); break; }
-                        case 'comp_get': { gameVariables[v[2]] = (window.entityComponents[v[0]] && window.entityComponents[v[0]][v[1]] !== undefined) ? window.entityComponents[v[0]][v[1]] : 0; break; }
-                        case 'comp_has': { gameVariables[v[2]] = (window.entityComponents[v[0]] && window.entityComponents[v[0]][v[1]] !== undefined) ? 1 : 0; break; }
-                        
-                        case 'evt_message_send': {
-                             const en=resolveValue(v[0]); gameVariables['event_param']=resolveValue(v[1]);
-                             if(globalCurrentSceneData){
-                                 globalCurrentSceneData.objects.forEach(o=>{
-                                     if(!o.scripts)return;
-                                     o.scripts.filter(b=>b.type==='evt_message_receive'&&b.values[0]===en).forEach(bl=>executeChain(bl,o.scripts,o.connections||[]));
-                                 });
-                             }
-                             break;
-                        }
-                        
-                        case 'gfx_light_ambient': { const a=1.0-parseFloat(v[0]); let l=document.getElementById('gfx-ambient'); if(!l){ l=document.createElement('div'); l.id='gfx-ambient'; l.style.cssText='position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:500; mix-blend-mode:multiply;'; stage.appendChild(l); } l.style.backgroundColor=\`rgba(0,0,0,\${a})\`; break; }
-                        
-                        case 'gfx_light_point': { const el=document.getElementById(v[0]); if(el){ const rad=v[2]+'px'; el.style.boxShadow=\`0 0 \${rad} \${parseFloat(rad)/4}px \${v[1]}\`; el.style.zIndex='501'; } break; }
-                        
-                        case 'gfx_particles': {
-                             const x=parseFloat(v[0]); const y=parseFloat(v[1]); const col=v[2]; const cnt=parseInt(v[3]);
-                             for(let i=0;i<cnt;i++){
-                                 const p=document.createElement('div'); p.style.cssText=\`position:absolute; left:\${x}px; top:\${y}px; width:4px; height:4px; background:\${col}; border-radius:50%; pointer-events:none; z-index:1000;\`; stage.appendChild(p);
-                                 const ang=Math.random()*Math.PI*2; const spd=Math.random()*50+20;
-                                 const tx=Math.cos(ang)*spd; const ty=Math.sin(ang)*spd;
-                                 p.animate([{transform:'translate(0,0) scale(1)',opacity:1},{transform:\`translate(\${tx}px,\${ty}px) scale(0)\`,opacity:0}],{duration:500+Math.random()*500,easing:'ease-out'}).onfinish=()=>p.remove();
-                             }
-                             break;
-                        }
-                        
-                        case 'inv_add': { const i=resolveValue(v[0]); if(!window.gameInventory.includes(i)) window.gameInventory.push(i); break; }
-                        case 'inv_has': { gameVariables[v[1]] = window.gameInventory.includes(resolveValue(v[0]))?1:0; break; }
-                        case 'quest_set': { window.gameQuests[v[0]]=resolveValue(v[1]); break; }
+                        case 'scene_next': { const idx = PROJECT.scenes.findIndex(s => s.id === currentSceneId); if (idx !== -1 && idx < PROJECT.scenes.length - 1) loadScene(PROJECT.scenes[idx + 1].id); break; }
+                        case 'scene_save_state': { localStorage.setItem('ecrous_save_'+PROJECT.settings?.name+'_'+(v[0]||'auto'), JSON.stringify({vars:gameVariables})); break; }
+                        case 'scene_load_state': { const d=localStorage.getItem('ecrous_save_'+PROJECT.settings?.name+'_'+(v[0]||'auto')); if(d){ gameVariables=JSON.parse(d).vars||{}; updateDynamicText(); } break; }
+                        case 'game_pause': { isGamePaused=(v[0]==='1'||v[0]==='true'); stage.style.filter=isGamePaused?'grayscale(100%)':'none'; break; }
+                        case 'game_restart': { const cur=PROJECT.scenes.find(s=>s.id===currentSceneId); if(cur){ gameVariables={}; loadScene(cur.id); } break; }
 
                         case 'evt_wait': { await new Promise(r => setTimeout(r, parseFloat(v[0]) * 1000)); break; }
                     }
                     resolve();
-                }, 10);
+                }, 0);
             });
         }
     `
@@ -1191,13 +935,15 @@ async function generateGameHTML() {
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>${projectData.settings?.name || 'Ecrous Game'}</title>
     <link rel="icon" type="image/png" href="${iconBase64}">
+    <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
     <style>
         :root { --accent: #2979FF; --dark: #0a0a0a; }
         body { 
             margin: 0; background: #000; overflow: hidden; 
             font-family: 'Segoe UI', system-ui, sans-serif; 
             user-select: none; touch-action: none;
-            height: 100vh; display: flex; align-items: center; justify-content: center;
+            height: 100vh; width: 100vw;
+            display: flex; align-items: center; justify-content: center;
         }
         #game-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         
@@ -1230,7 +976,6 @@ async function generateGameHTML() {
             color: white; cursor: pointer;
         }
         .splash-content { display: flex; flex-direction: column; align-items: center; animation: slideUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
-        
         .logo-box {
             width: 100px; height: 100px;
             background: url('${iconBase64}') no-repeat center center;
@@ -1241,15 +986,12 @@ async function generateGameHTML() {
             animation: pulse 3s infinite ease-in-out;
         }
         .logo-box::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; border: 2px solid rgba(255,255,255,0.2); }
-        
         .title-main { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
         .title-sub { font-size: 11px; text-transform: uppercase; letter-spacing: 4px; color: #555; font-weight: 600; }
-        
         #splash-loader { width: 200px; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; margin-top: 60px; overflow: hidden; transition: opacity 0.5s; }
         #splash-bar-fill { width: 0%; height: 100%; background: #2979FF; transition: width 1.5s cubic-bezier(0.2, 0.8, 0.2, 1); }
         #splash-start-msg { margin-top: 60px; font-size: 13px; color: #888; letter-spacing: 1px; opacity: 0; transform: translateY(10px); transition: all 0.5s; display: none; }
         #splash-start-msg.visible { display: block; opacity: 1; transform: translateY(0); animation: blink 2s infinite; }
-
         @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes pulse { 0%, 100% { transform: scale(1); box-shadow: 0 20px 60px rgba(41, 121, 255, 0.3); } 50% { transform: scale(1.05); box-shadow: 0 30px 80px rgba(41, 121, 255, 0.5); } }
         @keyframes blink { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
@@ -1298,46 +1040,53 @@ async function exportMobileBundle(platform) {
 	const html = await generateGameHTML()
 	const iconBase64 = await getProjectIconData()
 
-	// --- ПРИМЕНЕНИЕ НАСТРОЕК ---
+	// --- НАСТРОЙКИ ---
 	const orient = projectData.settings?.orientation || 'landscape'
 	const pkgId = projectData.settings?.packageId || 'com.ecrous.game'
 	const appName = projectData.settings?.name || 'Game'
+    
+    // 1. Основной файл
+	zip.file('index.html', html)
 
-	// Формируем манифест
+    // 2. Иконка
+	const [, iconData] = iconBase64.split('base64,')
+	zip.file('icon.png', iconData, { base64: true })
+
+    // 3. Манифест (PWA / Android TWA)
 	const manifest = {
 		name: appName,
 		short_name: appName,
-		id: pkgId, // Используем Package ID
 		start_url: './index.html',
 		display: 'standalone',
-		orientation: orient, // Применяем ориентацию (portrait/landscape/any)
+		orientation: orient,
 		background_color: '#000000',
 		theme_color: '#000000',
 		icons: [{ src: 'icon.png', sizes: '512x512', type: 'image/png' }],
 	}
-
-	zip.file('index.html', html)
-
-	if (projectData.assets) {
-		for (const asset of projectData.assets) {
-			if (asset.data.startsWith('data:')) {
-				const [, base64] = asset.data.split('base64,')
-				const binary = atob(base64)
-				const array = new Uint8Array(binary.length)
-				for (let i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i)
-				const blob = new Blob([array], { type: asset.type })
-				zip.file(`assets/${asset.name}`, blob)
-			}
-		}
-	}
-
 	zip.file('manifest.json', JSON.stringify(manifest, null, 2))
 
-	const [, iconData] = iconBase64.split('base64,')
-	zip.file('icon.png', iconData, { base64: true })
+    // 4. Инструкция для пользователя (так как браузер не делает .apk)
+    const readme = `
+ECROUS ENGINE - MOBILE EXPORT (${platform})
+===========================================
+
+Ваш проект экспортирован как "Web Bundle".
+Браузеры не могут создавать .APK или .IPA файлы напрямую.
+
+ЧТО ДЕЛАТЬ ДАЛЬШЕ:
+1. Воспользуйтесь онлайн-конвертером (например, websitetoapk.com).
+2. Или используйте Cordova / Capacitor.
+3. Загрузите содержимое этого архива.
+
+Файлы внутри:
+- index.html (Сама игра)
+- icon.png (Иконка)
+- manifest.json (Настройки)
+    `;
+    zip.file('README.txt', readme);
 
 	zip.generateAsync({ type: 'blob' }).then(content => {
-		downloadFile(`Game_${platform}.zip`, content, 'application/zip')
+		downloadFile(`${appName}_${platform}.zip`, content, 'application/zip')
 		if (btn) btn.innerHTML = oldText
 	})
 }
@@ -1350,7 +1099,7 @@ function exportProjectAsEcr() {
 }
 
 function exportProjectAsExe() {
-	alert('Экспорт в EXE требует внешнего упаковщика. Скачан HTML.')
+	alert('Экспорт в EXE требует внешнего упаковщика (например, Electron). Скачан HTML.')
 	document.getElementById('exportWindows').click()
 }
 

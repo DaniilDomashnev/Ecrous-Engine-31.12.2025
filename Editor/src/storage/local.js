@@ -50,24 +50,30 @@ async function loadAssetsFromDB(projectName) {
 // ==========================================
 
 async function saveProjectToLocal() {
+	// 0. Защита от сохранения пустого проекта
+	if (!projectData || !projectData.scenes || projectData.scenes.length === 0) {
+		console.warn('Попытка сохранить пустой проект! Отменено.')
+		return
+	}
+
 	// 1. Сначала обновляем данные из редактора
 	if (typeof saveCurrentWorkspace === 'function') saveCurrentWorkspace()
 
 	// 2. Подготовка данных
-	// Мы ВРЕМЕННО извлекаем ассеты из объекта projectData, чтобы не пихать их в localStorage
 	const assetsBackup = projectData.assets || []
 
 	// Создаем легкую копию проекта БЕЗ ассетов для localStorage
 	const lightProjectData = { ...projectData, assets: [] }
 
 	try {
-		// 3. Сохраняем ассеты в IndexedDB (безлимитное хранилище)
+		// 3. Сохраняем ассеты в IndexedDB
 		await saveAssetsToDB(currentProjectName, assetsBackup)
 
-		// 4. Сохраняем структуру проекта в LocalStorage (легкие данные)
+		// 4. Сохраняем структуру проекта в LocalStorage
+		// Используем STORAGE_KEY, который уникален для имени проекта
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(lightProjectData))
 
-		// 5. Восстанавливаем ассеты в памяти (чтобы редактор продолжал работать)
+		// 5. Восстанавливаем ассеты в памяти
 		projectData.assets = assetsBackup
 
 		if (typeof showNotification === 'function') {
@@ -85,7 +91,6 @@ async function saveProjectToLocal() {
 		}
 	} catch (e) {
 		console.error('Ошибка сохранения:', e)
-		// Если ошибка, восстанавливаем ассеты в памяти, чтобы ничего не пропало
 		projectData.assets = assetsBackup
 		alert(
 			'Ошибка сохранения! Возможно, закончилось место на диске.\n' + e.message
@@ -99,19 +104,27 @@ async function loadProjectFromLocal() {
 		const json = localStorage.getItem(STORAGE_KEY)
 
 		if (json) {
-			projectData = JSON.parse(json)
+			const loadedData = JSON.parse(json)
+
+			// Дополнительная проверка целостности загруженных данных
+			if (!loadedData || !loadedData.scenes) {
+				console.error('Загруженные данные повреждены.')
+				// Не сбрасываем projectData в null, чтобы не запустить создание нового поверх старого
+				return
+			}
+
+			projectData = loadedData
 
 			// 2. Асинхронно подгружаем тяжелые ассеты из базы данных
 			const assets = await loadAssetsFromDB(currentProjectName)
 			projectData.assets = assets || []
 
-			// Проверка целостности
-			if (!projectData.scenes || projectData.scenes.length === 0) return
-
 			// Восстанавливаем состояние редактора
-			activeSceneId = projectData.scenes[0].id
-			const firstObj = projectData.scenes[0].objects[0]
-			activeObjectId = firstObj ? firstObj.id : null
+			if (projectData.scenes && projectData.scenes.length > 0) {
+				activeSceneId = projectData.scenes[0].id
+				const firstObj = projectData.scenes[0].objects[0]
+				activeObjectId = firstObj ? firstObj.id : null
+			}
 
 			if (typeof renderSidebar === 'function') renderSidebar()
 			if (typeof loadWorkspace === 'function') loadWorkspace()
@@ -121,17 +134,18 @@ async function loadProjectFromLocal() {
 
 			console.log(`Проект загружен. Ассетов: ${projectData.assets.length}`)
 		} else {
-			projectData = null // Маркер нового проекта
+			// Проекта нет в памяти - это НОВЫЙ проект.
+			// projectData остается дефолтным (из main.js)
+			console.log('Проект не найден в памяти, создан новый.')
 		}
 	} catch (e) {
 		console.error('Ошибка загрузки:', e)
 		alert('Не удалось загрузить проект.')
-		projectData = null
+		// Не обнуляем projectData, чтобы не потерять текущую сессию
 	}
 }
 
 function saveCurrentWorkspace() {
-	// Эта функция остается без изменений, она собирает данные со сцены
 	if (typeof getActiveObject !== 'function') return
 
 	const currentObj = getActiveObject()
@@ -154,13 +168,11 @@ function saveCurrentWorkspace() {
 	})
 
 	currentObj.scripts = data
-	// connections - глобальная переменная из main.js
 	if (typeof connections !== 'undefined') {
 		currentObj.connections = [...connections]
 	}
 }
 
-// Эта функция нужна для inicialization.js, чтобы восстановить провода
 function loadWorkspace() {
 	if (typeof container === 'undefined' || !container) return
 
@@ -184,3 +196,44 @@ function loadWorkspace() {
 		setTimeout(updateAllConnections, 50)
 	}
 }
+
+// ==========================================
+// --- АВТОСОХРАНЕНИЕ ---
+// ==========================================
+const AUTOSAVE_INTERVAL = 30000 // 30 секунд
+
+function saveProjectLocal() {
+	// [ВАЖНО] Защита от перезаписи хорошего сохранения пустым состоянием
+	if (!projectData || !projectData.scenes || projectData.scenes.length === 0) {
+		return
+	}
+
+	try {
+		// Сначала обновляем модель данными из UI
+		if (typeof saveCurrentWorkspace === 'function') saveCurrentWorkspace()
+
+		// Готовим данные без ассетов (ассеты тяжелые, их в автосейв каждые 30сек писать не будем в localStorage, только при ручном)
+		// Или пишем, но только структуру.
+		const lightProjectData = { ...projectData, assets: [] }
+		const saveStr = JSON.stringify(lightProjectData)
+
+		const key =
+			typeof STORAGE_KEY !== 'undefined'
+				? STORAGE_KEY
+				: 'ecrous_autosave_default'
+
+		localStorage.setItem(key, saveStr)
+
+		const saveIcon = document.getElementById('btnSave')
+		if (saveIcon) {
+			saveIcon.style.color = '#00E676'
+			setTimeout(() => (saveIcon.style.color = ''), 500)
+		}
+		console.log('[AutoSave] Проект сохранен:', new Date().toLocaleTimeString())
+	} catch (e) {
+		console.error('Ошибка автосохранения:', e)
+	}
+}
+
+// Запускаем таймер
+setInterval(saveProjectLocal, AUTOSAVE_INTERVAL)

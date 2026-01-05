@@ -3032,3 +3032,4 @@ function getAssetUrl(input) {
 	// 3. Иначе считаем, что это прямая ссылка (https://...)
 	return input
 }
+

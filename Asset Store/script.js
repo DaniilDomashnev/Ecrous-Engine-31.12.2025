@@ -19,6 +19,7 @@ import {
 	deleteDoc,
 	doc,
 	updateDoc,
+	increment,
 } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js'
 
 // ==========================================
@@ -262,16 +263,29 @@ function renderAssets(assets, category) {
 		const card = document.createElement('article')
 		card.className = 'asset-card'
 
+		// --- ЛОГИКА ГАЛОЧКИ ---
+		// Если в базе есть поле isVerified: true, показываем галочку
+		const verifiedHtml = asset.isVerified
+			? `<span class="verified-badge" title="Проверенный автор"><i class="fa-solid fa-check"></i></span>`
+			: ''
+
+		// --- ЛОГИКА РЕЙТИНГА ---
+		// Вычисляем средний рейтинг
+		const ratingSum = Math.max(0, asset.ratingSum || 0)
+		const ratingCount = Math.max(0, asset.ratingCount || 0)
+
+		const avgRating =
+			ratingCount > 0 ? (ratingSum / ratingCount).toFixed(1) : '0.0'
+
 		const isOwner = currentUserEmail === asset.author
 
-		// Генерируем кнопки действий
 		let actionButtonsHtml = ''
 		if (isOwner) {
 			actionButtonsHtml = `
-                <button class="btn btn-icon edit-btn" data-id="${asset.id}" title="Редактировать" style="margin-right: 5px; color: #fbbf24;">
+                <button class="btn btn-icon edit-btn" data-id="${asset.id}" title="Редактировать" style="margin-right: 5px; color: #fbbf24; z-index: 5; position: relative;">
                     <i class="fa-solid fa-pen"></i>
                 </button>
-                <button class="btn btn-icon delete-btn" data-id="${asset.id}" title="Удалить" style="margin-right: 5px; color: #ef4444;">
+                <button class="btn btn-icon delete-btn" data-id="${asset.id}" title="Удалить" style="margin-right: 5px; color: #ef4444; z-index: 5; position: relative;">
                     <i class="fa-solid fa-trash"></i>
                 </button>
             `
@@ -288,61 +302,76 @@ function renderAssets(assets, category) {
             </div>
             <div class="card-body">
                 <div class="card-category">${asset.category}</div>
-                <h3 class="card-title" title="${asset.name}">${asset.name}</h3>
-                <p class="card-author">By ${asset.author.split('@')[0]}</p>
+                <h3 class="card-title">${asset.name}</h3>
+                
+                <p class="card-author">
+                    By ${asset.author.split('@')[0]}
+                    ${verifiedHtml}
+                </p>
+
+                <div style="font-size: 0.8rem; color: #fbbf24; margin-bottom: 10px;">
+                    <i class="fa-solid fa-star"></i> ${avgRating} <span style="color:#666">(${ratingCount})</span>
+                </div>
                 
                 <div class="card-footer">
                     <span class="price-tag">FREE</span>
                     <div style="display:flex; align-items: center;">
                         ${actionButtonsHtml}
-                        <a href="${
-													asset.downloadUrl
-												}" target="_blank" class="btn btn-outline-sm">
-                            <i class="fa-solid fa-download"></i>
-                        </a>
+                        <button class="btn btn-outline-sm open-details-btn" data-id="${
+													asset.id
+												}">
+                             Подробнее
+                        </button>
                     </div>
                 </div>
             </div>
         `
+
+		// Клик по всей карточке (кроме кнопок) открывает детали
+		card.addEventListener('click', e => {
+			// Если кликнули не по кнопкам редактирования/удаления
+			if (!e.target.closest('.edit-btn') && !e.target.closest('.delete-btn')) {
+				openAssetDetails(asset.id)
+			}
+		})
+
 		assetsContainer.appendChild(card)
 	})
 
-	// 1. Обработчики удаления
+	// Привязываем старые обработчики удаления и редактирования...
+	attachActionHandlers()
+}
+
+// Вынесем обработчики кнопок в отдельную функцию, чтобы не дублировать
+function attachActionHandlers() {
 	document.querySelectorAll('.delete-btn').forEach(btn => {
 		btn.addEventListener('click', async e => {
 			e.stopPropagation()
-			if (confirm('Вы уверены, что хотите удалить этот ассет?')) {
+			if (confirm('Удалить этот ассет?')) {
 				const id = btn.getAttribute('data-id')
 				try {
 					await deleteDoc(doc(db, 'assets', id))
 					showToast('Ассет удален', 'success')
-
-					// Удаляем из массива и перерисовываем
 					allAssets = allAssets.filter(a => a.id !== id)
-					// Вместо полной перезагрузки можно просто удалить элемент из DOM
-					btn.closest('.asset-card').remove()
+					loadAssets() // Перезагружаем для чистоты
 				} catch (err) {
-					showToast('Ошибка удаления: ' + err.message, 'error')
+					showToast('Ошибка: ' + err.message, 'error')
 				}
 			}
 		})
 	})
 
-	// 2. Обработчики редактирования (НОВОЕ)
 	document.querySelectorAll('.edit-btn').forEach(btn => {
 		btn.addEventListener('click', e => {
 			e.stopPropagation()
 			const id = btn.getAttribute('data-id')
-			const assetToEdit = allAssets.find(a => a.id === id)
-
-			if (assetToEdit) {
-				// Заполняем форму данными
+			const asset = allAssets.find(a => a.id === id)
+			if (asset) {
 				document.getElementById('edit-asset-id').value = id
-				document.getElementById('edit-name').value = assetToEdit.name
-				document.getElementById('edit-category').value = assetToEdit.category
-				document.getElementById('edit-preview').value = assetToEdit.previewUrl
-				document.getElementById('edit-file').value = assetToEdit.downloadUrl
-
+				document.getElementById('edit-name').value = asset.name
+				document.getElementById('edit-category').value = asset.category
+				document.getElementById('edit-preview').value = asset.previewUrl
+				document.getElementById('edit-file').value = asset.downloadUrl
 				window.openModal('edit-modal')
 			}
 		})
@@ -436,4 +465,325 @@ if (editForm) {
             btn.disabled = false
         }
     })
+}
+
+// ==========================================
+// 9. ЛОГИКА ДЕТАЛЕЙ, РЕЙТИНГА И КОММЕНТАРИЕВ
+// ==========================================
+
+let currentAssetId = null; // ID открытого ассета
+let editingCommentId = null; // ID комментария, который редактируем (если null, значит создаем новый)
+let oldRatingValue = 0; // Сохраняем старую оценку при редактировании, чтобы правильно пересчитать сумму
+
+// Открытие модального окна деталей
+window.openAssetDetails = async (id) => {
+    currentAssetId = id;
+    
+    // Сбрасываем форму при открытии
+    resetCommentForm();
+
+    const asset = allAssets.find(a => a.id === id);
+    if (!asset) return;
+
+    // Заполняем инфо
+    document.getElementById('detail-img').src = asset.previewUrl;
+    document.getElementById('detail-title').textContent = asset.name;
+    document.getElementById('detail-category').textContent = asset.category;
+    document.getElementById('detail-author').textContent = asset.author.split('@')[0];
+    document.getElementById('detail-download').href = asset.downloadUrl;
+
+    // Галочка
+    const verEl = document.getElementById('detail-verified');
+    verEl.innerHTML = asset.isVerified 
+        ? `<span class="verified-badge"><i class="fa-solid fa-check"></i></span>` 
+        : '';
+
+    // Рейтинг
+    updateRatingUI(asset);
+
+    // Загружаем комментарии
+    await loadComments(id);
+
+    window.openModal('details-modal');
+}
+
+// Вспомогательная функция отрисовки рейтинга
+function updateRatingUI(asset) {
+	// Тоже добавляем защиту от минусов
+	const sum = Math.max(0, asset.ratingSum || 0)
+	const count = Math.max(0, asset.ratingCount || 0)
+
+	const avg = count > 0 ? (sum / count).toFixed(1) : '0.0'
+
+	document.getElementById('detail-rating-val').textContent = avg
+	document.getElementById('detail-reviews-count').textContent = count
+
+	// Рисуем звезды
+	let starsHtml = ''
+	for (let i = 1; i <= 5; i++) {
+		if (i <= Math.round(avg)) starsHtml += '<i class="fa-solid fa-star"></i>'
+		else starsHtml += '<i class="fa-regular fa-star" style="color:#555"></i>'
+	}
+	document.getElementById('detail-stars').innerHTML = starsHtml
+}
+
+// Загрузка комментариев
+async function loadComments(assetId) {
+    const list = document.getElementById('comments-list');
+    list.innerHTML = '<div class="spinner" style="width:20px;height:20px;border-width:2px;margin:10px auto;"></div>';
+
+    try {
+        const commentsRef = collection(db, 'assets', assetId, 'comments');
+        const q = query(commentsRef, orderBy('createdAt', 'desc'));
+        const snapshot = await getDocs(q);
+
+        list.innerHTML = '';
+        if (snapshot.empty) {
+            list.innerHTML = '<p style="text-align:center; color:#666; font-size: 0.9rem;">Пока нет отзывов. Будьте первым!</p>';
+            return;
+        }
+
+        const currentUser = auth.currentUser ? auth.currentUser.email : null;
+
+        snapshot.forEach(docSnap => {
+            const c = docSnap.data();
+            const cid = docSnap.id;
+
+            // Генерируем звезды для коммента
+            let sHtml = '';
+            for(let i=0; i<c.rating; i++) sHtml += '<i class="fa-solid fa-star"></i>';
+
+            const item = document.createElement('div');
+            item.className = 'comment-item';
+            
+            // Если это мой комментарий, добавляем кнопки
+            let actionsHtml = '';
+            if (currentUser === c.author) {
+                actionsHtml = `
+                    <div class="comment-actions">
+                        <button class="comment-btn edit" title="Редактировать">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                        <button class="comment-btn delete" title="Удалить">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+            }
+
+            item.innerHTML = `
+                <div class="comment-header">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span class="comment-author">${c.authorName}</span>
+                        <span class="comment-stars">${sHtml}</span>
+                    </div>
+                    ${actionsHtml}
+                </div>
+                <div class="comment-text">${c.text}</div>
+            `;
+
+            // Навешиваем обработчики событий на кнопки (если они есть)
+            if (currentUser === c.author) {
+                const editBtn = item.querySelector('.edit');
+                const deleteBtn = item.querySelector('.delete');
+
+                // Удаление
+                deleteBtn.addEventListener('click', () => handleDeleteComment(assetId, cid, c.rating));
+
+                // Редактирование
+                editBtn.addEventListener('click', () => handleEditStart(cid, c.text, c.rating));
+            }
+
+            list.appendChild(item);
+        });
+    } catch (e) {
+        console.error(e);
+        list.innerHTML = '<p style="color:red">Ошибка загрузки комментариев</p>';
+    }
+}
+
+// === ЛОГИКА УДАЛЕНИЯ ===
+async function handleDeleteComment(assetId, commentId, ratingVal) {
+	if (!confirm('Удалить ваш отзыв?')) return
+
+	// Находим ассет локально, чтобы проверить текущие цифры
+	const localAsset = allAssets.find(a => a.id === assetId)
+
+	// Защита: если вдруг локально счетчик уже 0, не отправляем минус в базу
+	// (Хотя ситуация редкая, если кнопка доступна)
+	if (localAsset && localAsset.ratingCount <= 0) {
+		console.warn('Попытка уйти в минус предотвращена')
+		// Можно просто сбросить поля в базе принудительно, но лучше просто удалить коммент
+	}
+
+	try {
+		// 1. Удаляем сам комментарий
+		await deleteDoc(doc(db, 'assets', assetId, 'comments', commentId))
+
+		// 2. Обновляем рейтинг ассета (минусуем)
+		const assetRef = doc(db, 'assets', assetId)
+		await updateDoc(assetRef, {
+			// Используем Math.max нельзя внутри increment, поэтому полагаемся на базу
+			// Но мы можем добавить проверку в правилах безопасности, если нужно.
+			ratingSum: increment(-ratingVal),
+			ratingCount: increment(-1),
+		})
+
+		// 3. Обновляем локальные данные и UI
+		updateLocalAssetStats(assetId, -ratingVal, -1)
+
+		showToast('Отзыв удален', 'success')
+
+		if (editingCommentId === commentId) resetCommentForm()
+
+		openAssetDetails(assetId)
+
+		// Перерисовка фона, чтобы обновились звезды в списке
+		const activeCat =
+			document
+				.querySelector('.category-list li.active')
+				?.getAttribute('data-cat') || 'all'
+		renderAssets(allAssets, activeCat)
+	} catch (err) {
+		console.error(err)
+		showToast('Ошибка удаления: ' + err.message, 'error')
+	}
+}
+
+// === ЛОГИКА РЕДАКТИРОВАНИЯ (Старт) ===
+function handleEditStart(commentId, text, rating) {
+    editingCommentId = commentId;
+    oldRatingValue = rating;
+
+    // Заполняем форму
+    document.getElementById('comment-text').value = text;
+    
+    // Ставим звезды
+    const starInput = document.querySelector(`input[name="rating"][value="${rating}"]`);
+    if (starInput) starInput.checked = true;
+
+    // Меняем кнопку и стиль
+    const btn = document.querySelector('#comment-form button');
+    btn.textContent = 'Обновить отзыв';
+    btn.classList.remove('btn-accent');
+    btn.classList.add('btn-primary'); // меняем цвет на фиолетовый для отличия
+
+    // Скролл к форме
+    document.getElementById('comment-form').scrollIntoView({ behavior: 'smooth' });
+}
+
+// === СБРОС ФОРМЫ ===
+function resetCommentForm() {
+    editingCommentId = null;
+    oldRatingValue = 0;
+    const form = document.getElementById('comment-form');
+    if(form) {
+        form.reset();
+        const btn = form.querySelector('button');
+        btn.textContent = 'Отправить отзыв';
+        btn.classList.add('btn-accent');
+        btn.classList.remove('btn-primary');
+    }
+}
+
+// === ОБРАБОТКА ОТПРАВКИ ФОРМЫ (Создание и Редактирование) ===
+const commentForm = document.getElementById('comment-form');
+if (commentForm) {
+    commentForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (!auth.currentUser) {
+            showToast('Войдите, чтобы оставить отзыв', 'error');
+            return window.openModal('login-modal');
+        }
+        
+        if (!currentAssetId) return;
+
+        const text = document.getElementById('comment-text').value;
+        const ratingInput = document.querySelector('input[name="rating"]:checked');
+        const rating = ratingInput ? parseInt(ratingInput.value) : 0;
+
+        if (rating === 0) return showToast('Поставьте оценку (звезды)!', 'error');
+
+        const btn = commentForm.querySelector('button');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Обработка...';
+
+        try {
+            const assetRef = doc(db, 'assets', currentAssetId);
+
+            if (editingCommentId) {
+                // --- РЕЖИМ РЕДАКТИРОВАНИЯ ---
+                
+                // 1. Обновляем документ комментария
+                const commentRef = doc(db, 'assets', currentAssetId, 'comments', editingCommentId);
+                await updateDoc(commentRef, {
+                    text: text,
+                    rating: rating,
+                    // author и date не меняем, можно добавить updatedAt
+                });
+
+                // 2. Корректируем рейтинг ассета
+                // Разница между новой и старой оценкой (например: было 4, стало 5. Разница +1)
+                const ratingDiff = rating - oldRatingValue;
+                
+                if (ratingDiff !== 0) {
+                    await updateDoc(assetRef, {
+                        ratingSum: increment(ratingDiff)
+                        // ratingCount не меняется, так как это тот же отзыв
+                    });
+                    updateLocalAssetStats(currentAssetId, ratingDiff, 0);
+                }
+
+                showToast('Отзыв обновлен!', 'success');
+                resetCommentForm();
+
+            } else {
+                // --- РЕЖИМ СОЗДАНИЯ (НОВЫЙ) ---
+
+                // 1. Создаем коммент
+                await addDoc(collection(db, 'assets', currentAssetId, 'comments'), {
+                    text: text,
+                    rating: rating,
+                    author: auth.currentUser.email,
+                    authorName: auth.currentUser.email.split('@')[0],
+                    createdAt: new Date()
+                });
+
+                // 2. Обновляем рейтинг ассета
+                await updateDoc(assetRef, {
+                    ratingSum: increment(rating),
+                    ratingCount: increment(1)
+                });
+
+                updateLocalAssetStats(currentAssetId, rating, 1);
+                showToast('Отзыв опубликован!', 'success');
+                commentForm.reset();
+            }
+            
+            // Перезагружаем UI
+            openAssetDetails(currentAssetId);
+            
+            // Обновляем сетку на фоне (чтобы звезды обновились и там)
+            const activeCat = document.querySelector('.category-list li.active')?.getAttribute('data-cat') || 'all';
+            renderAssets(allAssets, activeCat);
+
+        } catch (err) {
+            console.error(err);
+            showToast('Ошибка: ' + err.message, 'error');
+        } finally {
+            btn.disabled = false;
+            if(!editingCommentId) btn.textContent = 'Отправить отзыв'; // Возвращаем текст только если не в режиме редактирования (там сброс сам вернет)
+        }
+    });
+}
+
+// Вспомогательная функция для обновления локального массива (чтобы не делать лишний запрос getDocs)
+function updateLocalAssetStats(assetId, ratingDelta, countDelta) {
+    const localAsset = allAssets.find(a => a.id === assetId);
+    if(localAsset) {
+        localAsset.ratingSum = (localAsset.ratingSum || 0) + ratingDelta;
+        localAsset.ratingCount = (localAsset.ratingCount || 0) + countDelta;
+    }
 }

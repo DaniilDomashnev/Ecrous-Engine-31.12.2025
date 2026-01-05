@@ -111,11 +111,26 @@ function initCanvasEvents() {
 		{ passive: false }
 	)
 
+	// Настройка смещения для мобилок (чтобы видеть блок НАД пальцем)
+	// Можно вынести это в настройки проекта в будущем
+	const MOBILE_DRAG_OFFSET_Y = 80 // Пикселей вверх
+
 	// ГЛОБАЛЬНОЕ ДВИЖЕНИЕ (И мышь, и палец)
-	const handleMove = (clientX, clientY) => {
+	const handleMove = (clientX, clientY, isTouch = false) => {
 		const rect = canvas.getBoundingClientRect()
-		const x = (clientX - rect.left - panX) / zoomLevel
-		const y = (clientY - rect.top - panY) / zoomLevel
+
+		// Корректируем координаты
+		let rawX = clientX - rect.left
+		let rawY = clientY - rect.top
+
+		// Если это тач - поднимаем точку выше, чтобы блок был над пальцем
+		if (isTouch) {
+			rawY -= MOBILE_DRAG_OFFSET_Y
+		}
+
+		// Переводим в координаты канваса с учетом зума и панорамирования
+		const x = (rawX - panX) / zoomLevel
+		const y = (rawY - panY) / zoomLevel
 
 		// 1. Тянем провод
 		if (isWiring && tempWireNode) {
@@ -125,8 +140,14 @@ function initCanvasEvents() {
 
 		// 2. Тянем блок
 		if (draggedBlock) {
-			draggedBlock.style.left = x - dragOffset.x + 'px'
-			draggedBlock.style.top = y - dragOffset.y + 'px'
+			// dragOffset - это смещение внутри самого блока (за что взяли)
+			// Если dragOffset не задан (новый блок), ставим по центру
+			const offsetX = dragOffset ? dragOffset.x : draggedBlock.offsetWidth / 2
+			const offsetY = dragOffset ? dragOffset.y : draggedBlock.offsetHeight / 2
+
+			draggedBlock.style.left = x - offsetX + 'px'
+			draggedBlock.style.top = y - offsetY + 'px'
+
 			if (editorMode === 'nodes') updateAllConnections()
 			return
 		}
@@ -138,8 +159,8 @@ function initCanvasEvents() {
 			panY = e.clientY - panStart.y
 			updateTransform()
 		} else {
-			handleMove(e.clientX, e.clientY)
-		}
+        handleMove(e.clientX, e.clientY, false); // false = это мышь
+    }
 	})
 
 	document.addEventListener(
