@@ -96,7 +96,7 @@ function initCanvasEvents() {
 				}
 			} else if (e.touches.length === 2) {
 				// Два пальца: Зум
-				isPanning = true // Тоже включаем режим панорамирования для центра зума
+				isPanning = true
 				const dx = e.touches[0].clientX - e.touches[1].clientX
 				const dy = e.touches[0].clientY - e.touches[1].clientY
 				initialPinchDist = Math.sqrt(dx * dx + dy * dy)
@@ -110,17 +110,18 @@ function initCanvasEvents() {
 		{ passive: false }
 	)
 
-	// Настройка смещения для перетаскивания СУЩЕСТВУЮЩИХ блоков
-	const BLOCK_DRAG_OFFSET_Y = 80
-
+	// ОБРАБОТКА ДВИЖЕНИЯ
 	const handleMove = (clientX, clientY, isTouch = false) => {
 		const rect = canvas.getBoundingClientRect()
 		let rawX = clientX - rect.left
 		let rawY = clientY - rect.top
 
-		// Если это тач, поднимаем точку выше, чтобы блок был над пальцем
-		if (isTouch) {
-			rawY -= BLOCK_DRAG_OFFSET_Y
+		// --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+		// Раньше тут было rawY -= 80 для всех блоков, и при зуме это давало "километр".
+		// Теперь смещение только если мы тянем ПРОВОД (isWiring).
+		// Блоки тянутся ровно под пальцем.
+		if (isTouch && isWiring) {
+			rawY -= 60
 		}
 
 		const x = (rawX - panX) / zoomLevel
