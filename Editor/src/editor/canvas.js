@@ -1,5 +1,5 @@
 // ==========================================
-// --- Canavs ---
+// --- Canvas (src/editor/canvas.js) ---
 // ==========================================
 
 function initCanvasEvents() {
@@ -78,12 +78,9 @@ function initCanvasEvents() {
 	canvas.addEventListener(
 		'touchstart',
 		e => {
-			// Если мы в процессе создания нового блока из меню (mobile.js), игнорируем события холста
 			if (window.isMobileDraggingNewBlock) return
 
 			if (e.touches.length === 1) {
-				// Один палец: Паннинг (сдвиг холста)
-				// Но только если мы НЕ попали по блоку и НЕ попали по контролам
 				if (
 					!e.target.closest('.node-block') &&
 					!e.target.closest('.canvas-controls')
@@ -95,7 +92,6 @@ function initCanvasEvents() {
 					}
 				}
 			} else if (e.touches.length === 2) {
-				// Два пальца: Зум
 				isPanning = true
 				const dx = e.touches[0].clientX - e.touches[1].clientX
 				const dy = e.touches[0].clientY - e.touches[1].clientY
@@ -113,30 +109,22 @@ function initCanvasEvents() {
 	// ОБРАБОТКА ДВИЖЕНИЯ
 	const handleMove = (clientX, clientY, isTouch = false) => {
 		const rect = canvas.getBoundingClientRect()
-		let rawX = clientX - rect.left
-		let rawY = clientY - rect.top
 
-		// --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-		// Раньше тут было rawY -= 80 для всех блоков, и при зуме это давало "километр".
-		// Теперь смещение только если мы тянем ПРОВОД (isWiring).
-		// Блоки тянутся ровно под пальцем.
-		if (isTouch && isWiring) {
-			rawY -= 60
-		}
+		// Координаты на экране относительно канваса
+		let screenX = clientX - rect.left
+		let screenY = clientY - rect.top
 
-		const x = (rawX - panX) / zoomLevel
-		const y = (rawY - panY) / zoomLevel
+		// Переводим в мировые координаты (учитываем pan и zoom)
+		const x = (screenX - panX) / zoomLevel
+		const y = (screenY - panY) / zoomLevel
 
-		// 1. Тянем провод
 		if (isWiring && tempWireNode) {
+			// Убираем любой искусственный offset — нить идёт точно под палец/курсор
 			updateTempPath(x, y)
 			return
 		}
 
-		// 2. Тянем блок
 		if (draggedBlock) {
-			// Если мы схватили блок за конкретную точку (dragOffset), используем её
-			// Иначе (fallback) по центру
 			const offsetX = dragOffset ? dragOffset.x : draggedBlock.offsetWidth / 2
 			const offsetY = dragOffset ? dragOffset.y : draggedBlock.offsetHeight / 2
 
@@ -148,36 +136,49 @@ function initCanvasEvents() {
 		}
 	}
 
+	// ИСПРАВЛЕННАЯ ФУНКЦИЯ КООРДИНАТ ПОРТА
+	// Гарантирует синхронизацию начала и конца нити
+	function getPortHandlePosition(portElement) {
+		const canvasRect = canvas.getBoundingClientRect()
+		const portRect = portElement.getBoundingClientRect()
+
+		const screenX = portRect.left - canvasRect.left + portRect.width / 2
+		const screenY = portRect.top - canvasRect.top + portRect.height / 2
+
+		const x = (screenX - panX) / zoomLevel
+		const y = (screenY - panY) / zoomLevel
+
+		return { x, y }
+	}
+	window.getPortHandlePosition = getPortHandlePosition
+
 	document.addEventListener('mousemove', e => {
 		if (isPanning) {
 			panX = e.clientX - panStart.x
 			panY = e.clientY - panStart.y
 			updateTransform()
 		} else {
-			handleMove(e.clientX, e.clientY, false) // false = мышь
+			handleMove(e.clientX, e.clientY, false)
 		}
 	})
 
 	document.addEventListener(
 		'touchmove',
 		e => {
-			// Если тащим новый блок из меню, здесь ничего не делаем (обрабатывает mobile.js)
 			if (window.isMobileDraggingNewBlock) return
 
 			if (e.touches.length === 1) {
 				if (draggedBlock || isWiring) {
-					e.preventDefault() // Блокируем скролл страницы
-					handleMove(e.touches[0].clientX, e.touches[0].clientY, true) // true = тач
+					e.preventDefault()
+					handleMove(e.touches[0].clientX, e.touches[0].clientY, true)
 				} else if (isPanning) {
-					e.preventDefault() // Блокируем скролл страницы при панорамировании
+					e.preventDefault()
 					panX = e.touches[0].clientX - panStart.x
 					panY = e.touches[0].clientY - panStart.y
 					updateTransform()
 				}
 			} else if (e.touches.length === 2) {
 				e.preventDefault()
-
-				// --- ZOOM ---
 				const dx = e.touches[0].clientX - e.touches[1].clientX
 				const dy = e.touches[0].clientY - e.touches[1].clientY
 				const dist = Math.sqrt(dx * dx + dy * dy)
@@ -190,7 +191,6 @@ function initCanvasEvents() {
 					zoomLevel = newZoom
 				}
 
-				// --- PAN with 2 fingers ---
 				const cx = (e.touches[0].clientX + e.touches[1].clientX) / 2
 				const cy = (e.touches[0].clientY + e.touches[1].clientY) / 2
 				panX = cx - panStart.x
@@ -207,23 +207,33 @@ function initCanvasEvents() {
 		if (isWiring) {
 			if (e.changedTouches) {
 				const t = e.changedTouches[0]
-				const target = document.elementFromPoint(t.clientX, t.clientY)
-				// Расширенная зона поиска порта для мобилок
+
+				// Учитываем скролл при определении цели
+				const scrollX =
+					window.pageXOffset || document.documentElement.scrollLeft
+				const scrollY = window.pageYOffset || document.documentElement.scrollTop
+
+				const target = document.elementFromPoint(
+					t.clientX + scrollX,
+					t.clientY + scrollY
+				)
+
 				if (target) {
-					// Ищем порт или родителя порта
 					const port = target.closest('.port-in')
 					if (port) {
 						const block = port.closest('.node-block')
-						// Подменяем target на порт для корректной отработки endWireDrag
-						// (Хак, так как endWireDrag смотрит e.target)
-						// Но endWireDrag в editor/connections.js требует переработки под тач
-						// Пока вызываем endWireDrag с эмулированным событием
-						endWireDrag({ target: port }, block)
+
+						const fakeEvent = {
+							target: port,
+							stopPropagation: () => {},
+							preventDefault: () => {},
+						}
+
+						endWireDrag(fakeEvent, block)
 						return
 					}
 				}
 			} else {
-				// Mouse
 				if (e.target.classList.contains('port-in')) {
 					const block = e.target.closest('.node-block')
 					endWireDrag(e, block)
@@ -252,3 +262,5 @@ function updateTransform() {
 	const gridSize = 24 * zoomLevel
 	canvas.style.backgroundSize = `${gridSize}px ${gridSize}px`
 }
+
+

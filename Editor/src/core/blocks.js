@@ -3,14 +3,12 @@
 // ==========================================
 const BLOCK_DEFINITIONS = [
 	// ==========================================
-	// --- СОБЫТИЯ (С РАЗДЕЛЕНИЕМ) ---
+	// --- 1. СОБЫТИЯ (EVENTS) ---
 	// ==========================================
-
-	// --- ПОДРАЗДЕЛ: ОСНОВНЫЕ ---
 	{
 		id: 'evt_start',
 		category: 'События',
-		subcategory: 'Основные', // <--- НОВОЕ ПОЛЕ
+		subcategory: 'Основные',
 		label: 'При старте',
 		desc: 'Выполняет блоки один раз при запуске.',
 		icon: 'ri-flag-fill',
@@ -35,22 +33,10 @@ const BLOCK_DEFINITIONS = [
 		color: '#00E676',
 		inputs: [{ label: 'Интервал', default: '1' }],
 	},
-
-	// --- ПОДРАЗДЕЛ: ВВОД И КАСАНИЯ ---
-	{
-		id: 'evt_object_click',
-		category: 'События',
-		subcategory: 'Ввод / Касания',
-		label: 'Нажатие на объект',
-		desc: 'Клик мышкой или тап пальцем по объекту.',
-		icon: 'ri-cursor-fill',
-		color: '#00E676',
-		inputs: [{ label: 'Объект', default: 'btn_start' }],
-	},
 	{
 		id: 'evt_screen_touch',
-		category: 'События', // <--- НОВЫЙ БЛОК
-		subcategory: 'Ввод / Касания',
+		category: 'События',
+		subcategory: 'Ввод',
 		label: 'Касание экрана',
 		desc: 'Срабатывает при нажатии в любом месте экрана.',
 		icon: 'ri-fingerprint-line',
@@ -58,17 +44,25 @@ const BLOCK_DEFINITIONS = [
 		inputs: [],
 	},
 	{
+		id: 'evt_object_click',
+		category: 'События',
+		subcategory: 'Ввод',
+		label: 'Нажатие на объект',
+		desc: 'Клик мышкой или тап пальцем по объекту.',
+		icon: 'ri-cursor-fill',
+		color: '#00E676',
+		inputs: [{ label: 'Объект', default: 'btn_start' }],
+	},
+	{
 		id: 'evt_key_press',
 		category: 'События',
-		subcategory: 'Ввод / Касания',
+		subcategory: 'Ввод',
 		label: 'Нажатие клавиши',
 		desc: 'При нажатии кнопки на клавиатуре.',
 		icon: 'ri-keyboard-fill',
 		color: '#00E676',
 		inputs: [{ label: 'Клавиша (Code)', default: 'Space' }],
 	},
-
-	// --- ПОДРАЗДЕЛ: ФИЗИКА ---
 	{
 		id: 'evt_collision',
 		category: 'События',
@@ -84,7 +78,7 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'evt_collision_end',
-		category: 'События', // <--- НОВЫЙ БЛОК (выход из коллизии полезен)
+		category: 'События',
 		subcategory: 'Физика',
 		label: 'Столкновение (Конец)',
 		desc: 'Когда объекты перестали касаться.',
@@ -95,12 +89,10 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'Объект 2', default: 'enemy' },
 		],
 	},
-
-	// --- ПОДРАЗДЕЛ: ПОЛЬЗОВАТЕЛЬСКИЕ ---
 	{
 		id: 'evt_custom_trigger',
-		category: 'События', // <--- НОВЫЙ БЛОК: ВЫЗВАТЬ
-		subcategory: 'Кастомные',
+		category: 'События',
+		subcategory: 'Сигналы',
 		label: 'Вызвать событие',
 		desc: 'Запускает блоки "При событии" с этим именем.',
 		icon: 'ri-signal-tower-fill',
@@ -112,8 +104,8 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'evt_custom_receive',
-		category: 'События', // <--- НОВЫЙ БЛОК: ПРИНЯТЬ
-		subcategory: 'Кастомные',
+		category: 'События',
+		subcategory: 'Сигналы',
 		label: 'При событии',
 		desc: 'Срабатывает, когда вызвано событие.',
 		icon: 'ri-base-station-line',
@@ -121,10 +113,13 @@ const BLOCK_DEFINITIONS = [
 		inputs: [{ label: 'Имя события', default: 'OnWin' }],
 	},
 
-	// --- ДВИЖЕНИЕ ---
+	// ==========================================
+	// --- 2. ДВИЖЕНИЕ (MOVEMENT) ---
+	// ==========================================
 	{
 		id: 'mov_set_pos',
 		category: 'Движение',
+		subcategory: 'Координаты',
 		label: 'Перейти в точку',
 		desc: 'Мгновенно телепортирует объект в указанные координаты X и Y.',
 		icon: 'ri-map-pin-fill',
@@ -138,8 +133,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'mov_change_pos',
 		category: 'Движение',
+		subcategory: 'Координаты',
 		label: 'Сдвинуть на',
-		desc: 'Сдвигает объект на указанные значения по осям X и Y относительно его текущей позиции.',
+		desc: 'Сдвигает объект на указанные значения по осям X и Y.',
 		icon: 'ri-arrow-right-up-line',
 		color: '#6200EA',
 		inputs: [
@@ -149,8 +145,35 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
+		id: 'mov_align',
+		category: 'Движение',
+		subcategory: 'Координаты',
+		label: 'Выровнять',
+		desc: 'Выравнивает объект по экрану (центр, края).',
+		icon: 'ri-align-item-horizontal-center-fill',
+		color: '#6200EA',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Позиция', default: 'center' },
+		],
+	},
+	{
+		id: 'mov_pin',
+		category: 'Движение',
+		subcategory: 'Координаты',
+		label: 'Привязка к экрану',
+		desc: 'Закрепляет объект относительно окна (HUD).',
+		icon: 'ri-pushpin-fill',
+		color: '#6200EA',
+		inputs: [
+			{ label: 'Объект', default: 'ui_text' },
+			{ label: 'Вкл/Выкл (1/0)', default: '1' },
+		],
+	},
+	{
 		id: 'mov_look_at',
 		category: 'Движение',
+		subcategory: 'Поворот',
 		label: 'Смотреть на',
 		desc: 'Поворачивает объект в направлении другого объекта.',
 		icon: 'ri-eye-2-line',
@@ -161,32 +184,9 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
-		id: 'mov_pin',
-		category: 'Движение',
-		label: 'Привязка к экрану',
-		desc: 'Закрепляет объект относительно окна.',
-		icon: 'ri-pushpin-fill',
-		color: '#6200EA',
-		inputs: [
-			{ label: 'Объект', default: 'ui_text' },
-			{ label: 'Вкл/Выкл (1/0)', default: '1' },
-		],
-	},
-	{
-		id: 'mov_align',
-		category: 'Движение',
-		label: 'Выровнять',
-		desc: 'Выровнивает объект по указанной позиции на экране (лево, центр, право, верх, низ).',
-		icon: 'ri-align-item-horizontal-center-fill',
-		color: '#6200EA',
-		inputs: [
-			{ label: 'Объект', default: 'box1' },
-			{ label: 'Позиция', default: 'center' },
-		],
-	},
-	{
 		id: 'ai_patrol',
 		category: 'Движение',
+		subcategory: 'AI / Авто',
 		label: 'Патруль (X1 -> X2)',
 		desc: 'Двигает объект туда-сюда.',
 		icon: 'ri-route-line',
@@ -199,8 +199,37 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
+		id: 'ai_move_to',
+		category: 'Движение',
+		subcategory: 'AI / Авто',
+		label: 'Идти к объекту',
+		desc: 'Делает шаг в сторону цели (для Update).',
+		icon: 'ri-footprint-line',
+		color: '#6200EA',
+		inputs: [
+			{ label: 'Кто', default: 'enemy' },
+			{ label: 'Цель', default: 'player' },
+			{ label: 'Скорость', default: '2' },
+		],
+	},
+	{
+		id: 'ai_flee',
+		category: 'Движение',
+		subcategory: 'AI / Авто',
+		label: 'Убегать от',
+		desc: 'Делает шаг от цели (для Update).',
+		icon: 'ri-run-line',
+		color: '#6200EA',
+		inputs: [
+			{ label: 'Кто', default: 'civilian' },
+			{ label: 'От кого', default: 'zombie' },
+			{ label: 'Скорость', default: '3' },
+		],
+	},
+	{
 		id: 'ai_move_smart',
 		category: 'Движение',
+		subcategory: 'AI / Авто',
 		label: 'Умное движение (A*)',
 		desc: 'Идет к цели, обходя стены (нужен Тайлмап).',
 		icon: 'ri-map-pin-user-fill',
@@ -209,180 +238,19 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'Кто', default: 'enemy' },
 			{ label: 'Цель', default: 'player' },
 			{ label: 'Скорость', default: '2' },
-			{ label: 'ID Сетки (var)', default: 'myMap' }, // Переменная, куда сохранили карту
+			{ label: 'ID Сетки (var)', default: 'myMap' },
 		],
 	},
 
-	// --- ГРУППЫ И ОРГАНИЗАЦИЯ ---
-	{
-		id: 'grp_add',
-		category: 'Группы',
-		label: 'Добавить в группу',
-		desc: 'Добавляет указанный объект в группу с заданным именем.',
-		icon: 'ri-group-fill',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'box1' },
-			{ label: 'Имя группы', default: 'enemies' },
-		],
-	},
-	{
-		id: 'grp_remove',
-		category: 'Группы',
-		label: 'Убрать из группы',
-		desc: 'Удаляет указанный объект из группы с заданным именем.',
-		icon: 'ri-user-unfollow-line',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'box1' },
-			{ label: 'Имя группы', default: 'enemies' },
-		],
-	},
-	{
-		id: 'grp_move',
-		category: 'Группы',
-		label: 'Двигать группу',
-		desc: 'Сдвигает все объекты в указанной группе на заданные значения по осям X и Y.',
-		icon: 'ri-drag-move-line',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Имя группы', default: 'enemies' },
-			{ label: 'Сдвиг X', default: '5' },
-			{ label: 'Сдвиг Y', default: '0' },
-		],
-	},
-	{
-		id: 'grp_state',
-		category: 'Группы',
-		label: 'Состояние группы',
-		desc: 'Показывает или скрывает все объекты в указанной группе.',
-		icon: 'ri-eye-close-line',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Имя группы', default: 'enemies' },
-			{ label: 'show/hide', default: 'hide' },
-		],
-	},
-	{
-		id: 'grp_delete',
-		category: 'Группы',
-		label: 'Удалить группу',
-		desc: 'Удаляет все объекты из указанной группы и очищает её.',
-		icon: 'ri-delete-bin-2-line',
-		color: '#FF4081',
-		inputs: [{ label: 'Имя группы', default: 'enemies' }],
-	},
-	{
-		id: 'sys_group',
-		category: 'Группы',
-		label: 'Группа',
-		desc: 'Позволяет сворачивать (скрывать) цепочку блоков для удобства.',
-		icon: 'ri-folder-open-fill',
-		color: '#E91E63',
-		inputs: [{ label: 'Название', default: 'Логика врага' }],
-	},
-
-	// --- ОКНО ---
-	{
-		id: 'win_set_title',
-		category: 'Окно',
-		label: 'Название Окна',
-		desc: 'Устанавливает заголовок окна.',
-		icon: 'ri-window-line',
-		color: '#00B0FF',
-		inputs: [{ label: 'Текст', default: 'Ecrous Game' }],
-	},
-	{
-		id: 'win_scale_mode',
-		category: 'Окно',
-		label: 'Режим масштаба',
-		desc: 'Как игра подстраивается под экран.',
-		icon: 'ri-aspect-ratio-fill',
-		color: '#00B0FF',
-		inputs: [
-			{
-				label: 'Режим',
-				default: 'fit',
-				type: 'select',
-				options: ['fixed', 'fit', 'stretch', 'fill'],
-			},
-			// fixed = фиксированный размер (как сейчас)
-			// fit = вписать с сохранением пропорций (черные полосы)
-			// stretch = растянуть (искажение пропорций)
-			// fill = заполнить (обрезка краев)
-		],
-	},
-	{
-		id: 'win_set_size',
-		category: 'Окно',
-		label: 'Базовый размер',
-		desc: 'Внутреннее разрешение игры (логические пиксели).',
-		icon: 'ri-ruler-2-line',
-		color: '#00B0FF',
-		inputs: [
-			{ label: 'Ширина', default: '800' },
-			{ label: 'Высота', default: '600' },
-		],
-	},
-	{
-		id: 'win_set_cursor',
-		category: 'Окно',
-		label: 'Курсор мыши',
-		desc: 'Меняет вид курсора или скрывает его.',
-		icon: 'ri-cursor-fill',
-		color: '#00B0FF',
-		inputs: [
-			{
-				label: 'Вид',
-				default: 'default',
-				type: 'select',
-				options: ['default', 'pointer', 'none', 'crosshair', 'text', 'wait'],
-			},
-		],
-	},
-	{
-		id: 'win_fullscreen',
-		category: 'Окно',
-		label: 'Полный экран',
-		desc: 'Переключает полноэкранный режим (работает по клику).',
-		icon: 'ri-fullscreen-fill',
-		color: '#00B0FF',
-		inputs: [{ label: 'Вкл/Выкл (1/0)', default: '1' }],
-	},
-	{
-		id: 'win_bg_color',
-		category: 'Окно',
-		label: 'Цвет Фона',
-		desc: 'Цвет полос по краям или фона сцены.',
-		icon: 'ri-paint-fill',
-		color: '#00B0FF',
-		inputs: [{ label: 'Цвет', default: '#1a1a1a' }],
-	},
-	{
-		id: 'win_bg_image',
-		category: 'Окно',
-		label: 'Фото Фона (URL)',
-		desc: 'Картинка на фоне.',
-		icon: 'ri-image-line',
-		color: '#00B0FF',
-		inputs: [{ label: 'Ссылка', default: 'https://' }],
-	},
-	{
-		id: 'win_console_state',
-		category: 'Окно',
-		label: 'Консоль',
-		desc: 'Показывает или скрывает консоль разработчика в окне игры.',
-		icon: 'ri-terminal-box-line',
-		color: '#00B0FF',
-		inputs: [{ label: 'Показать/Скрыть', default: 'hide' }],
-	},
-
-	// --- ОБЪЕКТЫ ---
+	// ==========================================
+	// --- 3. ОБЪЕКТЫ (OBJECTS) ---
+	// ==========================================
 	{
 		id: 'obj_create_rect_custom',
 		category: 'Объекты',
+		subcategory: 'Создание',
 		label: 'Прямоугольник',
-		desc: 'Создает прямоугольный объект с заданными размерами, позицией и цветом.',
+		desc: 'Создает цветной прямоугольник.',
 		icon: 'ri-shape-line',
 		color: '#2979FF',
 		inputs: [
@@ -398,8 +266,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_create_circle',
 		category: 'Объекты',
+		subcategory: 'Создание',
 		label: 'Создать Круг',
-		desc: 'Создает круглый объект с заданным радиусом, позицией и цветом.',
+		desc: 'Создает круг.',
 		icon: 'ri-checkbox-blank-circle-line',
 		color: '#2979FF',
 		inputs: [
@@ -411,10 +280,28 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
+		id: 'obj_create_poly',
+		category: 'Объекты',
+		subcategory: 'Создание',
+		label: 'Полигон (N-углов)',
+		desc: 'Создает многоугольник.',
+		icon: 'ri-shape-2-fill',
+		color: '#2979FF',
+		inputs: [
+			{ label: 'Имя', default: 'poly1' },
+			{ label: 'X', default: '300' },
+			{ label: 'Y', default: '100' },
+			{ label: 'Радиус', default: '40' },
+			{ label: 'Углов', default: '5' },
+			{ label: 'Цвет', default: '#ffff00' },
+		],
+	},
+	{
 		id: 'obj_create_line',
 		category: 'Объекты',
+		subcategory: 'Создание',
 		label: 'Создать Линию',
-		desc: 'Создает линию между двумя точками с заданной толщиной и цветом.',
+		desc: 'Рисует линию между точками.',
 		icon: 'ri-pencil-ruler-2-line',
 		color: '#2979FF',
 		inputs: [
@@ -428,26 +315,61 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
-		id: 'obj_create_poly',
+		id: 'obj_create_sprite',
 		category: 'Объекты',
-		label: 'Полигон (N-углов)',
-		desc: 'Создает правильный многоугольник с заданным количеством углов, радиусом, позицией и цветом.',
-		icon: 'ri-shape-2-fill',
+		subcategory: 'Спрайты',
+		label: 'Создать Спрайт',
+		desc: 'Создает картинку с физикой.',
+		icon: 'ri-image-line',
 		color: '#2979FF',
 		inputs: [
-			{ label: 'Имя', default: 'poly1' },
-			{ label: 'X', default: '300' },
+			{ label: 'Имя ID', default: 'sprite1' },
+			{ label: 'Картинка (URL)', default: 'assets/hero.png' },
+			{ label: 'X', default: '100' },
 			{ label: 'Y', default: '100' },
-			{ label: 'Радиус', default: '40' },
-			{ label: 'Углов', default: '5' },
-			{ label: 'Цвет', default: '#ffff00' },
+			{ label: 'Ширина', default: '50' },
+			{ label: 'Высота', default: '50' },
+			{
+				label: 'Физика',
+				type: 'select',
+				options: ['Static', 'Dynamic', 'None'],
+				default: 'Dynamic',
+			},
+			{ label: 'Слой', default: '1' },
+		],
+	},
+	{
+		id: 'obj_set_sprite_frame',
+		category: 'Объекты',
+		subcategory: 'Спрайты',
+		label: 'Сменить картинку',
+		desc: 'Меняет изображение спрайта.',
+		icon: 'ri-image-edit-line',
+		color: '#2979FF',
+		inputs: [
+			{ label: 'Имя объекта', default: 'sprite1' },
+			{ label: 'Новый URL', default: 'assets/run.png' },
+		],
+	},
+	{
+		id: 'obj_set_texture',
+		category: 'Объекты',
+		subcategory: 'Спрайты',
+		label: 'Текстура (URL)',
+		desc: 'Накладывает текстуру на фигуру.',
+		icon: 'ri-image-add-line',
+		color: '#2979FF',
+		inputs: [
+			{ label: 'Имя', default: 'box1' },
+			{ label: 'URL', default: 'https://' },
 		],
 	},
 	{
 		id: 'obj_clone',
 		category: 'Объекты',
+		subcategory: 'Управление',
 		label: 'Клонировать',
-		desc: 'Создает копию указанного объекта с новым именем.',
+		desc: 'Создает копию объекта.',
 		icon: 'ri-file-copy-line',
 		color: '#2979FF',
 		inputs: [
@@ -456,17 +378,52 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
+		id: 'obj_spawn_clone',
+		category: 'Объекты',
+		subcategory: 'Управление',
+		label: 'Спавн клона',
+		desc: 'Создает копию в новых координатах.',
+		icon: 'ri-file-copy-2-fill',
+		color: '#2979FF',
+		inputs: [
+			{ label: 'Кого клонировать', default: 'bullet_prefab' },
+			{ label: 'Новое имя', default: 'bullet_1' },
+			{ label: 'X', default: '100' },
+			{ label: 'Y', default: '100' },
+		],
+	},
+	{
 		id: 'obj_delete',
 		category: 'Объекты',
+		subcategory: 'Управление',
 		label: 'Удалить объект',
-		desc: 'Удаляет указанный объект из сцены.',
+		desc: 'Удаляет объект из сцены.',
 		icon: 'ri-delete-bin-line',
 		color: '#2979FF',
 		inputs: [{ label: 'Имя', default: 'box1' }],
 	},
 	{
+		id: 'obj_set_visible',
+		category: 'Объекты',
+		subcategory: 'Управление',
+		label: 'Видимость',
+		desc: 'Скрывает или показывает объект.',
+		icon: 'ri-eye-line',
+		color: '#2979FF',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{
+				label: 'Режим',
+				type: 'select',
+				default: 'hide',
+				options: ['hide', 'show', 'toggle'],
+			},
+		],
+	},
+	{
 		id: 'obj_get_pos',
 		category: 'Объекты',
+		subcategory: 'Данные',
 		label: 'Получить позицию',
 		desc: 'Записывает X и Y объекта в переменные.',
 		icon: 'ri-map-pin-user-line',
@@ -477,13 +434,12 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'В перем. Y', default: 'obj_y' },
 		],
 	},
-
-	// --- СТИЛИЗАЦИЯ ---
 	{
 		id: 'obj_set_size',
 		category: 'Объекты',
+		subcategory: 'Стили',
 		label: 'Уст. Размер',
-		desc: 'Устанавливает ширину и высоту указанного объекта.',
+		desc: 'Меняет ширину и высоту.',
 		icon: 'ri-fullscreen-line',
 		color: '#2979FF',
 		inputs: [
@@ -495,8 +451,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_set_scale',
 		category: 'Объекты',
+		subcategory: 'Стили',
 		label: 'Уст. Масштаб',
-		desc: 'Устанавливает масштаб по осям X и Y для указанного объекта.',
+		desc: 'Множитель размера (1 = 100%).',
 		icon: 'ri-zoom-in-line',
 		color: '#2979FF',
 		inputs: [
@@ -508,8 +465,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_set_rotate',
 		category: 'Объекты',
+		subcategory: 'Стили',
 		label: 'Вращение (град)',
-		desc: 'Устанавливает угол поворота в градусах для указанного объекта.',
+		desc: 'Поворачивает объект.',
 		icon: 'ri-restart-line',
 		color: '#2979FF',
 		inputs: [
@@ -520,8 +478,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_set_color',
 		category: 'Объекты',
+		subcategory: 'Стили',
 		label: 'Уст. Цвет',
-		desc: 'Устанавливает цвет указанного объекта на заданный HEX-цвет.',
+		desc: 'Меняет цвет заливки (HEX).',
 		icon: 'ri-palette-line',
 		color: '#2979FF',
 		inputs: [
@@ -532,8 +491,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_set_stroke',
 		category: 'Объекты',
+		subcategory: 'Стили',
 		label: 'Обводка',
-		desc: 'Устанавливает цвет и толщину обводки для указанного объекта.',
+		desc: 'Цвет и толщина линии.',
 		icon: 'ri-checkbox-blank-line',
 		color: '#2979FF',
 		inputs: [
@@ -547,7 +507,7 @@ const BLOCK_DEFINITIONS = [
 		category: 'Объекты',
 		subcategory: 'Стили',
 		label: 'Границы (Расшир.)',
-		desc: 'Настройка рамки: толщина, стиль, цвет, скругление.',
+		desc: 'Настройка рамки и скругления.',
 		icon: 'ri-checkbox-blank-line',
 		color: '#2979FF',
 		inputs: [
@@ -564,22 +524,11 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
-		id: 'obj_set_texture',
-		category: 'Объекты',
-		label: 'Текстура (URL)',
-		desc: 'Устанавливает изображение текстуры для указанного объекта по ссылке URL.',
-		icon: 'ri-image-add-line',
-		color: '#2979FF',
-		inputs: [
-			{ label: 'Имя', default: 'box1' },
-			{ label: 'URL', default: 'https://' },
-		],
-	},
-	{
 		id: 'obj_set_zindex',
 		category: 'Объекты',
+		subcategory: 'Стили',
 		label: 'Слой (Z-index)',
-		desc: 'Устанавливает порядок слоя (z-index) для указанного объекта.',
+		desc: 'Порядок наложения объектов.',
 		icon: 'ri-stack-fill',
 		color: '#2979FF',
 		inputs: [
@@ -590,8 +539,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_set_shadow',
 		category: 'Объекты',
+		subcategory: 'Эффекты',
 		label: 'Тень',
-		desc: 'Устанавливает цвет и размытие тени для указанного объекта.',
+		desc: 'Добавляет тень объекту.',
 		icon: 'ri-drop-line',
 		color: '#2979FF',
 		inputs: [
@@ -603,8 +553,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_set_blur',
 		category: 'Объекты',
+		subcategory: 'Эффекты',
 		label: 'Размытие (Blur)',
-		desc: 'Устанавливает уровень размытия для указанного объекта в пикселях.',
+		desc: 'Блюрит сам объект.',
 		icon: 'ri-blur-off-line',
 		color: '#2979FF',
 		inputs: [
@@ -613,258 +564,15 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 
-	// --- ТЕКСТ (ЖЕЛТЫЙ) ---
-	{
-		id: 'txt_create',
-		category: 'Текст',
-		label: 'Создать Текст',
-		desc: 'Создает текст с настройкой выравнивания.',
-		icon: 'ri-text',
-		color: '#FFD600',
-		inputs: [
-			{ label: 'Имя', default: 'txt1' },
-			{ label: 'X', default: '50' },
-			{ label: 'Y', default: '50' },
-			{ label: 'Текст', default: 'Hello World' },
-			{ label: 'Размер', default: '24' },
-			{ label: 'Цвет', default: '#ffffff' },
-			{
-				label: 'Выравнивание', // <--- НОВЫЙ INPUT
-				type: 'select',
-				default: 'left',
-				options: ['left', 'center', 'right'],
-			},
-		],
-	},
-	{
-		id: 'txt_modify',
-		category: 'Текст',
-		label: 'Изменить текст',
-		desc: 'Меняет содержимое.',
-		icon: 'ri-edit-2-line',
-		color: '#FFD600',
-		inputs: [
-			{ label: 'Элемент', default: 'txt1' },
-			{ label: 'Текст', default: 'Новый текст' },
-		],
-	},
-	{
-		id: 'txt_set_opacity',
-		category: 'Текст',
-		label: 'Прозр. Текста',
-		desc: 'Устанавливает уровень прозрачности для указанного текстового элемента (от 0 до 1).',
-		icon: 'ri-contrast-drop-line',
-		color: '#FFD600',
-		inputs: [
-			{ label: 'Имя', default: 'txt1' },
-			{ label: 'Значение (0-1)', default: '0.5' },
-		],
-	},
-	{
-		id: 'txt_hide',
-		category: 'Текст',
-		label: 'Скрыть Текст',
-		desc: 'Скрывает указанный текстовый элемент.',
-		icon: 'ri-eye-off-fill',
-		color: '#FFD600',
-		inputs: [{ label: 'Имя', default: 'txt1' }],
-	},
-	{
-		id: 'txt_show',
-		category: 'Текст',
-		label: 'Показать Текст',
-		desc: 'Показывает указанный текстовый элемент, если он был скрыт.',
-		icon: 'ri-eye-fill',
-		color: '#FFD600',
-		inputs: [{ label: 'Имя', default: 'txt1' }],
-	},
-	{
-		id: 'txt_load_font',
-		category: 'Текст',
-		label: 'Загрузить шрифт (URL)',
-		desc: 'Подключает шрифт из интернета.',
-		icon: 'ri-download-line',
-		color: '#FFD600',
-		inputs: [
-			{ label: 'Имя шрифта', default: 'MyFont' }, // v[0]
-			{ label: 'Ссылка (URL)', default: 'https://...' }, // v[1]
-		],
-	},
-	{
-		id: 'txt_set_font',
-		category: 'Текст',
-		label: 'Установить шрифт',
-		desc: 'Применяет шрифт к объекту.',
-		icon: 'ri-font-family',
-		color: '#FFD600',
-		inputs: [
-			{ label: 'Имя текста', default: 'txt1' }, // v[0]
-			{ label: 'Имя шрифта', default: 'MyFont' }, // v[1] (Теперь тут можно писать!)
-		],
-	},
-
-	// --- ПЕРЕМЕННЫЕ ---
-	{
-		id: 'var_set',
-		category: 'Переменные',
-		subcategory: 'Основное',
-		label: 'Установить перем.',
-		desc: 'Устанавливает указанную переменную в заданное значение.',
-		icon: 'ri-save-line',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Имя', default: 'score' },
-			{ label: 'Значение', default: '0' },
-		],
-	},
-	{
-		id: 'var_change',
-		category: 'Переменные',
-		subcategory: 'Основное',
-		label: 'Изменить перем.',
-		desc: 'Изменяет указанную переменную на заданное значение (прибавляет или вычитает).',
-		icon: 'ri-add-circle-line',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Имя', default: 'score' },
-			{ label: 'На сколько', default: '1' },
-		],
-	},
-	{
-		id: 'log_print',
-		category: 'Переменные',
-		subcategory: 'Основное',
-		label: 'Вывести в консоль',
-		desc: 'Выводит текст. Можно отключить перенос строки.',
-		icon: 'ri-terminal-line',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Текст/Перем.', default: 'Score: ' }, // v[0]
-			{
-				label: 'С новой строки?', // v[1]
-				type: 'select',
-				default: 'yes',
-				options: ['yes', 'no'],
-			},
-		],
-	},
-
-	{
-		id: 'var_math',
-		category: 'Переменные',
-		subcategory: 'Матиматика',
-		label: 'Математика',
-		desc: 'Выполняет математическую операцию.',
-		icon: 'ri-calculator-line',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Куда записать', default: 'result' }, // v[0]
-			{ label: 'Число А', default: '0' }, // v[1]
-			{
-				label: 'Операция', // v[2]
-				type: 'select',
-				default: '+',
-				options: [
-					// Базовые
-					'+',
-					'-',
-					'*',
-					'/',
-					'%',
-					'^',
-					// Алгебра
-					'sqrt',
-					'abs',
-					'round',
-					'floor',
-					'ceil',
-					// Тригонометрия (Радианы)
-					'sin',
-					'cos',
-					'tan',
-					'asin',
-					'acos',
-					'atan',
-					// Конвертация
-					'deg2rad',
-					'rad2deg',
-					// Логарифмы
-					'log',
-					'log10',
-					'exp',
-					// Сравнение
-					'min',
-					'max',
-					'random',
-				],
-			},
-			{ label: 'Число Б (если нужно)', default: '0' }, // v[3]
-		],
-	},
-	{
-		id: 'var_random',
-		category: 'Переменные',
-		subcategory: 'Матиматика',
-		label: 'Случайное число',
-		desc: 'Генерирует число от Мин до Макс.',
-		icon: 'ri-shuffle-line',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Результат в', default: 'rnd' },
-			{ label: 'Мин', default: '1' },
-			{ label: 'Макс', default: '10' },
-		],
-	},
-
-	// --- 2. СОСТОЯНИЯ (STATE) ---
-	{
-		id: 'state_set',
-		category: 'Переменные',
-		subcategory: 'Состояние',
-		label: 'Задать состояние',
-		desc: 'Устанавливает текстовое состояние объекта (например: idle, run).',
-		icon: 'ri-price-tag-3-line',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Состояние', default: 'idle' },
-		],
-	},
-	{
-		id: 'state_get',
-		category: 'Переменные',
-		subcategory: 'Состояние',
-		label: 'Взять состояние',
-		desc: 'Записывает текущее состояние объекта в переменную.',
-		icon: 'ri-price-tag-3-fill',
-		color: '#D50000',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Результат в', default: 'p_state' },
-		],
-	},
-
 	// ==========================================
-	// --- ЛОГИКА (С ПОДКАТЕГОРИЯМИ) ---
+	// --- 4. ЛОГИКА (LOGIC) ---
 	// ==========================================
-
-	// --- ПОДРАЗДЕЛ: ПОТОК ---
-	{
-		id: 'evt_wait',
-		category: 'Логика',
-		subcategory: 'Поток',
-		label: 'Ждать (сек)',
-		desc: 'Приостанавливает выполнение прикрепленных блоков на указанное количество секунд.',
-		icon: 'ri-timer-line',
-		color: '#FF6D00',
-		inputs: [{ label: 'Секунды', default: '1' }],
-	},
 	{
 		id: 'flow_if',
 		category: 'Логика',
 		subcategory: 'Поток',
 		label: 'Если (IF)',
-		desc: 'Если условие верно, выполняет блоки внутри. Иначе пропускает их до "Конец блока".',
+		desc: 'Проверка условия.',
 		icon: 'ri-question-mark',
 		color: '#FF6D00',
 		inputs: [
@@ -874,24 +582,24 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
-		id: 'flow_repeat',
-		category: 'Логика',
-		subcategory: 'Поток',
-		label: 'Повторить N раз',
-		desc: 'Повторяет блоки внутри указанное число раз.',
-		icon: 'ri-loop-right-line',
-		color: '#FF6D00',
-		inputs: [{ label: 'Количество', default: '5' }],
-	},
-	{
 		id: 'flow_else',
 		category: 'Логика',
 		subcategory: 'Поток',
 		label: 'Иначе (Else)',
-		desc: 'Выполняется, если предыдущий IF был ложным.',
+		desc: 'Если условие не выполнено.',
 		icon: 'ri-arrow-go-forward-line',
 		color: '#FF6D00',
 		inputs: [],
+	},
+	{
+		id: 'flow_repeat',
+		category: 'Логика',
+		subcategory: 'Поток',
+		label: 'Повторить N раз',
+		desc: 'Цикл.',
+		icon: 'ri-loop-right-line',
+		color: '#FF6D00',
+		inputs: [{ label: 'Количество', default: '5' }],
 	},
 	{
 		id: 'flow_end',
@@ -904,39 +612,31 @@ const BLOCK_DEFINITIONS = [
 		inputs: [],
 	},
 	{
+		id: 'evt_wait',
+		category: 'Логика',
+		subcategory: 'Поток',
+		label: 'Ждать (сек)',
+		desc: 'Пауза в выполнении скрипта.',
+		icon: 'ri-timer-line',
+		color: '#FF6D00',
+		inputs: [{ label: 'Секунды', default: '1' }],
+	},
+	{
 		id: 'flow_comment',
 		category: 'Логика',
 		subcategory: 'Поток',
 		label: 'Комментарий',
-		desc: 'Заметка для разработчика (не выполняется).',
+		desc: 'Заметка.',
 		icon: 'ri-chat-1-line',
 		color: '#FF8F00',
 		inputs: [{ label: 'Текст', default: 'Тут сложная логика...' }],
 	},
-
-	// --- ПОДРАЗДЕЛ: БОЙ ---
-	{
-		id: 'combat_damage',
-		category: 'Логика',
-		subcategory: 'Бой',
-		label: 'Нанести урон',
-		desc: 'Уменьшает переменную HP у объекта (компонент).',
-		icon: 'ri-sword-fill',
-		color: '#FF6D00',
-		inputs: [
-			{ label: 'Цель (Obj)', default: 'enemy' },
-			{ label: 'Кол-во', default: '10' },
-			{ label: 'Имя комп. HP', default: 'health' },
-		],
-	},
-
-	// --- ПОДРАЗДЕЛ: ПРОВЕРКИ ---
 	{
 		id: 'logic_chance',
 		category: 'Логика',
 		subcategory: 'Проверки',
 		label: 'Вероятность (%)',
-		desc: 'Записывает 1 в переменную, если повезло.',
+		desc: 'Удача (1 или 0).',
 		icon: 'ri-percent-line',
 		color: '#FF6D00',
 		inputs: [
@@ -949,7 +649,7 @@ const BLOCK_DEFINITIONS = [
 		category: 'Логика',
 		subcategory: 'Проверки',
 		label: 'Объект существует?',
-		desc: 'Проверяет, есть ли объект на сцене. Пишет 1 или 0.',
+		desc: 'Проверка на наличие.',
 		icon: 'ri-question-line',
 		color: '#FF6D00',
 		inputs: [
@@ -962,7 +662,7 @@ const BLOCK_DEFINITIONS = [
 		category: 'Логика',
 		subcategory: 'Проверки',
 		label: 'Объект видим?',
-		desc: 'Проверяет, не скрыт ли объект (display != none).',
+		desc: 'Проверка видимости.',
 		icon: 'ri-eye-line',
 		color: '#FF6D00',
 		inputs: [
@@ -970,15 +670,291 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'Результат в', default: 'is_vis' },
 		],
 	},
+	{
+		id: 'interact_dist',
+		category: 'Логика',
+		subcategory: 'Проверки',
+		label: 'Дистанция до...',
+		desc: 'Считает расстояние между объектами.',
+		icon: 'ri-ruler-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Объект А', default: 'player' },
+			{ label: 'Объект Б', default: 'door' },
+			{ label: 'Результат в', default: 'dist' },
+		],
+	},
+	{
+		id: 'zone_check',
+		category: 'Логика',
+		subcategory: 'Проверки',
+		label: 'Внутри зоны?',
+		desc: 'Попадание объекта в зону.',
+		icon: 'ri-shape-2-line',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Кто', default: 'player' },
+			{ label: 'Зона (Объект)', default: 'zone1' },
+			{ label: 'Результат в', default: 'in_zone' },
+		],
+	},
+	{
+		id: 'combat_damage',
+		category: 'Логика',
+		subcategory: 'Геймплей',
+		label: 'Нанести урон',
+		desc: 'Уменьшает HP компонента.',
+		icon: 'ri-sword-fill',
+		color: '#FF6D00',
+		inputs: [
+			{ label: 'Цель (Obj)', default: 'enemy' },
+			{ label: 'Кол-во', default: '10' },
+			{ label: 'Имя комп. HP', default: 'health' },
+		],
+	},
 
 	// ==========================================
-	// --- ТАЙЛМАПЫ И АНИМАЦИИ (UNITY STYLE) ---
+	// --- 5. ПЕРЕМЕННЫЕ (VARIABLES) ---
+	// ==========================================
+	{
+		id: 'var_set',
+		category: 'Переменные',
+		subcategory: 'Значения',
+		label: 'Установить перем.',
+		desc: 'Присваивает значение.',
+		icon: 'ri-save-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Имя', default: 'score' },
+			{ label: 'Значение', default: '0' },
+		],
+	},
+	{
+		id: 'var_change',
+		category: 'Переменные',
+		subcategory: 'Значения',
+		label: 'Изменить перем.',
+		desc: 'Прибавляет или вычитает.',
+		icon: 'ri-add-circle-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Имя', default: 'score' },
+			{ label: 'На сколько', default: '1' },
+		],
+	},
+	{
+		id: 'var_math',
+		category: 'Переменные',
+		subcategory: 'Вычисления',
+		label: 'Математика',
+		desc: 'Сложные операции (sin, cos, round...).',
+		icon: 'ri-calculator-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Куда записать', default: 'result' },
+			{ label: 'Число А', default: '0' },
+			{
+				label: 'Операция',
+				type: 'select',
+				default: '+',
+				options: [
+					'+',
+					'-',
+					'*',
+					'/',
+					'%',
+					'^',
+					'sqrt',
+					'abs',
+					'round',
+					'floor',
+					'ceil',
+					'sin',
+					'cos',
+					'tan',
+					'asin',
+					'acos',
+					'atan',
+					'deg2rad',
+					'rad2deg',
+					'log',
+					'log10',
+					'exp',
+					'min',
+					'max',
+					'random',
+				],
+			},
+			{ label: 'Число Б (если нужно)', default: '0' },
+		],
+	},
+	{
+		id: 'var_random',
+		category: 'Переменные',
+		subcategory: 'Вычисления',
+		label: 'Случайное число',
+		desc: 'Рандом от Min до Max.',
+		icon: 'ri-shuffle-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Результат в', default: 'rnd' },
+			{ label: 'Мин', default: '1' },
+			{ label: 'Макс', default: '10' },
+		],
+	},
+	{
+		id: 'state_set',
+		category: 'Переменные',
+		subcategory: 'Состояние',
+		label: 'Задать состояние',
+		desc: 'Текстовая метка (idle, run).',
+		icon: 'ri-price-tag-3-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Состояние', default: 'idle' },
+		],
+	},
+	{
+		id: 'state_get',
+		category: 'Переменные',
+		subcategory: 'Состояние',
+		label: 'Взять состояние',
+		desc: 'Читает текущее состояние.',
+		icon: 'ri-price-tag-3-fill',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Результат в', default: 'p_state' },
+		],
+	},
+	{
+		id: 'log_print',
+		category: 'Переменные',
+		subcategory: 'Отладка',
+		label: 'Вывести в консоль',
+		desc: 'Печатает текст в лог.',
+		icon: 'ri-terminal-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Текст/Перем.', default: 'Score: ' },
+			{
+				label: 'С новой строки?',
+				type: 'select',
+				default: 'yes',
+				options: ['yes', 'no'],
+			},
+		],
+	},
+
+	// ==========================================
+	// --- 6. ТЕКСТ (TEXT) ---
+	// ==========================================
+	{
+		id: 'txt_create',
+		category: 'Текст',
+		subcategory: 'Создание',
+		label: 'Создать Текст',
+		desc: 'Добавляет надпись на экран.',
+		icon: 'ri-text',
+		color: '#FFD600',
+		inputs: [
+			{ label: 'Имя', default: 'txt1' },
+			{ label: 'X', default: '50' },
+			{ label: 'Y', default: '50' },
+			{ label: 'Текст', default: 'Hello World' },
+			{ label: 'Размер', default: '24' },
+			{ label: 'Цвет', default: '#ffffff' },
+			{
+				label: 'Выравнивание',
+				type: 'select',
+				default: 'left',
+				options: ['left', 'center', 'right'],
+			},
+		],
+	},
+	{
+		id: 'txt_modify',
+		category: 'Текст',
+		subcategory: 'Управление',
+		label: 'Изменить текст',
+		desc: 'Меняет содержимое надписи.',
+		icon: 'ri-edit-2-line',
+		color: '#FFD600',
+		inputs: [
+			{ label: 'Элемент', default: 'txt1' },
+			{ label: 'Текст', default: 'Новый текст' },
+		],
+	},
+	{
+		id: 'txt_load_font',
+		category: 'Текст',
+		subcategory: 'Шрифты',
+		label: 'Загрузить шрифт (URL)',
+		desc: 'Подключает сторонний шрифт.',
+		icon: 'ri-download-line',
+		color: '#FFD600',
+		inputs: [
+			{ label: 'Имя шрифта', default: 'MyFont' },
+			{ label: 'Ссылка (URL)', default: 'https://...' },
+		],
+	},
+	{
+		id: 'txt_set_font',
+		category: 'Текст',
+		subcategory: 'Шрифты',
+		label: 'Установить шрифт',
+		desc: 'Применяет шрифт к объекту.',
+		icon: 'ri-font-family',
+		color: '#FFD600',
+		inputs: [
+			{ label: 'Имя текста', default: 'txt1' },
+			{ label: 'Имя шрифта', default: 'MyFont' },
+		],
+	},
+	{
+		id: 'txt_set_opacity',
+		category: 'Текст',
+		subcategory: 'Стиль',
+		label: 'Прозр. Текста',
+		desc: 'Меняет прозрачность.',
+		icon: 'ri-contrast-drop-line',
+		color: '#FFD600',
+		inputs: [
+			{ label: 'Имя', default: 'txt1' },
+			{ label: 'Значение (0-1)', default: '0.5' },
+		],
+	},
+	{
+		id: 'txt_hide',
+		category: 'Текст',
+		subcategory: 'Стиль',
+		label: 'Скрыть Текст',
+		desc: 'Прячет надпись.',
+		icon: 'ri-eye-off-fill',
+		color: '#FFD600',
+		inputs: [{ label: 'Имя', default: 'txt1' }],
+	},
+	{
+		id: 'txt_show',
+		category: 'Текст',
+		subcategory: 'Стиль',
+		label: 'Показать Текст',
+		desc: 'Показывает надпись.',
+		icon: 'ri-eye-fill',
+		color: '#FFD600',
+		inputs: [{ label: 'Имя', default: 'txt1' }],
+	},
+
+	// ==========================================
+	// --- 7. АНИМАЦИЯ (ANIMATION) ---
 	// ==========================================
 	{
 		id: 'anim_move_to',
 		category: 'Анимация',
+		subcategory: 'Твины (Плавность)',
 		label: 'Плавное движение',
-		desc: 'Плавно перемещает объект к указанным координатам X и Y за заданное время.',
+		desc: 'Перемещает объект за время.',
 		icon: 'ri-run-line',
 		color: '#D500F9',
 		inputs: [
@@ -991,8 +967,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'anim_rotate_to',
 		category: 'Анимация',
+		subcategory: 'Твины (Плавность)',
 		label: 'Плавный поворот',
-		desc: 'Плавно поворачивает объект к указанному углу в градусах за заданное время.',
+		desc: 'Вращает объект за время.',
 		icon: 'ri-refresh-line',
 		color: '#D500F9',
 		inputs: [
@@ -1004,8 +981,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'anim_scale_to',
 		category: 'Анимация',
+		subcategory: 'Твины (Плавность)',
 		label: 'Плавный масштаб',
-		desc: 'Плавно изменяет масштаб объекта по осям X и Y за заданное время.',
+		desc: 'Изменяет размер за время.',
 		icon: 'ri-aspect-ratio-fill',
 		color: '#D500F9',
 		inputs: [
@@ -1018,8 +996,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'anim_fade',
 		category: 'Анимация',
+		subcategory: 'Твины (Плавность)',
 		label: 'Плавная прозр.',
-		desc: 'Плавно изменяет прозрачность объекта до указанного значения (от 0 до 1) за заданное время.',
+		desc: 'Меняет прозрачность за время.',
 		icon: 'ri-drop-fill',
 		color: '#D500F9',
 		inputs: [
@@ -1031,8 +1010,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'anim_stop',
 		category: 'Анимация',
+		subcategory: 'Управление',
 		label: 'Стоп анимация',
-		desc: 'Останавливает все текущие анимации для указанного объекта.',
+		desc: 'Останавливает все твины.',
 		icon: 'ri-stop-circle-line',
 		color: '#D500F9',
 		inputs: [{ label: 'Объект', default: 'box1' }],
@@ -1040,9 +1020,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'anim_create_sheet',
 		category: 'Анимация',
-		subcategory: 'Спрайты',
+		subcategory: 'Кадровая',
 		label: 'Спрайт-лист',
-		desc: 'Нарезает картинку на кадры (Сетка).',
+		desc: 'Нарезка кадров из картинки.',
 		icon: 'ri-grid-fill',
 		color: '#D500F9',
 		inputs: [
@@ -1057,9 +1037,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'anim_play_clip',
 		category: 'Анимация',
-		subcategory: 'Управление',
+		subcategory: 'Кадровая',
 		label: 'Играть анимацию',
-		desc: 'Запускает созданную анимацию на объекте.',
+		desc: 'Запускает спрайт-анимацию.',
 		icon: 'ri-play-circle-fill',
 		color: '#D500F9',
 		inputs: [
@@ -1069,332 +1049,15 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 
-	// --- ТАЙЛМАПЫ ---
-	{
-		id: 'tile_create_map',
-		category: 'Тайлмап',
-		label: 'Создать сетку',
-		desc: 'Создает карту из символов (Массив строк).',
-		icon: 'ri-map-2-fill',
-		color: '#795548',
-		inputs: [
-			{ label: 'Размер клетки (px)', default: '32' },
-			{
-				label: 'Карта (через запятую)',
-				type: 'textarea', // Используем TextArea для удобства
-				default: '1,1,1,1,1\n1,0,0,0,1\n1,0,P,0,1\n1,1,1,1,1',
-			},
-		],
-	},
-	{
-		id: 'tile_define',
-		category: 'Тайлмап',
-		label: 'Назначить тайл',
-		desc: 'Говорит движку, что создавать для символа "1" или "P".',
-		icon: 'ri-image-edit-line',
-		color: '#795548',
-		inputs: [
-			{ label: 'Символ', default: '1' },
-			{ label: 'URL Картинки', default: 'wall.png' },
-			{ label: 'Твердый? (1/0)', default: '1' },
-		],
-	},
-
-	// --- ОТЛАДКА ---
-	{
-		id: 'debug_draw_bounds',
-		category: 'Отладка',
-		label: 'Показать границы',
-		desc: 'Показывает или скрывает границы (контур) указанного объекта для отладки.',
-		icon: 'ri-shape-line',
-		color: '#F57C00',
-		inputs: [
-			{ label: 'Объект', default: 'box1' },
-			{ label: 'Вкл/Выкл (1/0)', default: '1' },
-		],
-	},
-	{
-		id: 'debug_show_fps',
-		category: 'Отладка',
-		label: 'Показать FPS',
-		desc: 'Включает или отключает отображение счетчика кадров в секунду (FPS) на экране.',
-		icon: 'ri-speed-line',
-		color: '#F57C00',
-		inputs: [{ label: 'Вкл/Выкл (1/0)', default: '1' }],
-	},
-	{
-		id: 'debug_pause',
-		category: 'Отладка',
-		label: 'Пауза игры',
-		desc: 'Приостанавливает или возобновляет выполнение игры.',
-		icon: 'ri-pause-circle-line',
-		color: '#F57C00',
-		inputs: [],
-	},
-	{
-		id: 'debug_step',
-		category: 'Отладка',
-		label: 'Шаг (кадр)',
-		desc: 'Выполняет один кадр игры при паузе для поэтапной отладки.',
-		icon: 'ri-skip-forward-line',
-		color: '#F57C00',
-		inputs: [],
-	},
-
-	// --- ЗВУК ---
-	{
-		id: 'snd_load',
-		category: 'Звук',
-		label: 'Загрузить звук',
-		desc: 'Загружает файл по ссылке и дает ему имя',
-		icon: 'ri-download-cloud-2-line',
-		color: '#ea99ddff',
-		inputs: [
-			{ name: 'Имя (ID)', type: 'text', default: 'bg_music' }, // v[0]
-			{
-				name: 'Ссылка/Файл',
-				type: 'text',
-				default: 'https://example.com/sound.mp3',
-			}, // v[1]
-		],
-	},
-	{
-		id: 'snd_play',
-		category: 'Звук',
-		label: 'Проиграть звук',
-		desc: 'Играет звук по ID',
-		icon: 'ri-play-circle-line',
-		color: '#ea99ddff',
-		inputs: [
-			{ name: 'Имя (ID)', type: 'text', default: 'bg_music' }, // v[0]
-		],
-	},
-	{
-		id: 'snd_stop',
-		category: 'Звук',
-		label: 'Остановить звук',
-		desc: 'Останавливает конкретный звук',
-		icon: 'ri-stop-circle-line',
-		color: '#ea99ddff',
-		inputs: [
-			{ name: 'Имя (ID)', type: 'text', default: 'bg_music' }, // v[0]
-		],
-	},
-	{
-		id: 'snd_loop',
-		category: 'Звук',
-		label: 'Зациклить звук',
-		desc: 'Вкл/Выкл повторение (1 или 0)',
-		icon: 'ri-repeat-line',
-		color: '#ea99ddff',
-		inputs: [
-			{ name: 'Имя (ID)', type: 'text', default: 'bg_music' }, // v[0]
-			{ name: 'Включить? (1/0)', type: 'text', default: '1' }, // v[1]
-		],
-	},
-	{
-		id: 'snd_stop_all',
-		category: 'Звук',
-		label: 'Остановить все звуки',
-		desc: 'Тишина',
-		icon: 'ri-volume-mute-line',
-		color: '#ea99ddff',
-		inputs: [], // Входов нет, просто действие
-	},
-	{
-		id: 'snd_set_volume',
-		category: 'Звук',
-		label: 'Громкость звука',
-		desc: 'Установить громкость (0.0 - 1.0)',
-		icon: 'ri-volume-up-line',
-		color: '#ea99ddff',
-		inputs: [
-			{ label: 'ID звука', default: 'bg_music' },
-			{ label: 'Громкость', default: '0.5' },
-		],
-	},
-
-	// --- ИНТЕРФЕЙС (UI) ---
-	{
-		id: 'ui_panel',
-		category: 'Интерфейс',
-		label: 'Создать панель',
-		desc: 'Фон для меню или статов',
-		icon: 'ri-layout-top-line',
-		color: '#ff9800',
-		inputs: [
-			{ name: 'ID', type: 'text', default: 'panel1' },
-			{ name: 'X', type: 'number', default: '10' },
-			{ name: 'Y', type: 'number', default: '10' },
-			{ name: 'Ширина', type: 'number', default: '200' },
-			{ name: 'Высота', type: 'number', default: '300' },
-			{ name: 'Цвет', type: 'color', default: '#202020' },
-		],
-	},
-	{
-		id: 'ui_button_create',
-		category: 'Интерфейс',
-		label: 'Создать кнопку',
-		desc: 'Кнопка, которую можно нажать',
-		icon: 'ri-cursor-line',
-		color: '#ff9800',
-		inputs: [
-			{ name: 'ID', type: 'text', default: 'btn_jump' },
-			{ name: 'Текст', type: 'text', default: 'ПРЫЖОК' },
-			{ name: 'X', type: 'number', default: '650' },
-			{ name: 'Y', type: 'number', default: '500' },
-			{ name: 'Ширина', type: 'number', default: '120' },
-			{ name: 'Высота', type: 'number', default: '50' },
-		],
-	},
-	{
-		id: 'ui_button_onclick',
-		category: 'Интерфейс',
-		label: 'Когда кнопка нажата',
-		desc: 'Событие клика по UI кнопке',
-		icon: 'ri-cursor-line',
-		color: '#fb8c00', // Чуть темнее, так как это событие
-		inputs: [{ name: 'ID кнопки', type: 'text', default: 'btn_jump' }],
-	},
-	{
-		id: 'ui_progressbar',
-		category: 'Интерфейс',
-		label: 'Прогрессбар',
-		desc: 'Полоска жизни или загрузки',
-		icon: 'ri-loader-3-line',
-		color: '#ff9800',
-		inputs: [
-			{ name: 'ID', type: 'text', default: 'hp_bar' },
-			{ name: 'Значение (0-100)', type: 'text', default: '100' },
-			{ name: 'X', type: 'number', default: '20' },
-			{ name: 'Y', type: 'number', default: '20' },
-			{ name: 'Ширина', type: 'number', default: '200' },
-			{ name: 'Высота', type: 'number', default: '20' },
-		],
-	},
-	{
-		id: 'ui_slider',
-		category: 'Интерфейс',
-		label: 'Слайдер',
-		desc: 'Ползунок. Меняет переменную.',
-		icon: 'ri-equalizer-line',
-		color: '#ff9800',
-		inputs: [
-			{ name: 'ID', type: 'text', default: 'vol_slider' },
-			{ name: 'Привязать к перем.', type: 'text', default: 'speed' },
-			{ name: 'Мин', type: 'number', default: '0' },
-			{ name: 'Макс', type: 'number', default: '100' },
-			{ name: 'X', type: 'number', default: '20' },
-			{ name: 'Y', type: 'number', default: '60' },
-		],
-	},
-	{
-		id: 'ui_toggle',
-		category: 'Интерфейс',
-		label: 'Скрыть/Показать (Toggle)',
-		desc: 'Переключает видимость элемента или панели',
-		icon: 'ri-eye-close-line',
-		color: '#ff9800',
-		inputs: [
-			{ name: 'ID элемента', type: 'text', default: 'panel1' }, // v[0]
-			{
-				name: 'Режим',
-				type: 'select',
-				default: 'toggle',
-				options: ['toggle', 'show', 'hide'],
-			}, // v[1]
-		],
-	},
-	{
-		id: 'ui_anchor',
-		category: 'Интерфейс',
-		label: 'Привязать к экрану',
-		desc: 'Закрепляет объект у края экрана (адаптивно).',
-		icon: 'ri-pushpin-2-fill',
-		color: '#ff9800',
-		inputs: [
-			{ label: 'Объект', default: 'hp_bar' },
-			{
-				label: 'Точка',
-				type: 'select',
-				default: 'top-left',
-				options: [
-					'top-left',
-					'top-center',
-					'top-right',
-					'center-left',
-					'center',
-					'center-right',
-					'bottom-left',
-					'bottom-center',
-					'bottom-right',
-					'stretch-full', // Растянуть на весь экран
-				],
-			},
-			{ label: 'Отступ X (px)', default: '20' },
-			{ label: 'Отступ Y (px)', default: '20' },
-		],
-	},
-
-	// --- СЦЕНЫ ---
-	{
-		id: 'scene_load',
-		category: 'Сцены',
-		label: 'Загрузить сцену',
-		desc: 'Переход на другую сцену по имени',
-		icon: 'ri-movie-line',
-		color: '#7c4dff',
-		inputs: [
-			{ name: 'Имя сцены', type: 'text', default: 'Уровень 2' }, // v[0]
-		],
-	},
-	{
-		id: 'scene_reload',
-		category: 'Сцены',
-		label: 'Перезапуск',
-		desc: 'Рестарт текущей сцены',
-		icon: 'ri-refresh-line',
-		color: '#7c4dff',
-		inputs: [],
-	},
-	{
-		id: 'scene_next',
-		category: 'Сцены',
-		label: 'След. сцена',
-		desc: 'Переход на следующую по списку',
-		icon: 'ri-skip-forward-line',
-		color: '#7c4dff',
-		inputs: [],
-	},
-	{
-		id: 'scene_save_state',
-		category: 'Сцены',
-		label: 'Сохранить прогресс',
-		desc: 'Сохраняет переменные в слот',
-		icon: 'ri-save-2-line',
-		color: '#7c4dff',
-		inputs: [
-			{ name: 'Имя слота', type: 'text', default: 'autosave' }, // v[0]
-		],
-	},
-	{
-		id: 'scene_load_state',
-		category: 'Сцены',
-		label: 'Загрузить прогресс',
-		desc: 'Восстанавливает переменные',
-		icon: 'ri-upload-2-line',
-		color: '#7c4dff',
-		inputs: [
-			{ name: 'Имя слота', type: 'text', default: 'autosave' }, // v[0]
-		],
-	},
-
-	// --- ФИЗИКА (BASIC 2D) ---
+	// ==========================================
+	// --- 8. ФИЗИКА (PHYSICS) ---
+	// ==========================================
 	{
 		id: 'phys_enable',
 		category: 'Физика',
-		label: 'Вкл. Физику (Matter)',
-		desc: 'Создает физическое тело. Тип: box или circle.',
+		subcategory: 'Тело',
+		label: 'Вкл. Физику',
+		desc: 'Делает объект твердым.',
 		icon: 'ri-basketball-line',
 		color: '#00BCD4',
 		inputs: [
@@ -1412,8 +1075,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'phys_set_gravity',
 		category: 'Физика',
+		subcategory: 'Мир',
 		label: 'Гравитация мира',
-		desc: 'Устанавливает глобальную гравитацию (X, Y).',
+		desc: 'Направление падения.',
 		icon: 'ri-arrow-down-double-line',
 		color: '#00BCD4',
 		inputs: [
@@ -1422,22 +1086,24 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
-		id: 'phys_set_rotation',
+		id: 'phys_collide_world',
 		category: 'Физика',
-		label: 'Вращать (сила)',
-		desc: 'Задает угловую скорость.',
-		icon: 'ri-restart-line',
+		subcategory: 'Мир',
+		label: 'Границы мира',
+		desc: 'Не дает объекту улететь за экран.',
+		icon: 'ri-layout-line',
 		color: '#00BCD4',
 		inputs: [
 			{ label: 'Объект', default: 'box1' },
-			{ label: 'Скорость', default: '0.1' },
+			{ label: 'Вкл/Выкл (1/0)', default: '1' },
 		],
 	},
 	{
 		id: 'phys_add_force',
 		category: 'Физика',
+		subcategory: 'Силы',
 		label: 'Толкнуть (Force)',
-		desc: 'Применяет импульс к объекту.',
+		desc: 'Придает ускорение.',
 		icon: 'ri-flight-takeoff-line',
 		color: '#00BCD4',
 		inputs: [
@@ -1449,8 +1115,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'phys_set_velocity',
 		category: 'Физика',
+		subcategory: 'Силы',
 		label: 'Задать скорость',
-		desc: 'Жестко устанавливает скорость движения.',
+		desc: 'Жесткое задание скорости.',
 		icon: 'ri-speed-mini-fill',
 		color: '#00BCD4',
 		inputs: [
@@ -1460,10 +1127,24 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
+		id: 'phys_set_rotation',
+		category: 'Физика',
+		subcategory: 'Силы',
+		label: 'Вращать (сила)',
+		desc: 'Угловая скорость.',
+		icon: 'ri-restart-line',
+		color: '#00BCD4',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Скорость', default: '0.1' },
+		],
+	},
+	{
 		id: 'phys_set_bounce',
 		category: 'Физика',
+		subcategory: 'Параметры',
 		label: 'Упругость (Bounce)',
-		desc: 'Коэффициент отскока от границ (0...1+).',
+		desc: 'Сила отскока.',
 		icon: 'ri-ping-pong-line',
 		color: '#00BCD4',
 		inputs: [
@@ -1471,530 +1152,16 @@ const BLOCK_DEFINITIONS = [
 			{ label: 'Значение', default: '0.7' },
 		],
 	},
-	{
-		id: 'phys_collide_world',
-		category: 'Физика',
-		label: 'Границы мира',
-		desc: 'Включает столкновение с краями окна игры.',
-		icon: 'ri-layout-line',
-		color: '#00BCD4',
-		inputs: [
-			{ label: 'Объект', default: 'box1' },
-			{ label: 'Вкл/Выкл (1/0)', default: '1' },
-		],
-	},
-
-	// --- КАМЕРА ---
-	{
-		id: 'cam_follow',
-		category: 'Камера',
-		label: 'Следить за...',
-		desc: 'Камера плавно следует за выбранным объектом.',
-		icon: 'ri-camera-lens-fill',
-		color: '#3F51B5',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Скорость (0-1)', default: '0.1' },
-		],
-	},
-	{
-		id: 'cam_set_pos',
-		category: 'Камера',
-		label: 'Позиция камеры',
-		desc: 'Мгновенно перемещает камеру в точку.',
-		icon: 'ri-camera-switch-line',
-		color: '#3F51B5',
-		inputs: [
-			{ label: 'X', default: '0' },
-			{ label: 'Y', default: '0' },
-		],
-	},
-	{
-		id: 'cam_zoom',
-		category: 'Камера',
-		label: 'Зум камеры',
-		desc: 'Приближение или отдаление (1 = норма).',
-		icon: 'ri-zoom-in-line',
-		color: '#3F51B5',
-		inputs: [{ label: 'Масштаб', default: '1' }],
-	},
-	{
-		id: 'cam_shake',
-		category: 'Камера',
-		label: 'Тряска камеры',
-		desc: 'Создает эффект землетрясения.',
-		icon: 'ri-pulse-line',
-		color: '#3F51B5',
-		inputs: [
-			{ label: 'Сила', default: '5' },
-			{ label: 'Длительность (сек)', default: '0.5' },
-		],
-	},
-	{
-		id: 'cam_reset',
-		category: 'Камера',
-		label: 'Сброс камеры',
-		desc: 'Возвращает камеру в начальное положение (0,0).',
-		icon: 'ri-restart-line',
-		color: '#3F51B5',
-		inputs: [],
-	},
-	{
-		id: 'cam_zoom_to',
-		category: 'Камера',
-		label: 'Плавный зум',
-		desc: 'Плавно меняет масштаб камеры.',
-		icon: 'ri-zoom-in-line',
-		color: '#3F51B5',
-		inputs: [
-			{ label: 'Зум (1=Норма)', default: '1.5' },
-			{ label: 'Время (сек)', default: '1' },
-		],
-	},
-	{
-		id: 'cam_set_parallax',
-		category: 'Камера',
-		label: 'Слой Параллакса',
-		desc: 'Задает глубину слоя. 1 = обычно, 0.5 = далеко (медленно), 0 = фон.',
-		icon: 'ri-layers-line',
-		color: '#3F51B5',
-		inputs: [
-			{ label: 'Объект/Группа', default: 'bg_mountains' },
-			{ label: 'Фактор (0-2)', default: '0.5' },
-		],
-	},
-
-	// --- ДАННЫЕ (SAVE/LOAD) ---
-	{
-		id: 'data_save',
-		category: 'Данные',
-		label: 'Сохранить',
-		desc: 'Сохраняет значение в память устройства (Local Storage). Останется после перезагрузки.',
-		icon: 'ri-save-3-fill',
-		color: '#795548',
-		inputs: [
-			{ label: 'Ключ (имя)', default: 'my_score' },
-			{ label: 'Значение', default: '100' },
-		],
-	},
-	{
-		id: 'data_load',
-		category: 'Данные',
-		label: 'Загрузить',
-		desc: 'Загружает данные из памяти в переменную.',
-		icon: 'ri-download-2-fill',
-		color: '#795548',
-		inputs: [
-			{ label: 'Ключ (имя)', default: 'my_score' },
-			{ label: 'В переменную', default: 'score' },
-		],
-	},
-	{
-		id: 'data_clear',
-		category: 'Данные',
-		label: 'Очистить все',
-		desc: 'Удаляет все сохраненные данные игры.',
-		icon: 'ri-delete-bin-fill',
-		color: '#795548',
-		inputs: [],
-	},
-
-	// --- ВВОД (INPUT) ---
-	{
-		id: 'input_key_down',
-		category: 'Ввод',
-		label: 'Клавиша зажата?',
-		desc: 'Записывает 1 (да) или 0 (нет) в переменную, если клавиша удерживается.',
-		icon: 'ri-keyboard-line',
-		color: '#607D8B',
-		inputs: [
-			{ label: 'Клавиша (Code)', default: 'Space' },
-			{ label: 'Результат в', default: 'is_jumping' },
-		],
-	},
-	{
-		id: 'input_mouse_pos',
-		category: 'Ввод',
-		label: 'Позиция мыши',
-		desc: 'Записывает X и Y мыши (в мире) в переменные.',
-		icon: 'ri-mouse-line',
-		color: '#607D8B',
-		inputs: [
-			{ label: 'Перем. X', default: 'mouse_x' },
-			{ label: 'Перем. Y', default: 'mouse_y' },
-		],
-	},
-	{
-		id: 'input_touch',
-		category: 'Ввод',
-		label: 'Касание (Touch)',
-		desc: 'Для мобильных. Записывает 1, если палец на экране.',
-		icon: 'ri-fingerprint-line',
-		color: '#607D8B',
-		inputs: [{ label: 'Результат в', default: 'is_touching' }],
-	},
-
-	// --- ПРОДВИНУТОЕ ---
-	{
-		id: 'sys_exec_js',
-		category: 'Система',
-		label: 'Выполнить JS',
-		desc: 'Выполняет произвольный JavaScript код. Доступны: gameVariables, el (объект), scene.',
-		icon: 'ri-code-box-line', // Иконка кода
-		color: '#607D8B', // Серо-синий цвет как на скрине
-		inputs: [
-			{
-				label: 'Код (JavaScript):',
-				type: 'textarea', // Используем наш новый тип
-				default: '// gameVariables["score"] += 10;\nconsole.log("Hello!");',
-			},
-		],
-	},
-
-	// --- УПРАВЛЕНИЕ ИГРОЙ ---
-	{
-		id: 'game_pause',
-		category: 'Система',
-		label: 'Пауза игры',
-		desc: 'Останавливает физику, таймеры и апдейты.',
-		icon: 'ri-pause-circle-fill',
-		color: '#607D8B',
-		inputs: [{ label: 'Вкл/Выкл (1/0)', default: '1' }],
-	},
-	{
-		id: 'game_over_screen',
-		category: 'Система',
-		label: 'Экран Game Over',
-		desc: 'Показывает стандартный экран проигрыша с кнопкой рестарта.',
-		icon: 'ri-skull-fill',
-		color: '#607D8B',
-		inputs: [{ label: 'Заголовок', default: 'GAME OVER' }],
-	},
-	{
-		id: 'game_restart',
-		category: 'Система',
-		label: 'Перезагрузить игру',
-		desc: 'Полный рестарт текущей сцены со сбросом переменных.',
-		icon: 'ri-refresh-line',
-		color: '#607D8B',
-		inputs: [],
-	},
-
-	// --- 3. ТЕГИ (TAGS) ---
-	{
-		id: 'tag_add',
-		category: 'Группы',
-		label: 'Добавить тег',
-		desc: 'Вешает метку на объект (например: enemy).',
-		icon: 'ri-bookmark-line',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'box1' },
-			{ label: 'Тег', default: 'enemy' },
-		],
-	},
-	{
-		id: 'tag_check',
-		category: 'Группы',
-		label: 'Имеет тег?',
-		desc: 'Проверяет наличие тега (1 или 0).',
-		icon: 'ri-bookmark-fill',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'box1' },
-			{ label: 'Тег', default: 'enemy' },
-			{ label: 'Результат в', default: 'has_tag' },
-		],
-	},
-
-	// --- 4. ВЗАИМОДЕЙСТВИЕ (INTERACT) ---
-	{
-		id: 'interact_dist',
-		category: 'Логика',
-		label: 'Дистанция до...',
-		desc: 'Считает расстояние между двумя объектами.',
-		icon: 'ri-ruler-line',
-		color: '#FF6D00',
-		inputs: [
-			{ label: 'Объект А', default: 'player' },
-			{ label: 'Объект Б', default: 'door' },
-			{ label: 'Результат в', default: 'dist' },
-		],
-	},
-	{
-		id: 'zone_check',
-		category: 'Логика',
-		label: 'Внутри зоны?',
-		desc: 'Проверяет, находится ли объект внутри другого (зоны).',
-		icon: 'ri-shape-2-line',
-		color: '#FF6D00',
-		inputs: [
-			{ label: 'Кто', default: 'player' },
-			{ label: 'Зона (Объект)', default: 'zone1' },
-			{ label: 'Результат в', default: 'in_zone' },
-		],
-	},
-
-	// --- 5. AI / ПОВЕДЕНИЕ ---
-	{
-		id: 'ai_move_to',
-		category: 'Движение',
-		label: 'Идти к объекту',
-		desc: 'Делает шаг в сторону цели (для Update).',
-		icon: 'ri-footprint-line',
-		color: '#6200EA',
-		inputs: [
-			{ label: 'Кто', default: 'enemy' },
-			{ label: 'Цель', default: 'player' },
-			{ label: 'Скорость', default: '2' },
-		],
-	},
-	{
-		id: 'ai_flee',
-		category: 'Движение',
-		label: 'Убегать от',
-		desc: 'Делает шаг от цели (для Update).',
-		icon: 'ri-run-line',
-		color: '#6200EA',
-		inputs: [
-			{ label: 'Кто', default: 'civilian' },
-			{ label: 'От кого', default: 'zombie' },
-			{ label: 'Скорость', default: '3' },
-		],
-	},
-
-	// --- 7. ВВОД (ADVANCED) ---
-	{
-		id: 'input_axis',
-		category: 'Ввод',
-		label: 'Ось (Axis)',
-		desc: 'Возвращает -1, 0 или 1 в зависимости от нажатых клавиш (напр. A и D).',
-		icon: 'ri-gamepad-line',
-		color: '#607D8B',
-		inputs: [
-			{ label: 'Кнопка Минус', default: 'KeyA' },
-			{ label: 'Кнопка Плюс', default: 'KeyD' },
-			{ label: 'Результат в', default: 'axis_x' },
-		],
-	},
-
-	// --- 8. ВИЗУАЛ (VFX) ---
-	{
-		id: 'fx_screen_color',
-		category: 'Окно',
-		label: 'FX: Цвет экрана',
-		desc: 'Накладывает цвет поверх игры (вспышка, затемнение).',
-		icon: 'ri-contrast-drop-2-line',
-		color: '#00B0FF',
-		inputs: [
-			{ label: 'Цвет (rgba)', default: 'rgba(255,0,0,0.5)' },
-			{ label: 'Время (сек)', default: '0.5' },
-		],
-	},
-	{
-		id: 'fx_shake',
-		category: 'Окно',
-		label: 'FX: Тряска (CSS)',
-		desc: 'Трясет указанный объект или UI.',
-		icon: 'ri-vibration-line',
-		color: '#00B0FF',
-		inputs: [
-			{ label: 'Объект', default: 'game-stage' },
-			{ label: 'Сила (px)', default: '10' },
-			{ label: 'Время (сек)', default: '0.5' },
-		],
-	},
-
-	// --- 10. ПРЕФАБЫ ---
-	{
-		id: 'obj_spawn_clone',
-		category: 'Объекты',
-		label: 'Спавн клона',
-		desc: 'Создает копию объекта в новых координатах.',
-		icon: 'ri-file-copy-2-fill',
-		color: '#2979FF',
-		inputs: [
-			{ label: 'Кого клонировать', default: 'bullet_prefab' },
-			{ label: 'Новое имя', default: 'bullet_1' },
-			{ label: 'X', default: '100' },
-			{ label: 'Y', default: '100' },
-		],
-	},
-
-	{
-		id: 'obj_set_visible',
-		category: 'Объекты',
-		label: 'Видимость объекта',
-		desc: 'Скрывает или показывает объект на сцене.',
-		icon: 'ri-eye-line',
-		color: '#2979FF',
-		inputs: [
-			{ label: 'Объект', default: 'box1' }, // v[0]
-			{
-				label: 'Режим',
-				type: 'select',
-				default: 'hide',
-				options: ['hide', 'show', 'toggle'],
-			}, // v[1]
-		],
-	},
 
 	// ==========================================
-	// --- КОМПОНЕНТНАЯ СИСТЕМА (ECS) ---
-	// ==========================================
-	{
-		id: 'comp_add',
-		category: 'Компоненты',
-		label: 'Добавить компонент',
-		desc: 'Вешает на объект данные (HP, Damage и т.д.)',
-		icon: 'ri-puzzle-2-fill',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Имя комп.', default: 'health' },
-			{ label: 'Значение', default: '100' },
-		],
-	},
-	{
-		id: 'comp_get',
-		category: 'Компоненты',
-		label: 'Получить компонент',
-		desc: 'Читает данные компонента.',
-		icon: 'ri-puzzle-2-line',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Имя комп.', default: 'health' },
-			{ label: 'В переменную', default: 'hp_val' },
-		],
-	},
-	{
-		id: 'comp_set',
-		category: 'Компоненты',
-		label: 'Изменить компонент',
-		desc: 'Обновляет значение компонента.',
-		icon: 'ri-refresh-line',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Имя комп.', default: 'health' },
-			{ label: 'Новое знач.', default: '90' },
-		],
-	},
-	{
-		id: 'comp_has',
-		category: 'Компоненты',
-		label: 'Имеет компонент?',
-		desc: 'Проверяет наличие (1 или 0).',
-		icon: 'ri-question-mark',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'player' },
-			{ label: 'Имя комп.', default: 'AI' },
-			{ label: 'Результат в', default: 'is_bot' },
-		],
-	},
-
-	// ==========================================
-	// --- ДИАЛОГИ И UI ---
-	// ==========================================
-	{
-		id: 'ui_dialog_show',
-		category: 'Интерфейс',
-		label: 'Показать диалог',
-		desc: 'Диалоговое окно (по умолчанию без аватара).',
-		icon: 'ri-chat-3-fill',
-		color: '#FF9800',
-		inputs: [
-			{ label: 'Имя', default: 'NPC' }, // v[0]
-			{
-				label: 'Текст',
-				type: 'textarea',
-				default: 'Привет! Это диалог без аватара.',
-			}, // v[1]
-			{ label: 'Аватар (URL)', default: '' }, // v[2] (Пусто)
-			{
-				label: 'Показать аватар?',
-				type: 'select',
-				default: 'no', // <--- ТЕПЕРЬ 'no' ПО УМОЛЧАНИЮ
-				options: ['yes', 'no'],
-			}, // v[3]
-			{
-				label: 'Позиция',
-				type: 'select',
-				default: 'bottom',
-				options: ['bottom', 'top', 'center'],
-			}, // v[4]
-			{
-				label: 'Стиль',
-				type: 'select',
-				default: 'classic',
-				options: ['classic', 'pixel', 'modern'],
-			}, // v[5]
-			{
-				label: 'Закрытие',
-				type: 'select',
-				default: 'click_anywhere',
-				options: ['click_anywhere', 'button_next', 'wait_3s'],
-			}, // v[6]
-			{ label: 'Статус в (var)', default: 'dialog_status' }, // v[7]
-		],
-	},
-	{
-		id: 'ui_dialog_hide',
-		category: 'Интерфейс',
-		label: 'Скрыть диалог',
-		desc: 'Убирает диалоговое окно.',
-		icon: 'ri-message-3-line',
-		color: '#FF9800',
-		inputs: [],
-	},
-
-	// ==========================================
-	// --- ИНВЕНТАРЬ И ЗАДАНИЯ ---
-	// ==========================================
-	{
-		id: 'inv_add',
-		category: 'Инвентарь',
-		label: 'Добавить предмет',
-		desc: 'Кладет предмет в инвентарь (строка).',
-		icon: 'ri-archive-drawer-fill',
-		color: '#795548',
-		inputs: [{ label: 'ID предмета', default: 'key_red' }],
-	},
-	{
-		id: 'inv_has',
-		category: 'Инвентарь',
-		label: 'Есть предмет?',
-		desc: 'Проверяет наличие предмета.',
-		icon: 'ri-search-eye-line',
-		color: '#795548',
-		inputs: [
-			{ label: 'ID предмета', default: 'key_red' },
-			{ label: 'Результат в', default: 'has_key' },
-		],
-	},
-	{
-		id: 'quest_set',
-		category: 'Задания',
-		label: 'Этап задания',
-		desc: 'Обновляет статус квеста.',
-		icon: 'ri-flag-2-fill',
-		color: '#FBC02D',
-		inputs: [
-			{ label: 'ID квеста', default: 'main_quest' },
-			{ label: 'Этап (число/текст)', default: '1' },
-		],
-	},
-
-	// ==========================================
-	// --- ВИЗУАЛ (СВЕТ, ЧАСТИЦЫ) ---
+	// --- 9. ГРАФИКА И VFX (VISUALS) ---
 	// ==========================================
 	{
 		id: 'gfx_light_ambient',
 		category: 'Графика',
+		subcategory: 'Свет',
 		label: 'Общий свет (Ambient)',
-		desc: 'Задает общее затемнение (0.0 - темно, 1.0 - светло).',
+		desc: 'Задает фоновую яркость.',
 		icon: 'ri-sun-fill',
 		color: '#9C27B0',
 		inputs: [{ label: 'Яркость (0-1)', default: '0.2' }],
@@ -2002,8 +1169,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'gfx_light_point',
 		category: 'Графика',
+		subcategory: 'Свет',
 		label: 'Источник света',
-		desc: 'Создает светящуюся точку на объекте.',
+		desc: 'Точечный свет (лампочка).',
 		icon: 'ri-lightbulb-flash-fill',
 		color: '#9C27B0',
 		inputs: [
@@ -2016,8 +1184,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'gfx_particles',
 		category: 'Графика',
+		subcategory: 'Частицы',
 		label: 'Спавн частиц',
-		desc: 'Простой взрыв частиц в точке.',
+		desc: 'Взрыв или искры.',
 		icon: 'ri-bubble-chart-fill',
 		color: '#9C27B0',
 		inputs: [
@@ -2028,86 +1197,38 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
-		id: 'gfx_filter',
+		id: 'fx_screen_color',
 		category: 'Графика',
-		label: 'Эффект (Glitch/Blur)',
-		desc: 'CSS фильтр на весь экран.',
-		icon: 'ri-blur-off-fill',
+		subcategory: 'Эффекты',
+		label: 'Вспышка / Цвет',
+		desc: 'Цветовая заливка экрана.',
+		icon: 'ri-contrast-drop-2-line',
 		color: '#9C27B0',
 		inputs: [
-			{
-				label: 'Тип',
-				type: 'select',
-				default: 'none',
-				options: ['none', 'blur', 'grayscale', 'invert', 'sepia', 'contrast'],
-			},
-			{ label: 'Сила (%)', default: '100' },
+			{ label: 'Цвет (rgba)', default: 'rgba(255,0,0,0.5)' },
+			{ label: 'Время (сек)', default: '0.5' },
 		],
 	},
-
-	// --- ВИДЕО (НОВАЯ КАТЕГОРИЯ) ---
 	{
-		id: 'video_load',
-		category: 'Видео',
-		label: 'Загрузить видео',
-		desc: 'Создает видео-слой. Можно использовать для кат-сцен или фона.',
-		icon: 'ri-movie-2-line',
-		color: '#E91E63',
+		id: 'fx_shake',
+		category: 'Графика',
+		subcategory: 'Эффекты',
+		label: 'Тряска объекта',
+		desc: 'Трясет объект (CSS).',
+		icon: 'ri-vibration-line',
+		color: '#9C27B0',
 		inputs: [
-			{ label: 'ID видео', default: 'intro_vid' },
-			{ label: 'URL / Файл', default: 'assets/video.mp4' },
-			{ label: 'Ширина (px/%s)', default: '100%' }, // Поддержка %
-			{ label: 'Высота (px/%s)', default: '100%' },
-			{ label: 'Z-Index', default: '50' }, // Поверх всего или фон
+			{ label: 'Объект', default: 'game-stage' },
+			{ label: 'Сила (px)', default: '10' },
+			{ label: 'Время (сек)', default: '0.5' },
 		],
 	},
-	{
-		id: 'video_control',
-		category: 'Видео',
-		label: 'Управление видео',
-		desc: 'Play, Pause или Stop.',
-		icon: 'ri-play-mini-fill',
-		color: '#E91E63',
-		inputs: [
-			{ label: 'ID видео', default: 'intro_vid' },
-			{
-				label: 'Действие',
-				type: 'select',
-				default: 'play',
-				options: ['play', 'pause', 'stop', 'remove'],
-			},
-		],
-	},
-	{
-		id: 'video_settings',
-		category: 'Видео',
-		label: 'Настройки видео',
-		desc: 'Звук, повтор, прозрачность.',
-		icon: 'ri-settings-4-line',
-		color: '#E91E63',
-		inputs: [
-			{ label: 'ID видео', default: 'intro_vid' },
-			{ label: 'Громкость (0-1)', default: '1' },
-			{ label: 'Зациклить? (1/0)', default: '0' },
-			{ label: 'Прозрачность (0-1)', default: '1' },
-		],
-	},
-	{
-		id: 'video_on_end',
-		category: 'Видео',
-		label: 'Когда видео закончилось',
-		desc: 'Событие: запускает цепочку, когда видео доиграло до конца.',
-		icon: 'ri-movie-2-fill',
-		color: '#E91E63',
-		inputs: [{ label: 'ID видео', default: 'intro_vid' }],
-	},
-
-	// --- ПОСТ-ПРОЦЕССИНГ (НОВАЯ КАТЕГОРИЯ) ---
 	{
 		id: 'pp_filter_set',
-		category: 'Пост-процесс',
+		category: 'Графика',
+		subcategory: 'Пост-процесс',
 		label: 'Цветокоррекция',
-		desc: 'Применяет фильтры к игровому миру (Blur, Grayscale, Contrast и др).',
+		desc: 'Фильтр на весь экран.',
 		icon: 'ri-palette-fill',
 		color: '#9C27B0',
 		inputs: [
@@ -2131,9 +1252,10 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'pp_vignette',
-		category: 'Пост-процесс',
+		category: 'Графика',
+		subcategory: 'Пост-процесс',
 		label: 'Виньетка',
-		desc: 'Затемнение по краям экрана (атмосфера, хоррор).',
+		desc: 'Затемнение углов.',
 		icon: 'ri-focus-3-line',
 		color: '#9C27B0',
 		inputs: [
@@ -2144,9 +1266,10 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'pp_crt_effect',
-		category: 'Пост-процесс',
+		category: 'Графика',
+		subcategory: 'Пост-процесс',
 		label: 'Эффект CRT (ТВ)',
-		desc: 'Добавляет скан-линии старого телевизора.',
+		desc: 'Старый телевизор.',
 		icon: 'ri-tv-line',
 		color: '#9C27B0',
 		inputs: [
@@ -2156,9 +1279,10 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'pp_chromatic',
-		category: 'Пост-процесс',
+		category: 'Графика',
+		subcategory: 'Пост-процесс',
 		label: 'Глитч / Сбой',
-		desc: 'Эффект хроматической аберрации (сдвиг каналов).',
+		desc: 'Сдвиг RGB каналов.',
 		icon: 'ri-movie-line',
 		color: '#9C27B0',
 		inputs: [
@@ -2168,9 +1292,10 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'pp_bloom_fake',
-		category: 'Пост-процесс',
+		category: 'Графика',
+		subcategory: 'Пост-процесс',
 		label: 'Блум (Свечение)',
-		desc: 'Делает яркие участки еще ярче (имитация через контраст).',
+		desc: 'Имитация яркого света.',
 		icon: 'ri-sun-line',
 		color: '#9C27B0',
 		inputs: [
@@ -2180,31 +1305,1004 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'pp_clear_all',
-		category: 'Пост-процесс',
+		category: 'Графика',
+		subcategory: 'Пост-процесс',
 		label: 'Сбросить эффекты',
-		desc: 'Удаляет все фильтры и наложения.',
+		desc: 'Убирает все фильтры.',
 		icon: 'ri-delete-back-2-line',
 		color: '#9C27B0',
 		inputs: [],
 	},
 
 	// ==========================================
-	// --- ТАБЛИЦЫ (TABLES / ARRAYS) ---
+	// --- 10. ИНТЕРФЕЙС (UI) ---
 	// ==========================================
 	{
+		id: 'ui_panel',
+		category: 'Интерфейс',
+		subcategory: 'Элементы',
+		label: 'Создать панель',
+		desc: 'Фон меню.',
+		icon: 'ri-layout-top-line',
+		color: '#ff9800',
+		inputs: [
+			{ name: 'ID', type: 'text', default: 'panel1' },
+			{ name: 'X', type: 'number', default: '10' },
+			{ name: 'Y', type: 'number', default: '10' },
+			{ name: 'Ширина', type: 'number', default: '200' },
+			{ name: 'Высота', type: 'number', default: '300' },
+			{ name: 'Цвет', type: 'color', default: '#202020' },
+		],
+	},
+	{
+		id: 'ui_button_create',
+		category: 'Интерфейс',
+		subcategory: 'Элементы',
+		label: 'Создать кнопку',
+		desc: 'Кликабельная кнопка.',
+		icon: 'ri-cursor-line',
+		color: '#ff9800',
+		inputs: [
+			{ name: 'ID', type: 'text', default: 'btn_jump' },
+			{ name: 'Текст', type: 'text', default: 'ПРЫЖОК' },
+			{ name: 'X', type: 'number', default: '650' },
+			{ name: 'Y', type: 'number', default: '500' },
+			{ name: 'Ширина', type: 'number', default: '120' },
+			{ name: 'Высота', type: 'number', default: '50' },
+		],
+	},
+	{
+		id: 'ui_progressbar',
+		category: 'Интерфейс',
+		subcategory: 'Элементы',
+		label: 'Прогрессбар',
+		desc: 'Полоска HP или загрузки.',
+		icon: 'ri-loader-3-line',
+		color: '#ff9800',
+		inputs: [
+			{ name: 'ID', type: 'text', default: 'hp_bar' },
+			{ name: 'Значение (0-100)', type: 'text', default: '100' },
+			{ name: 'X', type: 'number', default: '20' },
+			{ name: 'Y', type: 'number', default: '20' },
+			{ name: 'Ширина', type: 'number', default: '200' },
+			{ name: 'Высота', type: 'number', default: '20' },
+		],
+	},
+	{
+		id: 'ui_slider',
+		category: 'Интерфейс',
+		subcategory: 'Элементы',
+		label: 'Слайдер',
+		desc: 'Ползунок настроек.',
+		icon: 'ri-equalizer-line',
+		color: '#ff9800',
+		inputs: [
+			{ name: 'ID', type: 'text', default: 'vol_slider' },
+			{ name: 'Привязать к перем.', type: 'text', default: 'speed' },
+			{ name: 'Мин', type: 'number', default: '0' },
+			{ name: 'Макс', type: 'number', default: '100' },
+			{ name: 'X', type: 'number', default: '20' },
+			{ name: 'Y', type: 'number', default: '60' },
+		],
+	},
+	{
+		id: 'ui_button_onclick',
+		category: 'Интерфейс',
+		subcategory: 'События UI',
+		label: 'Когда кнопка нажата',
+		desc: 'Логика клика по кнопке.',
+		icon: 'ri-cursor-line',
+		color: '#fb8c00',
+		inputs: [{ name: 'ID кнопки', type: 'text', default: 'btn_jump' }],
+	},
+	{
+		id: 'ui_toggle',
+		category: 'Интерфейс',
+		subcategory: 'Действия',
+		label: 'Скрыть/Показать',
+		desc: 'Переключение видимости UI.',
+		icon: 'ri-eye-close-line',
+		color: '#ff9800',
+		inputs: [
+			{ name: 'ID элемента', type: 'text', default: 'panel1' },
+			{
+				name: 'Режим',
+				type: 'select',
+				default: 'toggle',
+				options: ['toggle', 'show', 'hide'],
+			},
+		],
+	},
+	{
+		id: 'ui_anchor',
+		category: 'Интерфейс',
+		subcategory: 'Расположение',
+		label: 'Привязать к экрану',
+		desc: 'Адаптивное позиционирование.',
+		icon: 'ri-pushpin-2-fill',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'Объект', default: 'hp_bar' },
+			{
+				label: 'Точка',
+				type: 'select',
+				default: 'top-left',
+				options: [
+					'top-left',
+					'top-center',
+					'top-right',
+					'center-left',
+					'center',
+					'center-right',
+					'bottom-left',
+					'bottom-center',
+					'bottom-right',
+					'stretch-full',
+				],
+			},
+			{ label: 'Отступ X (px)', default: '20' },
+			{ label: 'Отступ Y (px)', default: '20' },
+		],
+	},
+	{
+		id: 'ui_dialog_show',
+		category: 'Интерфейс',
+		subcategory: 'Диалоги',
+		label: 'Показать диалог',
+		desc: 'Окно с текстом NPC.',
+		icon: 'ri-chat-3-fill',
+		color: '#FF9800',
+		inputs: [
+			{ label: 'Имя', default: 'NPC' },
+			{
+				label: 'Текст',
+				type: 'textarea',
+				default: 'Привет! Это диалог без аватара.',
+			},
+			{ label: 'Аватар (URL)', default: '' },
+			{
+				label: 'Показать аватар?',
+				type: 'select',
+				default: 'no',
+				options: ['yes', 'no'],
+			},
+			{
+				label: 'Позиция',
+				type: 'select',
+				default: 'bottom',
+				options: ['bottom', 'top', 'center'],
+			},
+			{
+				label: 'Стиль',
+				type: 'select',
+				default: 'classic',
+				options: ['classic', 'pixel', 'modern'],
+			},
+			{
+				label: 'Закрытие',
+				type: 'select',
+				default: 'click_anywhere',
+				options: ['click_anywhere', 'button_next', 'wait_3s'],
+			},
+			{ label: 'Статус в (var)', default: 'dialog_status' },
+		],
+	},
+	{
+		id: 'ui_dialog_hide',
+		category: 'Интерфейс',
+		subcategory: 'Диалоги',
+		label: 'Скрыть диалог',
+		desc: 'Закрывает окно.',
+		icon: 'ri-message-3-line',
+		color: '#FF9800',
+		inputs: [],
+	},
+
+	// ==========================================
+	// --- 11. ВВОД (INPUT) ---
+	// ==========================================
+	{
+		id: 'input_key_down',
+		category: 'Ввод',
+		subcategory: 'Клавиатура',
+		label: 'Клавиша зажата?',
+		desc: 'Проверка удержания кнопки.',
+		icon: 'ri-keyboard-line',
+		color: '#607D8B',
+		inputs: [
+			{ label: 'Клавиша (Code)', default: 'Space' },
+			{ label: 'Результат в', default: 'is_jumping' },
+		],
+	},
+	{
+		id: 'input_axis',
+		category: 'Ввод',
+		subcategory: 'Клавиатура',
+		label: 'Ось (Axis)',
+		desc: 'Управление (-1, 0, 1).',
+		icon: 'ri-gamepad-line',
+		color: '#607D8B',
+		inputs: [
+			{ label: 'Кнопка Минус', default: 'KeyA' },
+			{ label: 'Кнопка Плюс', default: 'KeyD' },
+			{ label: 'Результат в', default: 'axis_x' },
+		],
+	},
+	{
+		id: 'input_mouse_pos',
+		category: 'Ввод',
+		subcategory: 'Мышь',
+		label: 'Позиция мыши',
+		desc: 'Координаты курсора.',
+		icon: 'ri-mouse-line',
+		color: '#607D8B',
+		inputs: [
+			{ label: 'Перем. X', default: 'mouse_x' },
+			{ label: 'Перем. Y', default: 'mouse_y' },
+		],
+	},
+	{
+		id: 'input_touch',
+		category: 'Ввод',
+		subcategory: 'Тач',
+		label: 'Касание (Touch)',
+		desc: 'Проверка пальца на экране.',
+		icon: 'ri-fingerprint-line',
+		color: '#607D8B',
+		inputs: [{ label: 'Результат в', default: 'is_touching' }],
+	},
+
+	// ==========================================
+	// --- 12. КАМЕРА (CAMERA) ---
+	// ==========================================
+	{
+		id: 'cam_follow',
+		category: 'Камера',
+		subcategory: 'Движение',
+		label: 'Следить за...',
+		desc: 'Плавное слежение за героем.',
+		icon: 'ri-camera-lens-fill',
+		color: '#3F51B5',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Скорость (0-1)', default: '0.1' },
+		],
+	},
+	{
+		id: 'cam_set_pos',
+		category: 'Камера',
+		subcategory: 'Движение',
+		label: 'Позиция камеры',
+		desc: 'Телепорт камеры.',
+		icon: 'ri-camera-switch-line',
+		color: '#3F51B5',
+		inputs: [
+			{ label: 'X', default: '0' },
+			{ label: 'Y', default: '0' },
+		],
+	},
+	{
+		id: 'cam_reset',
+		category: 'Камера',
+		subcategory: 'Движение',
+		label: 'Сброс камеры',
+		desc: 'В начало (0,0).',
+		icon: 'ri-restart-line',
+		color: '#3F51B5',
+		inputs: [],
+	},
+	{
+		id: 'cam_zoom',
+		category: 'Камера',
+		subcategory: 'Эффекты',
+		label: 'Зум камеры',
+		desc: 'Мгновенный масштаб.',
+		icon: 'ri-zoom-in-line',
+		color: '#3F51B5',
+		inputs: [{ label: 'Масштаб', default: '1' }],
+	},
+	{
+		id: 'cam_zoom_to',
+		category: 'Камера',
+		subcategory: 'Эффекты',
+		label: 'Плавный зум',
+		desc: 'Масштабирование по времени.',
+		icon: 'ri-zoom-in-line',
+		color: '#3F51B5',
+		inputs: [
+			{ label: 'Зум (1=Норма)', default: '1.5' },
+			{ label: 'Время (сек)', default: '1' },
+		],
+	},
+	{
+		id: 'cam_shake',
+		category: 'Камера',
+		subcategory: 'Эффекты',
+		label: 'Тряска камеры',
+		desc: 'Землетрясение.',
+		icon: 'ri-pulse-line',
+		color: '#3F51B5',
+		inputs: [
+			{ label: 'Сила', default: '5' },
+			{ label: 'Длительность (сек)', default: '0.5' },
+		],
+	},
+	{
+		id: 'cam_set_parallax',
+		category: 'Камера',
+		subcategory: 'Эффекты',
+		label: 'Слой Параллакса',
+		desc: 'Глубина фона.',
+		icon: 'ri-layers-line',
+		color: '#3F51B5',
+		inputs: [
+			{ label: 'Объект/Группа', default: 'bg_mountains' },
+			{ label: 'Фактор (0-2)', default: '0.5' },
+		],
+	},
+
+	// ==========================================
+	// --- 13. ЗВУК И ВИДЕО (MEDIA) ---
+	// ==========================================
+	{
+		id: 'snd_load',
+		category: 'Медиа',
+		subcategory: 'Звук',
+		label: 'Загрузить звук',
+		desc: 'Добавить аудиофайл.',
+		icon: 'ri-download-cloud-2-line',
+		color: '#ea99ddff',
+		inputs: [
+			{ name: 'Имя (ID)', type: 'text', default: 'bg_music' },
+			{
+				name: 'Ссылка/Файл',
+				type: 'text',
+				default: 'https://example.com/sound.mp3',
+			},
+		],
+	},
+	{
+		id: 'snd_play',
+		category: 'Медиа',
+		subcategory: 'Звук',
+		label: 'Проиграть звук',
+		desc: 'Включить аудио.',
+		icon: 'ri-play-circle-line',
+		color: '#ea99ddff',
+		inputs: [{ name: 'Имя (ID)', type: 'text', default: 'bg_music' }],
+	},
+	{
+		id: 'snd_stop',
+		category: 'Медиа',
+		subcategory: 'Звук',
+		label: 'Остановить звук',
+		desc: 'Выключить конкретный звук.',
+		icon: 'ri-stop-circle-line',
+		color: '#ea99ddff',
+		inputs: [{ name: 'Имя (ID)', type: 'text', default: 'bg_music' }],
+	},
+	{
+		id: 'snd_loop',
+		category: 'Медиа',
+		subcategory: 'Звук',
+		label: 'Зациклить звук',
+		desc: 'Повторять бесконечно.',
+		icon: 'ri-repeat-line',
+		color: '#ea99ddff',
+		inputs: [
+			{ name: 'Имя (ID)', type: 'text', default: 'bg_music' },
+			{ name: 'Включить? (1/0)', type: 'text', default: '1' },
+		],
+	},
+	{
+		id: 'snd_set_volume',
+		category: 'Медиа',
+		subcategory: 'Звук',
+		label: 'Громкость звука',
+		desc: 'Уровень (0.0 - 1.0).',
+		icon: 'ri-volume-up-line',
+		color: '#ea99ddff',
+		inputs: [
+			{ label: 'ID звука', default: 'bg_music' },
+			{ label: 'Громкость', default: '0.5' },
+		],
+	},
+	{
+		id: 'snd_stop_all',
+		category: 'Медиа',
+		subcategory: 'Звук',
+		label: 'Стоп все звуки',
+		desc: 'Полная тишина.',
+		icon: 'ri-volume-mute-line',
+		color: '#ea99ddff',
+		inputs: [],
+	},
+	{
+		id: 'video_load',
+		category: 'Медиа',
+		subcategory: 'Видео',
+		label: 'Загрузить видео',
+		desc: 'Добавить видеоплеер.',
+		icon: 'ri-movie-2-line',
+		color: '#E91E63',
+		inputs: [
+			{ label: 'ID видео', default: 'intro_vid' },
+			{ label: 'URL / Файл', default: 'assets/video.mp4' },
+			{ label: 'Ширина (px/%s)', default: '100%' },
+			{ label: 'Высота (px/%s)', default: '100%' },
+			{ label: 'Z-Index', default: '50' },
+		],
+	},
+	{
+		id: 'video_control',
+		category: 'Медиа',
+		subcategory: 'Видео',
+		label: 'Управление видео',
+		desc: 'Play/Pause/Stop.',
+		icon: 'ri-play-mini-fill',
+		color: '#E91E63',
+		inputs: [
+			{ label: 'ID видео', default: 'intro_vid' },
+			{
+				label: 'Действие',
+				type: 'select',
+				default: 'play',
+				options: ['play', 'pause', 'stop', 'remove'],
+			},
+		],
+	},
+	{
+		id: 'video_settings',
+		category: 'Медиа',
+		subcategory: 'Видео',
+		label: 'Настройки видео',
+		desc: 'Звук и повтор.',
+		icon: 'ri-settings-4-line',
+		color: '#E91E63',
+		inputs: [
+			{ label: 'ID видео', default: 'intro_vid' },
+			{ label: 'Громкость (0-1)', default: '1' },
+			{ label: 'Зациклить? (1/0)', default: '0' },
+			{ label: 'Прозрачность (0-1)', default: '1' },
+		],
+	},
+	{
+		id: 'video_on_end',
+		category: 'Медиа',
+		subcategory: 'Видео',
+		label: 'Видео закончилось',
+		desc: 'Событие завершения ролика.',
+		icon: 'ri-movie-2-fill',
+		color: '#E91E63',
+		inputs: [{ label: 'ID видео', default: 'intro_vid' }],
+	},
+
+	// ==========================================
+	// --- 14. СЦЕНА И СИСТЕМА (SYSTEM) ---
+	// ==========================================
+	{
+		id: 'scene_load',
+		category: 'Сцена',
+		subcategory: 'Управление',
+		label: 'Загрузить сцену',
+		desc: 'Переход на другой уровень.',
+		icon: 'ri-movie-line',
+		color: '#7c4dff',
+		inputs: [{ name: 'Имя сцены', type: 'text', default: 'Уровень 2' }],
+	},
+	{
+		id: 'scene_next',
+		category: 'Сцена',
+		subcategory: 'Управление',
+		label: 'След. сцена',
+		desc: 'Следующая по списку.',
+		icon: 'ri-skip-forward-line',
+		color: '#7c4dff',
+		inputs: [],
+	},
+	{
+		id: 'scene_reload',
+		category: 'Сцена',
+		subcategory: 'Управление',
+		label: 'Перезапуск сцены',
+		desc: 'Рестарт уровня.',
+		icon: 'ri-refresh-line',
+		color: '#7c4dff',
+		inputs: [],
+	},
+	{
+		id: 'game_restart',
+		category: 'Сцена',
+		subcategory: 'Управление',
+		label: 'Рестарт игры',
+		desc: 'Полный сброс.',
+		icon: 'ri-refresh-line',
+		color: '#607D8B',
+		inputs: [],
+	},
+	{
+		id: 'game_pause',
+		category: 'Сцена',
+		subcategory: 'Игра',
+		label: 'Пауза игры',
+		desc: 'Остановка времени.',
+		icon: 'ri-pause-circle-fill',
+		color: '#607D8B',
+		inputs: [{ label: 'Вкл/Выкл (1/0)', default: '1' }],
+	},
+	{
+		id: 'game_over_screen',
+		category: 'Сцена',
+		subcategory: 'Игра',
+		label: 'Экран Game Over',
+		desc: 'Стандартный экран проигрыша.',
+		icon: 'ri-skull-fill',
+		color: '#607D8B',
+		inputs: [{ label: 'Заголовок', default: 'GAME OVER' }],
+	},
+	{
+		id: 'scene_save_state',
+		category: 'Сцена',
+		subcategory: 'Сохранение',
+		label: 'Сохранить прогресс',
+		desc: 'Запись в слот.',
+		icon: 'ri-save-2-line',
+		color: '#7c4dff',
+		inputs: [{ name: 'Имя слота', type: 'text', default: 'autosave' }],
+	},
+	{
+		id: 'scene_load_state',
+		category: 'Сцена',
+		subcategory: 'Сохранение',
+		label: 'Загрузить прогресс',
+		desc: 'Чтение из слота.',
+		icon: 'ri-upload-2-line',
+		color: '#7c4dff',
+		inputs: [{ name: 'Имя слота', type: 'text', default: 'autosave' }],
+	},
+	{
+		id: 'win_set_title',
+		category: 'Сцена',
+		subcategory: 'Окно',
+		label: 'Название Окна',
+		desc: 'Заголовок вкладки.',
+		icon: 'ri-window-line',
+		color: '#00B0FF',
+		inputs: [{ label: 'Текст', default: 'Ecrous Game' }],
+	},
+	{
+		id: 'win_set_size',
+		category: 'Сцена',
+		subcategory: 'Окно',
+		label: 'Базовый размер',
+		desc: 'Разрешение игры.',
+		icon: 'ri-ruler-2-line',
+		color: '#00B0FF',
+		inputs: [
+			{ label: 'Ширина', default: '800' },
+			{ label: 'Высота', default: '600' },
+		],
+	},
+	{
+		id: 'win_scale_mode',
+		category: 'Сцена',
+		subcategory: 'Окно',
+		label: 'Режим масштаба',
+		desc: 'Адаптация под экран.',
+		icon: 'ri-aspect-ratio-fill',
+		color: '#00B0FF',
+		inputs: [
+			{
+				label: 'Режим',
+				default: 'fit',
+				type: 'select',
+				options: ['fixed', 'fit', 'stretch', 'fill'],
+			},
+		],
+	},
+	{
+		id: 'win_fullscreen',
+		category: 'Сцена',
+		subcategory: 'Окно',
+		label: 'Полный экран',
+		desc: 'На весь монитор.',
+		icon: 'ri-fullscreen-fill',
+		color: '#00B0FF',
+		inputs: [{ label: 'Вкл/Выкл (1/0)', default: '1' }],
+	},
+	{
+		id: 'win_bg_color',
+		category: 'Сцена',
+		subcategory: 'Фон',
+		label: 'Цвет Фона',
+		desc: 'Заливка заднего плана.',
+		icon: 'ri-paint-fill',
+		color: '#00B0FF',
+		inputs: [{ label: 'Цвет', default: '#1a1a1a' }],
+	},
+	{
+		id: 'win_bg_image',
+		category: 'Сцена',
+		subcategory: 'Фон',
+		label: 'Фото Фона (URL)',
+		desc: 'Картинка на фоне.',
+		icon: 'ri-image-line',
+		color: '#00B0FF',
+		inputs: [{ label: 'Ссылка', default: 'https://' }],
+	},
+	{
+		id: 'win_set_cursor',
+		category: 'Сцена',
+		subcategory: 'Курсор',
+		label: 'Курсор мыши',
+		desc: 'Вид курсора.',
+		icon: 'ri-cursor-fill',
+		color: '#00B0FF',
+		inputs: [
+			{
+				label: 'Вид',
+				default: 'default',
+				type: 'select',
+				options: ['default', 'pointer', 'none', 'crosshair', 'text', 'wait'],
+			},
+		],
+	},
+	{
+		id: 'win_console_state',
+		category: 'Сцена',
+		subcategory: 'Отладка',
+		label: 'Консоль',
+		desc: 'Показать/скрыть лог.',
+		icon: 'ri-terminal-box-line',
+		color: '#00B0FF',
+		inputs: [{ label: 'Показать/Скрыть', default: 'hide' }],
+	},
+	{
+		id: 'debug_show_fps',
+		category: 'Сцена',
+		subcategory: 'Отладка',
+		label: 'Показать FPS',
+		desc: 'Счетчик кадров.',
+		icon: 'ri-speed-line',
+		color: '#F57C00',
+		inputs: [{ label: 'Вкл/Выкл (1/0)', default: '1' }],
+	},
+	{
+		id: 'debug_draw_bounds',
+		category: 'Сцена',
+		subcategory: 'Отладка',
+		label: 'Показать границы',
+		desc: 'Контуры объектов.',
+		icon: 'ri-shape-line',
+		color: '#F57C00',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Вкл/Выкл (1/0)', default: '1' },
+		],
+	},
+	{
+		id: 'debug_pause',
+		category: 'Сцена',
+		subcategory: 'Отладка',
+		label: 'Дебаг-пауза',
+		desc: 'Пауза для отладки.',
+		icon: 'ri-pause-circle-line',
+		color: '#F57C00',
+		inputs: [],
+	},
+	{
+		id: 'debug_step',
+		category: 'Сцена',
+		subcategory: 'Отладка',
+		label: 'Шаг (кадр)',
+		desc: 'Один кадр вперед.',
+		icon: 'ri-skip-forward-line',
+		color: '#F57C00',
+		inputs: [],
+	},
+	{
+		id: 'sys_exec_js',
+		category: 'Сцена',
+		subcategory: 'Система',
+		label: 'Выполнить JS',
+		desc: 'Произвольный код.',
+		icon: 'ri-code-box-line',
+		color: '#607D8B',
+		inputs: [
+			{
+				label: 'Код (JavaScript):',
+				type: 'textarea',
+				default: '// gameVariables["score"] += 10;\nconsole.log("Hello!");',
+			},
+		],
+	},
+
+	// ==========================================
+	// --- 15. ТАЙЛМАПЫ (TILEMAP) ---
+	// ==========================================
+	{
+		id: 'tile_create_map',
+		category: 'Тайлмап',
+		subcategory: 'Создание',
+		label: 'Создать сетку',
+		desc: 'Карта уровня.',
+		icon: 'ri-map-2-fill',
+		color: '#795548',
+		inputs: [
+			{ label: 'Размер клетки (px)', default: '32' },
+			{
+				label: 'Карта (через запятую)',
+				type: 'textarea',
+				default: '1,1,1,1,1\n1,0,0,0,1\n1,0,P,0,1\n1,1,1,1,1',
+			},
+		],
+	},
+	{
+		id: 'tile_define',
+		category: 'Тайлмап',
+		subcategory: 'Настройка',
+		label: 'Назначить тайл',
+		desc: 'Связь символа и картинки.',
+		icon: 'ri-image-edit-line',
+		color: '#795548',
+		inputs: [
+			{ label: 'Символ', default: '1' },
+			{ label: 'URL Картинки', default: 'wall.png' },
+			{ label: 'Твердый? (1/0)', default: '1' },
+		],
+	},
+
+	// ==========================================
+	// --- 16. ГРУППЫ И ТЕГИ (GROUPS) ---
+	// ==========================================
+	{
+		id: 'grp_add',
+		category: 'Группы',
+		subcategory: 'Управление',
+		label: 'Добавить в группу',
+		desc: 'Вступает в группу.',
+		icon: 'ri-group-fill',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Имя группы', default: 'enemies' },
+		],
+	},
+	{
+		id: 'grp_remove',
+		category: 'Группы',
+		subcategory: 'Управление',
+		label: 'Убрать из группы',
+		desc: 'Покидает группу.',
+		icon: 'ri-user-unfollow-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Имя группы', default: 'enemies' },
+		],
+	},
+	{
+		id: 'grp_move',
+		category: 'Группы',
+		subcategory: 'Действия',
+		label: 'Двигать группу',
+		desc: 'Сдвиг всех членов.',
+		icon: 'ri-drag-move-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Имя группы', default: 'enemies' },
+			{ label: 'Сдвиг X', default: '5' },
+			{ label: 'Сдвиг Y', default: '0' },
+		],
+	},
+	{
+		id: 'grp_state',
+		category: 'Группы',
+		subcategory: 'Действия',
+		label: 'Состояние группы',
+		desc: 'Скрыть/показать всех.',
+		icon: 'ri-eye-close-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Имя группы', default: 'enemies' },
+			{ label: 'show/hide', default: 'hide' },
+		],
+	},
+	{
+		id: 'grp_delete',
+		category: 'Группы',
+		subcategory: 'Действия',
+		label: 'Удалить группу',
+		desc: 'Удаляет всех членов.',
+		icon: 'ri-delete-bin-2-line',
+		color: '#FF4081',
+		inputs: [{ label: 'Имя группы', default: 'enemies' }],
+	},
+	{
+		id: 'tag_add',
+		category: 'Группы',
+		subcategory: 'Теги',
+		label: 'Добавить тег',
+		desc: 'Метка на объекте.',
+		icon: 'ri-bookmark-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Тег', default: 'enemy' },
+		],
+	},
+	{
+		id: 'tag_check',
+		category: 'Группы',
+		subcategory: 'Теги',
+		label: 'Имеет тег?',
+		desc: 'Проверка метки.',
+		icon: 'ri-bookmark-fill',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'box1' },
+			{ label: 'Тег', default: 'enemy' },
+			{ label: 'Результат в', default: 'has_tag' },
+		],
+	},
+	{
+		id: 'sys_group',
+		category: 'Группы',
+		subcategory: 'Редактор',
+		label: 'Папка блоков',
+		desc: 'Сворачивает блоки.',
+		icon: 'ri-folder-open-fill',
+		color: '#E91E63',
+		inputs: [{ label: 'Название', default: 'Логика врага' }],
+	},
+
+	// ==========================================
+	// --- 17. КОМПОНЕНТЫ И ДАННЫЕ (DATA) ---
+	// ==========================================
+	{
+		id: 'comp_add',
+		category: 'Компоненты',
+		subcategory: 'ECS',
+		label: 'Добавить компонент',
+		desc: 'Вешает данные (HP).',
+		icon: 'ri-puzzle-2-fill',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Имя комп.', default: 'health' },
+			{ label: 'Значение', default: '100' },
+		],
+	},
+	{
+		id: 'comp_get',
+		category: 'Компоненты',
+		subcategory: 'ECS',
+		label: 'Получить компонент',
+		desc: 'Читает данные.',
+		icon: 'ri-puzzle-2-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Имя комп.', default: 'health' },
+			{ label: 'В переменную', default: 'hp_val' },
+		],
+	},
+	{
+		id: 'comp_set',
+		category: 'Компоненты',
+		subcategory: 'ECS',
+		label: 'Изменить компонент',
+		desc: 'Обновляет данные.',
+		icon: 'ri-refresh-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Имя комп.', default: 'health' },
+			{ label: 'Новое знач.', default: '90' },
+		],
+	},
+	{
+		id: 'comp_has',
+		category: 'Компоненты',
+		subcategory: 'ECS',
+		label: 'Имеет компонент?',
+		desc: 'Проверка наличия.',
+		icon: 'ri-question-mark',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'player' },
+			{ label: 'Имя комп.', default: 'AI' },
+			{ label: 'Результат в', default: 'is_bot' },
+		],
+	},
+	{
+		id: 'inv_add',
+		category: 'Компоненты',
+		subcategory: 'Инвентарь',
+		label: 'Добавить предмет',
+		desc: 'Кладёт в инвентарь.',
+		icon: 'ri-archive-drawer-fill',
+		color: '#795548',
+		inputs: [{ label: 'ID предмета', default: 'key_red' }],
+	},
+	{
+		id: 'inv_has',
+		category: 'Компоненты',
+		subcategory: 'Инвентарь',
+		label: 'Есть предмет?',
+		desc: 'Проверка предмета.',
+		icon: 'ri-search-eye-line',
+		color: '#795548',
+		inputs: [
+			{ label: 'ID предмета', default: 'key_red' },
+			{ label: 'Результат в', default: 'has_key' },
+		],
+	},
+	{
+		id: 'quest_set',
+		category: 'Компоненты',
+		subcategory: 'Квесты',
+		label: 'Этап задания',
+		desc: 'Обновляет квест.',
+		icon: 'ri-flag-2-fill',
+		color: '#FBC02D',
+		inputs: [
+			{ label: 'ID квеста', default: 'main_quest' },
+			{ label: 'Этап (число/текст)', default: '1' },
+		],
+	},
+	{
+		id: 'data_save',
+		category: 'Компоненты',
+		subcategory: 'Память',
+		label: 'Сохранить',
+		desc: 'Local Storage.',
+		icon: 'ri-save-3-fill',
+		color: '#795548',
+		inputs: [
+			{ label: 'Ключ (имя)', default: 'my_score' },
+			{ label: 'Значение', default: '100' },
+		],
+	},
+	{
+		id: 'data_load',
+		category: 'Компоненты',
+		subcategory: 'Память',
+		label: 'Загрузить',
+		desc: 'Из Local Storage.',
+		icon: 'ri-download-2-fill',
+		color: '#795548',
+		inputs: [
+			{ label: 'Ключ (имя)', default: 'my_score' },
+			{ label: 'В переменную', default: 'score' },
+		],
+	},
+	{
+		id: 'data_clear',
+		category: 'Компоненты',
+		subcategory: 'Память',
+		label: 'Очистить все',
+		desc: 'Удалить сохранения.',
+		icon: 'ri-delete-bin-fill',
+		color: '#795548',
+		inputs: [],
+	},
+	{
 		id: 'table_create',
-		category: 'Таблицы',
+		category: 'Компоненты',
+		subcategory: 'Таблицы',
 		label: 'Создать таблицу',
-		desc: 'Создает пустой список данных.',
+		desc: 'Новый список.',
 		icon: 'ri-table-line',
 		color: '#FF5722',
 		inputs: [{ label: 'Имя таблицы', default: 'myList' }],
 	},
 	{
 		id: 'table_add',
-		category: 'Таблицы',
+		category: 'Компоненты',
+		subcategory: 'Таблицы',
 		label: 'Добавить в конец',
-		desc: 'Добавляет значение в конец таблицы.',
+		desc: 'Push в массив.',
 		icon: 'ri-add-box-line',
 		color: '#FF5722',
 		inputs: [
@@ -2214,9 +2312,10 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'table_get',
-		category: 'Таблицы',
+		category: 'Компоненты',
+		subcategory: 'Таблицы',
 		label: 'Взять из...',
-		desc: 'Получает значение по номеру (Индекс с 0).',
+		desc: 'Получить по индексу.',
 		icon: 'ri-bring-forward',
 		color: '#FF5722',
 		inputs: [
@@ -2227,9 +2326,10 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'table_set',
-		category: 'Таблицы',
+		category: 'Компоненты',
+		subcategory: 'Таблицы',
 		label: 'Заменить в...',
-		desc: 'Меняет значение по индексу.',
+		desc: 'Изменить по индексу.',
 		icon: 'ri-edit-box-line',
 		color: '#FF5722',
 		inputs: [
@@ -2240,9 +2340,10 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'table_remove',
-		category: 'Таблицы',
+		category: 'Компоненты',
+		subcategory: 'Таблицы',
 		label: 'Удалить из...',
-		desc: 'Удаляет строку по индексу.',
+		desc: 'Удалить строку.',
 		icon: 'ri-delete-row',
 		color: '#FF5722',
 		inputs: [
@@ -2252,9 +2353,10 @@ const BLOCK_DEFINITIONS = [
 	},
 	{
 		id: 'table_length',
-		category: 'Таблицы',
+		category: 'Компоненты',
+		subcategory: 'Таблицы',
 		label: 'Длина таблицы',
-		desc: 'Возвращает количество элементов.',
+		desc: 'Размер списка.',
 		icon: 'ri-ruler-2-fill',
 		color: '#FF5722',
 		inputs: [
@@ -2264,24 +2366,39 @@ const BLOCK_DEFINITIONS = [
 	},
 
 	// ==========================================
-	// --- 3D МИР (CSS3D) ---
+	// --- 18. 3D МИР (3D) ---
 	// ==========================================
 	{
 		id: 'scene_3d_init',
 		category: '3D',
+		subcategory: 'Мир',
 		label: 'Инициализация 3D',
-		desc: 'Включает режим 3D для сцены (перспективу).',
+		desc: 'Включает перспективу.',
 		icon: 'ri-global-line',
 		color: '#FF4081',
+		inputs: [{ label: 'Глубина (Perspective)', default: '1000' }],
+	},
+	{
+		id: 'cam_3d_move',
+		category: '3D',
+		subcategory: 'Мир',
+		label: '3D Камера',
+		desc: 'Позиция камеры в 3D.',
+		icon: 'ri-camera-lens-fill',
+		color: '#FF4081',
 		inputs: [
-			{ label: 'Глубина (Perspective)', default: '1000' }, // Чем меньше, тем сильнее эффект
+			{ label: 'X', default: '0' },
+			{ label: 'Y', default: '0' },
+			{ label: 'Z (Zoom)', default: '0' },
+			{ label: 'Поворот Y', default: '0' },
 		],
 	},
 	{
 		id: 'obj_3d_create_cube',
 		category: '3D',
+		subcategory: 'Объекты',
 		label: 'Создать Куб',
-		desc: 'Создает объемный куб из 6 граней.',
+		desc: 'Объемный куб.',
 		icon: 'ri-box-3-fill',
 		color: '#FF4081',
 		inputs: [
@@ -2294,55 +2411,11 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
-		id: 'obj_3d_transform',
-		category: '3D',
-		label: '3D Трансформация',
-		desc: 'Перемещение и вращение объекта в 3D пространстве.',
-		icon: 'ri-refresh-line',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'cube1' },
-			{ label: 'X', default: '300' },
-			{ label: 'Y', default: '300' },
-			{ label: 'Z', default: '0' },
-			{ label: 'Rot X', default: '0' },
-			{ label: 'Rot Y', default: '0' },
-			{ label: 'Rot Z', default: '0' },
-		],
-	},
-	{
-		id: 'obj_3d_rotate_anim',
-		category: '3D',
-		label: 'Вращать постоянно',
-		desc: 'Автоматическое вращение объекта.',
-		icon: 'ri-loader-2-line',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'Объект', default: 'cube1' },
-			{ label: 'Скорость X', default: '1' },
-			{ label: 'Скорость Y', default: '1' },
-			{ label: 'Скорость Z', default: '0' },
-		],
-	},
-	{
-		id: 'cam_3d_move',
-		category: '3D',
-		label: '3D Камера',
-		desc: 'Перемещение камеры в пространстве.',
-		icon: 'ri-camera-lens-fill',
-		color: '#FF4081',
-		inputs: [
-			{ label: 'X', default: '0' },
-			{ label: 'Y', default: '0' },
-			{ label: 'Z (Zoom)', default: '0' },
-			{ label: 'Поворот Y', default: '0' },
-		],
-	},
-	{
 		id: 'obj_3d_create_plane',
 		category: '3D',
+		subcategory: 'Объекты',
 		label: 'Создать Плоскость',
-		desc: 'Плоский квадрат (стена или пол).',
+		desc: 'Пол или стена.',
 		icon: 'ri-stop-line',
 		color: '#FF4081',
 		inputs: [
@@ -2359,15 +2432,16 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_3d_create_cylinder',
 		category: '3D',
+		subcategory: 'Объекты',
 		label: 'Создать Цилиндр',
-		desc: 'Создает трубу или колонну из полосок.',
+		desc: 'Труба или колонна.',
 		icon: 'ri-database-2-line',
 		color: '#FF4081',
 		inputs: [
 			{ label: 'Имя', default: 'column1' },
 			{ label: 'Высота', default: '200' },
 			{ label: 'Диаметр', default: '60' },
-			{ label: 'Граней (качество)', default: '8' }, // Больше 16 может лагать!
+			{ label: 'Граней (качество)', default: '8' },
 			{ label: 'Цвет', type: 'color', default: '#607D8B' },
 			{ label: 'X', default: '100' },
 			{ label: 'Y', default: '100' },
@@ -2377,8 +2451,9 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'obj_3d_billboard',
 		category: '3D',
+		subcategory: 'Объекты',
 		label: '3D Спрайт (Billboard)',
-		desc: 'Картинка, которая стоит в 3D, но всегда смотрит на камеру.',
+		desc: 'Плоская картинка в 3D.',
 		icon: 'ri-image-user-line',
 		color: '#FF4081',
 		inputs: [
@@ -2392,10 +2467,44 @@ const BLOCK_DEFINITIONS = [
 		],
 	},
 	{
+		id: 'obj_3d_transform',
+		category: '3D',
+		subcategory: 'Действия',
+		label: '3D Трансформация',
+		desc: 'Двигать/вращать в 3D.',
+		icon: 'ri-refresh-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'cube1' },
+			{ label: 'X', default: '300' },
+			{ label: 'Y', default: '300' },
+			{ label: 'Z', default: '0' },
+			{ label: 'Rot X', default: '0' },
+			{ label: 'Rot Y', default: '0' },
+			{ label: 'Rot Z', default: '0' },
+		],
+	},
+	{
+		id: 'obj_3d_rotate_anim',
+		category: '3D',
+		subcategory: 'Действия',
+		label: 'Вращать постоянно',
+		desc: 'Авто-вращение.',
+		icon: 'ri-loader-2-line',
+		color: '#FF4081',
+		inputs: [
+			{ label: 'Объект', default: 'cube1' },
+			{ label: 'Скорость X', default: '1' },
+			{ label: 'Скорость Y', default: '1' },
+			{ label: 'Скорость Z', default: '0' },
+		],
+	},
+	{
 		id: 'obj_3d_set_face',
 		category: '3D',
+		subcategory: 'Материалы',
 		label: 'Текстура грани',
-		desc: 'Меняет картинку на одной стороне куба.',
+		desc: 'Картинка на боку куба.',
 		icon: 'ri-layout-4-line',
 		color: '#FF4081',
 		inputs: [
@@ -2412,9 +2521,10 @@ const BLOCK_DEFINITIONS = [
 	{
 		id: 'cam_3d_look_at',
 		category: '3D',
+		subcategory: 'Действия',
 		label: 'Биллбординг (в Update)',
-		desc: 'Повернуть объект лицом к камере (ставить в "Каждый кадр").',
-		icon: 'ri-eye-2-line',
+		desc: 'Повернуть лицом к камере.',
+		icon: 'ri-eye-line',
 		color: '#FF4081',
 		inputs: [{ label: 'Объект', default: 'hero_sprite' }],
 	},

@@ -2965,6 +2965,77 @@ function executeBlockLogic(block) {
 					}
 					break
 				}
+				case 'obj_create_sprite': {
+					const id = v[0]
+					// Если объект уже есть, не создаем дубликат
+					if (document.getElementById(id)) break
+
+					const url = getAssetUrl(resolveValue(v[1]))
+					const x = parseFloat(resolveValue(v[2]))
+					const y = parseFloat(resolveValue(v[3]))
+					const wVal = parseFloat(resolveValue(v[4]))
+					const hVal = parseFloat(resolveValue(v[5]))
+					const physType = v[6] // 'Static', 'Dynamic', 'None'
+					const layer = parseInt(resolveValue(v[7])) || 1
+
+					// 1. Создаем визуальный элемент (DOM)
+					const el = document.createElement('div')
+					el.id = id
+					el.style.position = 'absolute'
+					el.style.left = x + 'px'
+					el.style.top = y + 'px'
+					el.style.width = wVal + 'px'
+					el.style.height = hVal + 'px'
+					el.style.backgroundImage = `url('${url}')`
+					el.style.backgroundSize = 'contain'
+					el.style.backgroundRepeat = 'no-repeat'
+					el.style.backgroundPosition = 'center'
+					el.style.zIndex = layer
+
+					document.getElementById('game-world').appendChild(el)
+
+					// 2. Добавляем физику (если выбрана)
+					if (
+						physType !== 'None' &&
+						typeof Matter !== 'undefined' &&
+						matterEngine
+					) {
+						const isStatic = physType === 'Static'
+						// Matter.js использует координаты центра, а DOM — левый верхний угол
+						const centerX = x + wVal / 2
+						const centerY = y + hVal / 2
+
+						const body = Matter.Bodies.rectangle(centerX, centerY, wVal, hVal, {
+							isStatic: isStatic,
+							label: id, // Важно для событий столкновения
+							friction: 0.5,
+							restitution: 0.0, // Упругость
+						})
+
+						Matter.World.add(matterEngine.world, body)
+						bodyMap.set(id, body)
+
+						// Регистрируем в системе физики движка (для updatePhysics)
+						physicsObjects[id] = {
+							vx: 0,
+							vy: 0,
+							mass: isStatic ? 0 : 1,
+							width: wVal,
+							height: hVal,
+							collideWorld: false,
+						}
+					}
+					break
+				}
+
+				case 'obj_set_sprite_frame': {
+					const el = document.getElementById(v[0])
+					if (el) {
+						const url = getAssetUrl(resolveValue(v[1]))
+						el.style.backgroundImage = `url('${url}')`
+					}
+					break
+				}
 
 				// --- СИСТЕМНЫЕ ---
 				case 'flow_comment':
