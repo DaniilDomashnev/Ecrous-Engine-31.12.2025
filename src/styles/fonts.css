@@ -21,3 +21,15 @@
 	src: url('../fonts/ubuntu.ttf') format('opentype');
 	font-display: swap;
 }
+
+@font-face {
+	font-family: 'riimut';
+	src: url('../fonts/Riimut.otf') format('opentype');
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'wadik';
+	src: url('../fonts/Wadik.otf') format('opentype');
+	font-display: swap;
+}

@@ -2,7 +2,7 @@
 	margin: 0;
 	padding: 0;
 	box-sizing: border-box;
-	font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+	font-family: 'ubuntu', sans-serif; 
 	-webkit-font-smoothing: antialiased; 
 	-moz-osx-font-smoothing: grayscale; /* improved: better text rendering on macOS */
 }
@@ -142,6 +142,7 @@ body {
 	font-size: 18px;
 	font-weight: 500;
 	letter-spacing: 0.5px;
+	font-family: 'ubuntu', sans-serif;
 
 	background: var(--bg-elevated-soft);
 	border-radius: 12px;

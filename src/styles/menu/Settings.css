@@ -182,12 +182,16 @@
 	background: var(--accent);
 	color: white;
 
-	margin-top: 18px; /* <<< КНОПКА ТЕПЕРЬ НИЖЕ */
+	margin-top: 10px;
 
 	box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35), 0 0 12px var(--accent-soft);
 
 	transition: background 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease,
 		opacity 0.25s ease;
+}
+
+.tutorial-reset-btn {
+	margin-top: 0px;
 }
 
 /* Hover */
