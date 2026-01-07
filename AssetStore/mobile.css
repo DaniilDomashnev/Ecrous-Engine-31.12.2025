@@ -1,0 +1,288 @@
+/* ==========================================
+   ECROUS ENGINE STORE - MOBILE OVERRIDES
+   ========================================== */
+
+@media (max-width: 768px) {
+	/* --- 1. NAVBAR (Верхняя панель) --- */
+	.navbar {
+		height: auto;
+		padding: 12px 16px;
+		flex-wrap: wrap;
+		gap: 12px;
+		position: relative;
+	}
+
+	/* Логотип и иконка */
+	.nav-brand {
+		font-size: 1.1rem;
+		flex-grow: 1;
+	}
+
+	/* Кнопки входа/профиля */
+	.nav-auth {
+		gap: 8px;
+	}
+
+	.nav-auth .btn {
+		padding: 8px 14px;
+		font-size: 0.85rem;
+	}
+
+	/* Скрываем email на телефоне, оставляем только аватар и кнопку */
+	.user-info {
+		background: transparent;
+		padding: 0;
+	}
+	#user-email {
+		display: none;
+	}
+
+	/* Поиск на всю ширину второй строкой */
+	.search-container {
+		order: 3;
+		width: 100%;
+		margin: 0;
+		max-width: 100%;
+	}
+
+	.search-container input {
+		padding-top: 10px;
+		padding-bottom: 10px;
+		font-size: 16px; /* Защита от зума на iPhone */
+	}
+
+	/* --- 2. SIDEBAR (Превращаем в горизонтальное меню) --- */
+	.main-layout {
+		display: flex;
+		flex-direction: column;
+	}
+
+	.sidebar {
+		display: block !important; /* Переопределяем скрытие */
+		width: 100%;
+		height: auto;
+		position: sticky;
+		top: 0; /* Прилипает под навбаром (если navbar sticky) или просто сверху */
+		z-index: 90;
+		padding: 10px 16px;
+		border-right: none;
+		border-bottom: 1px solid var(--border);
+		background: var(--bg); /* Чтобы контент не просвечивал */
+		overflow: hidden;
+	}
+
+	/* Скрываем лишние элементы сайдбара на мобилке */
+	.sidebar h3,
+	.sidebar-promo,
+	.sidebar .btn-outline-sm {
+		display: none;
+	}
+
+	/* Горизонтальный скролл категорий */
+	.category-list {
+		display: flex;
+		flex-direction: row;
+		overflow-x: auto;
+		gap: 8px;
+		padding-bottom: 5px; /* Место для скроллбара */
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none; /* Скрываем скроллбар Firefox */
+	}
+
+	.category-list::-webkit-scrollbar {
+		display: none; /* Скрываем скроллбар Chrome/Safari */
+	}
+
+	.category-list li {
+		margin: 0;
+		white-space: nowrap;
+		background: var(--bg-elevated);
+		border: 1px solid var(--border);
+		flex-shrink: 0;
+		padding: 8px 16px;
+		border-radius: 50px; /* Овальные кнопки */
+		font-size: 0.9rem;
+	}
+
+	.category-list li.active {
+		background: var(--accent);
+		color: white;
+		border-color: var(--accent);
+	}
+
+	.category-list li i {
+		margin-right: 5px;
+	}
+
+	/* --- 3. MAIN CONTENT --- */
+	.content-area {
+		padding: 16px;
+		overflow-x: hidden;
+	}
+
+	/* Баннер поменьше */
+	.hero-banner {
+		height: 180px;
+		padding: 20px;
+		border-radius: 16px;
+		margin-bottom: 24px;
+		background-attachment: scroll; /* Фикс для iOS */
+	}
+
+	.hero-content h1 {
+		font-size: 1.6rem;
+	}
+
+	.hero-content p {
+		font-size: 0.95rem;
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	/* Фильтр бар */
+	.filter-bar {
+		flex-direction: row;
+		align-items: center;
+		margin-bottom: 16px;
+	}
+
+	.filter-bar h2 {
+		font-size: 1.1rem;
+	}
+
+	.sort-label {
+		font-size: 0.8rem;
+		padding: 6px 12px;
+	}
+
+	/* --- 4. ASSETS GRID (Сетка 2 колонки) --- */
+	.assets-grid {
+		display: grid;
+		grid-template-columns: repeat(2, 1fr); /* Две колонки */
+		gap: 12px;
+	}
+
+	/* Если экран совсем узкий (iPhone SE), можно оставить 1 колонку, 
+       но обычно 2 смотрятся лучше для магазина */
+	@media (max-width: 360px) {
+		.assets-grid {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.asset-card {
+		border-radius: 12px;
+	}
+
+	.card-img-wrapper {
+		height: 110px; /* Чуть меньше картинка */
+	}
+
+	.card-body {
+		padding: 12px;
+	}
+
+	.card-title {
+		font-size: 0.95rem;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+
+	.card-category {
+		font-size: 0.65rem;
+	}
+
+	.card-footer {
+		flex-direction: column; /* Цена и кнопка друг под другом для экономии места */
+		align-items: flex-start;
+		gap: 8px;
+		padding-top: 10px;
+	}
+
+	.card-footer > div {
+		width: 100%;
+		display: flex;
+		justify-content: space-between;
+	}
+
+	.open-details-btn {
+		padding: 6px 10px;
+		width: 100%;
+		text-align: center;
+	}
+
+	/* --- 5. MODALS (Bottom Sheet Style) --- */
+	.modal-overlay {
+		align-items: flex-end; /* Прижимаем к низу */
+	}
+
+	.modal-box {
+		width: 100%;
+		max-width: 100%;
+		margin: 0;
+		border-radius: 24px 24px 0 0; /* Закругляем только верх */
+		padding: 24px 20px 40px 20px; /* Больше отступа снизу для Safe Area телефонов */
+		max-height: 85vh;
+		overflow-y: auto;
+		transform: translateY(100%);
+		transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+	}
+
+	.modal-overlay.active .modal-box {
+		transform: translateY(0);
+	}
+
+	/* Полоска-"ручка" для шторки */
+	.modal-box::before {
+		content: '';
+		display: block;
+		width: 40px;
+		height: 4px;
+		background: var(--border);
+		border-radius: 2px;
+		margin: -10px auto 20px auto;
+	}
+
+	.close-modal {
+		top: 15px;
+		right: 15px;
+		background: rgba(0, 0, 0, 0.05);
+	}
+
+	/* Детали ассета внутри модалки */
+	.details-content {
+		grid-template-columns: 1fr; /* Одна колонка */
+		gap: 20px;
+	}
+
+	.details-img {
+		max-height: 200px;
+	}
+
+	.details-right {
+		padding-bottom: 20px;
+	}
+
+	/* Кнопки в модалках большие для пальца */
+	.modal-box .btn {
+		padding: 14px;
+		font-size: 1rem;
+	}
+
+	/* --- 6. TOASTS --- */
+	.toast-container {
+		left: 20px;
+		right: 20px;
+		bottom: 20px;
+		width: auto;
+	}
+
+	.toast {
+		min-width: auto;
+		width: 100%;
+		justify-content: center;
+	}
+}
