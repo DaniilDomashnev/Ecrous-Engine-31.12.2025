@@ -7,9 +7,8 @@ let currentKeyDownHandler = null
 let currentClickHandler = null
 let runtimeSceneId = null
 let isGameResizing = false
-
-// --- НОВЫЕ ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
 let activeCollisionsPair = new Set() // Чтобы событие срабатывало 1 раз при входе
+let isConsoleVisible = true
 window.globalCurrentSceneData = null // Ссылка на данные сцены для поиска скриптов
 let matterEngine = null
 let matterRender = null
@@ -24,7 +23,8 @@ let gameDragOffset = { x: 0, y: 0 }
 function initGameWindowDrag() {
 	const win = document.querySelector('.game-window')
 	const header = document.querySelector('.game-header')
-	const resizer = document.querySelector('.game-window-resizer') // Находим ресайзер
+	const resizer = document.querySelector('.game-window-resizer')
+	const consoleElement = document.getElementById('game-console')
 
 	if (!win || !header) return
 
@@ -92,12 +92,145 @@ function initGameWindowDrag() {
 	})
 }
 
+// === КОНСОЛЬ ===
+
+function logToConsole(message, type = 'log') {
+    const consoleElement = document.getElementById('game-console');
+    if (!consoleElement) return;
+
+    // Если консоль скрыта, но пришла ошибка — можно открыть её принудительно (опционально)
+    // if (type === 'error' && !isConsoleVisible) toggleConsoleVisibility();
+
+    const line = document.createElement('div');
+    line.className = `console-line ${type}`;
+    
+    if (typeof message === 'object') {
+        try {
+            line.innerText = JSON.stringify(message, null, 2);
+        } catch (e) {
+            line.innerText = String(message);
+        }
+    } else {
+        line.innerText = String(message);
+    }
+
+    consoleElement.appendChild(line);
+    consoleElement.scrollTop = consoleElement.scrollHeight;
+}
+
+function clearConsole() {
+    const consoleElement = document.getElementById('game-console');
+    if (consoleElement) {
+        consoleElement.innerHTML = '<div class="console-line system">> Консоль очищена</div>';
+    }
+}
+
+// === ПЕРЕКЛЮЧЕНИЕ ВИДИМОСТИ ===
+function toggleConsoleVisibility() {
+    const consoleElement = document.getElementById('game-console');
+    const btn = document.getElementById('btnToggleConsole');
+    
+    if (!consoleElement) return;
+    
+    isConsoleVisible = !isConsoleVisible;
+    
+    if (isConsoleVisible) {
+        consoleElement.style.display = 'block';
+        if (btn) {
+            btn.style.opacity = '1';
+            btn.innerHTML = '<i class="ri-terminal-box-line"></i>'; // Иконка "Активно"
+        }
+    } else {
+        consoleElement.style.display = 'none';
+        if (btn) {
+            btn.style.opacity = '0.5';
+            btn.innerHTML = '<i class="ri-terminal-line"></i>'; // Иконка "Скрыто"
+        }
+    }
+}
+
+// === ИНИЦИАЛИЗАЦИЯ КНОПОК ===
+function initConsoleControls() {
+	const header = document.querySelector('.game-header')
+	if (!header) return
+
+	// 1. Кнопка ОЧИСТКИ (Корзина)
+	if (!document.getElementById('btnClearConsole')) {
+		// Третий параметр '10px' — отступ слева от соседней кнопки
+		const btnClear = createHeaderBtn(
+			'btnClearConsole',
+			'ri-delete-bin-line',
+			'Очистить консоль',
+			'10px'
+		)
+		btnClear.onclick = e => {
+			e.stopPropagation()
+			clearConsole()
+		}
+
+		// Вставляем перед кнопкой закрытия
+		const closeBtn = document.getElementById('btnCloseGame')
+		if (closeBtn) header.insertBefore(btnClear, closeBtn)
+	}
+
+	// 2. Кнопка СКРЫТИЯ (Терминал)
+	if (!document.getElementById('btnToggleConsole')) {
+		// Третий параметр 'auto' — ВАЖНО: толкает все кнопки вправо, убирая "дыру" по центру
+		const btnToggle = createHeaderBtn(
+			'btnToggleConsole',
+			'ri-terminal-box-line',
+			'Скрыть/Показать консоль',
+			'auto'
+		)
+		btnToggle.onclick = e => {
+			e.stopPropagation()
+			toggleConsoleVisibility()
+		}
+
+		// Вставляем ПЕРЕД кнопкой очистки
+		const btnClear = document.getElementById('btnClearConsole')
+		if (btnClear) header.insertBefore(btnToggle, btnClear)
+	}
+}
+
+// Вспомогательная функция для создания кнопок (чтобы не дублировать код стилей)
+function createHeaderBtn(id, iconClass, title, marginLeftValue) {
+	const btn = document.createElement('button')
+	btn.id = id
+	btn.innerHTML = `<i class="${iconClass}"></i>`
+	btn.className = 'icon-btn'
+
+	// Стили
+	btn.style.marginLeft = marginLeftValue // Используем переданный отступ
+	btn.style.width = '24px'
+	btn.style.height = '24px'
+	btn.style.fontSize = '14px'
+	btn.style.background = 'transparent'
+	btn.style.border = 'none'
+	btn.style.color = '#aaa'
+	btn.style.cursor = 'pointer'
+	btn.title = title
+
+	// Ховер эффекты
+	btn.onmouseover = () => (btn.style.color = '#fff')
+	btn.onmouseleave = () => {
+		if (id === 'btnToggleConsole' && !isConsoleVisible) return
+		btn.style.color = '#aaa'
+	}
+
+	return btn
+}
+
 function runProject() {
 	stopGame()
 	saveCurrentWorkspace()
+	initConsoleControls()
 
 	// UI
 	document.getElementById('game-overlay').classList.remove('hidden')
+
+	// Сброс флага видимости при новом запуске (по желанию можно убрать)
+	isConsoleVisible = true
 
 	// === [ИСПРАВЛЕНИЕ] ===
 	// 1. Сначала объявляем переменную!

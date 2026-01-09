@@ -592,6 +592,16 @@ const BLOCK_DEFINITIONS = [
 		inputs: [],
 	},
 	{
+		id: 'flow_forever',
+		category: 'Логика',
+		subcategory: 'Поток',
+		label: 'Повторять вечно',
+		desc: 'Бесконечный цикл (пока игра запущена).',
+		icon: 'ri-loop-left-line',
+		color: '#FF6D00',
+		inputs: [], // Входов нет, работает как контейнер
+	},
+	{
 		id: 'flow_repeat',
 		category: 'Логика',
 		subcategory: 'Поток',
@@ -844,6 +854,93 @@ const BLOCK_DEFINITIONS = [
 				default: 'yes',
 				options: ['yes', 'no'],
 			},
+		],
+	},
+	// --- РАБОТА С ТЕКСТОМ ---
+	{
+		id: 'var_join',
+		category: 'Переменные',
+		subcategory: 'Текст',
+		label: 'Объединить текст',
+		desc: 'Склеивает две строки (А + Б).',
+		icon: 'ri-links-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Текст А', default: 'Score: ' },
+			{ label: 'Текст Б', default: '0' },
+		],
+	},
+
+	// --- ПОЛЕЗНАЯ МАТЕМАТИКА ---
+	{
+		id: 'var_clamp',
+		category: 'Переменные',
+		subcategory: 'Вычисления',
+		label: 'Ограничить (Clamp)',
+		desc: 'Держит число в границах Мин/Макс.',
+		icon: 'ri-contract-left-right-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Результат в', default: 'hp' },
+			{ label: 'Значение', default: '100' },
+			{ label: 'Мин', default: '0' },
+			{ label: 'Макс', default: '100' },
+		],
+	},
+	{
+		id: 'var_lerp',
+		category: 'Переменные',
+		subcategory: 'Вычисления',
+		label: 'Плавное (Lerp)',
+		desc: 'Интерполяция от А к Б.',
+		icon: 'ri-percent-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Результат в', default: 'smooth_x' },
+			{ label: 'От (А)', default: '0' },
+			{ label: 'До (Б)', default: '100' },
+			{ label: 'Скорость (0-1)', default: '0.1' },
+		],
+	},
+
+	// --- ЛОГИЧЕСКИЕ ПЕРЕКЛЮЧАТЕЛИ ---
+	{
+		id: 'var_toggle',
+		category: 'Переменные',
+		subcategory: 'Значения',
+		label: 'Переключить (Toggle)',
+		desc: 'Меняет true на false и наоборот.',
+		icon: 'ri-toggle-line',
+		color: '#D50000',
+		inputs: [{ label: 'Имя перем.', default: 'is_active' }],
+	},
+
+	// --- СОХРАНЕНИЕ (ОЧЕНЬ ВАЖНО ДЛЯ ИГР) ---
+	{
+		id: 'var_save_local',
+		category: 'Переменные',
+		subcategory: 'Память',
+		label: 'Сохранить в память',
+		desc: 'Записывает переменную в LocalStorage.',
+		icon: 'ri-save-3-fill',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Имя перем.', default: 'highscore' },
+			{ label: 'Ключ сохранения', default: 'save_score' },
+		],
+	},
+	{
+		id: 'var_load_local',
+		category: 'Переменные',
+		subcategory: 'Память',
+		label: 'Загрузить из памяти',
+		desc: 'Читает из LocalStorage.',
+		icon: 'ri-upload-cloud-2-line',
+		color: '#D50000',
+		inputs: [
+			{ label: 'Куда записать', default: 'highscore' },
+			{ label: 'Ключ сохранения', default: 'save_score' },
+			{ label: 'Если пусто', default: '0' },
 		],
 	},
 
@@ -1220,7 +1317,7 @@ const BLOCK_DEFINITIONS = [
 		subcategory: 'Эффекты',
 		label: 'Тряска объекта',
 		desc: 'Трясет объект (CSS).',
-		icon: 'ri-vibration-line',
+		icon: 'ri-volume-vibrate-line',
 		color: '#9C27B0',
 		inputs: [
 			{ label: 'Объект', default: 'game-stage' },
@@ -1638,7 +1735,7 @@ const BLOCK_DEFINITIONS = [
 		subcategory: 'Эффекты',
 		label: 'Слой Параллакса',
 		desc: 'Глубина фона.',
-		icon: 'ri-layers-line',
+		icon: 'ri-stacked-view',
 		color: '#3F51B5',
 		inputs: [
 			{ label: 'Объект/Группа', default: 'bg_mountains' },
@@ -2459,7 +2556,7 @@ const BLOCK_DEFINITIONS = [
 		subcategory: 'Объекты',
 		label: '3D Спрайт (Billboard)',
 		desc: 'Плоская картинка в 3D.',
-		icon: 'ri-image-user-line',
+		icon: 'ri-box-3-line',
 		color: '#FF4081',
 		inputs: [
 			{ label: 'Имя', default: 'hero_sprite' },
@@ -2532,5 +2629,292 @@ const BLOCK_DEFINITIONS = [
 		icon: 'ri-eye-line',
 		color: '#FF4081',
 		inputs: [{ label: 'Объект', default: 'hero_sprite' }],
+	},
+
+	// ==========================================
+	// --- НОВЫЕ БЛОКИ: UI & DEVICE ---
+	// ==========================================
+
+	// --- ТЕЛЕФОН ---
+	{
+		id: 'dev_vibrate',
+		category: 'Устройство',
+		subcategory: 'Система',
+		label: 'Вибрация',
+		desc: 'Вибрация телефона (мс).',
+		icon: 'ri-smartphone-line',
+		color: '#607D8B',
+		inputs: [{ label: 'Время (мс)', default: '200' }],
+	},
+	{
+		id: 'dev_fullscreen',
+		category: 'Устройство',
+		subcategory: 'Экран',
+		label: 'Полный экран',
+		desc: 'Скрыть/показать системные панели.',
+		icon: 'ri-fullscreen-fill',
+		color: '#607D8B',
+		inputs: [
+			{
+				label: 'Режим',
+				type: 'select',
+				default: 'enter',
+				options: ['enter', 'exit'],
+			},
+		],
+	},
+	{
+		id: 'dev_hide_keyboard',
+		category: 'Устройство',
+		subcategory: 'Ввод',
+		label: 'Скрыть клавиатуру',
+		desc: 'Убирает фокус с полей ввода.',
+		icon: 'ri-keyboard-line',
+		color: '#607D8B',
+		inputs: [],
+	},
+
+	// --- WEBVIEW ---
+	{
+		id: 'ui_webview_create',
+		category: 'Интерфейс',
+		subcategory: 'Web',
+		label: 'Создать WebView',
+		desc: 'Браузер внутри игры.',
+		icon: 'ri-global-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID', default: 'web1' },
+			{ label: 'URL', default: 'https://google.com' },
+			{ label: 'X', default: '0' },
+			{ label: 'Y', default: '0' },
+			{ label: 'Ширина', default: '300' },
+			{ label: 'Высота', default: '400' },
+		],
+	},
+	{
+		id: 'ui_webview_control',
+		category: 'Интерфейс',
+		subcategory: 'Web',
+		label: 'Упр. WebView',
+		desc: 'Навигация браузера.',
+		icon: 'ri-arrow-left-right-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID', default: 'web1' },
+			{
+				label: 'Действие',
+				type: 'select',
+				default: 'reload',
+				options: ['reload', 'back', 'forward'],
+			},
+		],
+	},
+	{
+		id: 'ui_webview_url',
+		category: 'Интерфейс',
+		subcategory: 'Web',
+		label: 'Сменить URL',
+		desc: 'Переход на другой сайт.',
+		icon: 'ri-link',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID', default: 'web1' },
+			{ label: 'URL', default: 'https://' },
+		],
+	},
+
+	// --- INPUTS ---
+	{
+		id: 'ui_input_create',
+		category: 'Интерфейс',
+		subcategory: 'Ввод',
+		label: 'Поле ввода',
+		desc: 'Однострочный ввод.',
+		icon: 'ri-text-input',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID', default: 'inp1' },
+			{ label: 'Подсказка', default: 'Введите текст...' },
+			{
+				label: 'Тип',
+				type: 'select',
+				default: 'text',
+				options: ['text', 'password', 'number'],
+			},
+			{ label: 'X', default: '50' },
+			{ label: 'Y', default: '50' },
+			{ label: 'Ширина', default: '150' },
+			{ label: 'Высота', default: '30' },
+		],
+	},
+	{
+		id: 'ui_textarea_create',
+		category: 'Интерфейс',
+		subcategory: 'Ввод',
+		label: 'Многострочный ввод',
+		desc: 'Textarea.',
+		icon: 'ri-article-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID', default: 'txt_area1' },
+			{ label: 'X', default: '50' },
+			{ label: 'Y', default: '100' },
+			{ label: 'Ширина', default: '200' },
+			{ label: 'Высота', default: '100' },
+		],
+	},
+	{
+		id: 'ui_input_set',
+		category: 'Интерфейс',
+		subcategory: 'Ввод',
+		label: 'Св-ва Поля ввода',
+		desc: 'Управление инпутом.',
+		icon: 'ri-settings-3-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID поля', default: 'inp1' },
+			{
+				label: 'Действие',
+				type: 'select',
+				default: 'set_text',
+				options: ['set_text', 'clear', 'disable', 'enable', 'focus'],
+			},
+			{ label: 'Значение (если set)', default: '' },
+		],
+	},
+	{
+		id: 'ui_input_get',
+		category: 'Интерфейс',
+		subcategory: 'Ввод',
+		label: 'Взять текст поля',
+		desc: 'Сохраняет текст в переменную.',
+		icon: 'ri-save-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID поля', default: 'inp1' },
+			{ label: 'В переменную', default: 'user_text' },
+		],
+	},
+
+	// --- SLIDERS ---
+	{
+		id: 'ui_slider_adv',
+		category: 'Интерфейс',
+		subcategory: 'Элементы',
+		label: 'Слайдер (+Ось)',
+		desc: 'Горизонтальный или вертикальный.',
+		icon: 'ri-equalizer-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID', default: 'slider1' },
+			{
+				label: 'Ось',
+				type: 'select',
+				default: 'horizontal',
+				options: ['horizontal', 'vertical'],
+			},
+			{ label: 'Переменная', default: 'val' },
+			{ label: 'Мин', default: '0' },
+			{ label: 'Макс', default: '100' },
+			{ label: 'X', default: '100' },
+			{ label: 'Y', default: '100' },
+			{ label: 'Длина', default: '150' },
+		],
+	},
+
+	// --- SCROLL ---
+	{
+		id: 'ui_scroll_create',
+		category: 'Интерфейс',
+		subcategory: 'Контейнеры',
+		label: 'Скролл-бокс',
+		desc: 'Контейнер с прокруткой.',
+		icon: 'ri-scroll-to-bottom-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID', default: 'scroll1' },
+			{ label: 'X', default: '50' },
+			{ label: 'Y', default: '50' },
+			{ label: 'Ширина', default: '200' },
+			{ label: 'Высота', default: '300' },
+			{ label: 'Цвет фона', type: 'color', default: '#333333' },
+		],
+	},
+	{
+		id: 'ui_scroll_add',
+		category: 'Интерфейс',
+		subcategory: 'Контейнеры',
+		label: 'Добавить в скролл',
+		desc: 'Помещает виджет внутрь.',
+		icon: 'ri-drag-move-2-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID Скролла', default: 'scroll1' },
+			{ label: 'ID Виджета', default: 'btn1' },
+		],
+	},
+	{
+		id: 'ui_scroll_to',
+		category: 'Интерфейс',
+		subcategory: 'Контейнеры',
+		label: 'Прокрутить к',
+		desc: 'Скролл к позиции.',
+		icon: 'ri-arrow-down-circle-line',
+		color: '#ff9800',
+		inputs: [
+			{ label: 'ID Скролла', default: 'scroll1' },
+			{ label: 'Пиксели', default: '0' },
+			{
+				label: 'Ось',
+				type: 'select',
+				default: 'vertical',
+				options: ['vertical', 'horizontal'],
+			},
+		],
+	},
+
+	// --- GENERAL MANAGEMENT ---
+	{
+		id: 'ui_widget_prop',
+		category: 'Интерфейс',
+		subcategory: 'Управление',
+		label: 'Св-ва Виджета',
+		desc: 'Позиция и размер.',
+		icon: 'ri-drag-drop-line',
+		color: '#fb8c00',
+		inputs: [
+			{ label: 'ID Виджета', default: 'btn1' },
+			{
+				label: 'Что менять',
+				type: 'select',
+				default: 'position',
+				options: ['position', 'size'],
+			},
+			{ label: 'X / Ширина', default: '100' },
+			{ label: 'Y / Высота', default: '100' },
+		],
+	},
+	{
+		id: 'ui_widget_delete',
+		category: 'Интерфейс',
+		subcategory: 'Управление',
+		label: 'Удалить виджет',
+		desc: 'Уничтожает элемент.',
+		icon: 'ri-delete-bin-2-line',
+		color: '#fb8c00',
+		inputs: [{ label: 'ID Виджета', default: 'btn1' }],
+	},
+
+	// --- EVENTS ---
+	{
+		id: 'evt_ui_change',
+		category: 'Интерфейс',
+		subcategory: 'События UI',
+		label: 'При изменении',
+		desc: 'Ввод текста или слайдер.',
+		icon: 'ri-pencil-ruler-line',
+		color: '#fb8c00',
+		inputs: [{ label: 'ID элемента', default: 'inp1' }],
 	},
 ]

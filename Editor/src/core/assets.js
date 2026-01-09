@@ -27,7 +27,7 @@ async function createAssetFolder() {
 	renderAssetList()
 }
 
-// === ПЕРЕИМЕНОВАНИЕ ПАПКИ (НОВОЕ) ===
+// === ПЕРЕИМЕНОВАНИЕ ПАПКИ ===
 async function renameAssetFolder(folderId) {
 	const folder = projectData.folders.find(f => f.id === folderId)
 	if (!folder) return
@@ -40,6 +40,25 @@ async function renameAssetFolder(folderId) {
 
 	if (newName && newName.trim() !== '') {
 		folder.name = newName
+
+		if (typeof saveProjectToLocal === 'function') saveProjectToLocal()
+		renderAssetList()
+	}
+}
+
+// === ПЕРЕИМЕНОВАНИЕ АССЕТА (НОВОЕ) ===
+async function renameAsset(assetId) {
+	const asset = projectData.assets.find(a => a.id === assetId)
+	if (!asset) return
+
+	const newName = await showCustomPrompt(
+		'Переименование файла',
+		'Новое имя:',
+		asset.name
+	)
+
+	if (newName && newName.trim() !== '') {
+		asset.name = newName
 
 		if (typeof saveProjectToLocal === 'function') saveProjectToLocal()
 		renderAssetList()
@@ -152,7 +171,6 @@ function renderAssetList() {
 		item.className = 'list-item folder-item'
 		item.draggable = true
 
-		// --- ИЗМЕНЕНИЕ: Белая иконка и кнопка редактирования ---
 		item.innerHTML = `
             <i class="ri-folder-3-fill" style="color: #ffffff;"></i>
             <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; font-weight:600;">${folder.name}</span>
@@ -163,20 +181,20 @@ function renderAssetList() {
             </div>
         `
 
-		// Вход в папку (только если не кликнули по кнопкам)
+		// Вход в папку
 		item.onclick = e => {
 			if (!e.target.classList.contains('action-icon')) {
 				openAssetFolder(folder.id)
 			}
 		}
 
-		// Логика переименования
+		// Логика переименования папки
 		item.querySelector('.edit-btn').onclick = e => {
 			e.stopPropagation()
 			renameAssetFolder(folder.id)
 		}
 
-		// Логика удаления
+		// Логика удаления папки
 		item.querySelector('.delete-btn').onclick = e => {
 			e.stopPropagation()
 			deleteFolderRecursive(folder.id)
@@ -186,7 +204,7 @@ function renderAssetList() {
 		container.appendChild(item)
 	})
 
-	// 4. РЕНДЕР ФАЙЛОВ
+	// 4. РЕНДЕР ФАЙЛОВ (ОБНОВЛЕНО: ДОБАВЛЕНА КНОПКА EDIT)
 	filesToShow.forEach(asset => {
 		const item = document.createElement('div')
 		item.className = 'list-item asset-item'
@@ -201,7 +219,10 @@ function renderAssetList() {
 		item.innerHTML = `
             <i class="${icon}"></i>
             <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px;">${asset.name}</span>
-            <i class="ri-delete-bin-line action-icon" title="Удалить" style="color:var(--danger)"></i>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <i class="ri-edit-line action-icon edit-asset-btn" title="Переименовать"></i>
+                <i class="ri-delete-bin-line action-icon delete-asset-btn" title="Удалить" style="color:var(--danger)"></i>
+            </div>
         `
 
 		item.ondragstart = e => {
@@ -210,15 +231,23 @@ function renderAssetList() {
 			e.dataTransfer.effectAllowed = 'all'
 		}
 
+		// Клик по элементу (копирование ID)
 		item.onclick = e => {
-			if (!e.target.classList.contains('ri-delete-bin-line')) {
+			if (!e.target.classList.contains('action-icon')) {
 				navigator.clipboard.writeText(asset.id)
 				if (typeof showNotification === 'function')
 					showNotification('ID скопирован')
 			}
 		}
 
-		item.querySelector('.ri-delete-bin-line').onclick = e => {
+		// Логика переименования файла (НОВОЕ)
+		item.querySelector('.edit-asset-btn').onclick = e => {
+			e.stopPropagation()
+			renameAsset(asset.id)
+		}
+
+		// Логика удаления файла
+		item.querySelector('.delete-asset-btn').onclick = e => {
 			e.stopPropagation()
 			if (confirm('Удалить файл?')) {
 				projectData.assets = projectData.assets.filter(a => a.id !== asset.id)

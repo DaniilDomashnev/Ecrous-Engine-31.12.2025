@@ -139,3 +139,123 @@ function closeProjectSettings() {
         setTimeout(() => modal.classList.add('hidden'), 200)
     }
 }
+
+// ==========================================
+// --- УПРАВЛЕНИЕ НАСТРОЙКАМИ (ИМПОРТ/ЭКСПОРТ) ---
+// ==========================================
+
+// Список ключей localStorage, которые мы считаем "настройками редактора"
+const SETTINGS_KEYS = [
+    'ecrous_autosave_config', // Автосохранение
+    'ecrous_hotkeys',         // Горячие клавиши
+    'ecrous_theme',           // Тема (если есть)
+    'ecrous_editor_opts'      // Общие опции (сетка, привязка и т.д.)
+];
+
+// --- ЭКСПОРТ ---
+function exportEditorSettings() {
+    try {
+        const exportData = {};
+        
+        // Собираем данные из localStorage
+        SETTINGS_KEYS.forEach(key => {
+            const val = localStorage.getItem(key);
+            if (val) {
+                try {
+                    exportData[key] = JSON.parse(val);
+                } catch (e) {
+                    exportData[key] = val; // Если это не JSON, сохраняем как строку
+                }
+            }
+        });
+
+        // Добавляем мета-данные
+        exportData._meta = {
+            version: '1.0',
+            date: new Date().toISOString(),
+            type: 'ecrous_settings'
+        };
+
+        // Генерируем файл
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+
+        // Скачиваем
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `ecrous_settings_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        if (typeof showNotification === 'function') showNotification('Настройки экспортированы');
+    } catch (e) {
+        console.error('Ошибка экспорта:', e);
+        alert('Не удалось экспортировать настройки.');
+    }
+}
+
+// --- ИМПОРТ ---
+function importEditorSettings() {
+    // Кликам по скрытому инпуту
+    document.getElementById('settingsFileInput').click();
+}
+
+function handleSettingsFileSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        try {
+            const json = JSON.parse(e.target.result);
+
+            // Простая проверка валидности
+            if (!json._meta || json._meta.type !== 'ecrous_settings') {
+                if(!confirm('Этот файл не похож на файл настроек Ecrous. Всё равно продолжить?')) {
+                    input.value = ''; // Сброс
+                    return;
+                }
+            }
+
+            // Применяем настройки
+            let importedCount = 0;
+            SETTINGS_KEYS.forEach(key => {
+                if (json[key] !== undefined) {
+                    const valToSave = typeof json[key] === 'object' ? JSON.stringify(json[key]) : json[key];
+                    localStorage.setItem(key, valToSave);
+                    importedCount++;
+                }
+            });
+
+            input.value = ''; // Сброс инпута
+
+            if (confirm(`Успешно импортировано настроек: ${importedCount}. Перезагрузить страницу для применения?`)) {
+                window.location.reload();
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert('Ошибка чтения файла. Убедитесь, что это корректный .json');
+        }
+    };
+    reader.readAsText(file);
+}
+
+// --- СБРОС ---
+function resetEditorSettings() {
+    if (confirm('Вы уверены? Это сбросит горячие клавиши, автосохранение и тему к значениям по умолчанию.')) {
+        
+        // Удаляем только ключи настроек
+        SETTINGS_KEYS.forEach(key => {
+            localStorage.removeItem(key);
+        });
+
+        if (typeof showNotification === 'function') showNotification('Настройки сброшены');
+        
+        // Перезагрузка для применения дефолтных значений (которые прописаны в коде как const DEFAULT_...)
+        setTimeout(() => window.location.reload(), 500);
+    }
+}

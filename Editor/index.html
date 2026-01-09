@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <title>Ecrous Engine | Editor</title>
@@ -34,6 +35,7 @@
     <link rel="stylesheet" href="styles/Core/scrollbars.css">
     <link rel="stylesheet" href="styles/Core/ui.css">
     <link rel="stylesheet" href="styles/Core/paint.css">
+    <link rel="stylesheet" href="styles/Core/formula-editor.css">
 
     <!-- Settings -->
     <link rel="stylesheet" href="styles/settings.css">
@@ -43,6 +45,7 @@
 
     <link rel="icon" type="image/png" href="../public/vite.jpg">
 </head>
+
 <body class="theme-dark">
     <header>
         <div class="header-left">
@@ -62,40 +65,57 @@
                 <div class="menu-item" id="menuFile">
                     Файл <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
-                        <div class="menu-entry" id="btnSave"><i class="ri-save-3-line"></i> Сохранить проект <span>Ctrl+S</span>
+                        <div class="menu-entry" id="btnSave"><i class="ri-save-3-line"></i> Сохранить проект
+                            <span>Ctrl+S</span>
                         </div>
                         <div class="menu-separator"></div>
                         <div class="menu-entry" id="btnProjectSettings"><i class="ri-settings-3-line"></i> Настройки...
-                            <span>Ctrl+Shift+P</span></div>
-                        <div class="menu-entry" id="btnExport"><i class="ri-archive-line"></i> Экспорт <span>Shift+E</span></div>
+                            <span>Ctrl+Shift+P</span>
+                        </div>
+                        <div class="menu-entry" id="btnExport"><i class="ri-archive-line"></i> Экспорт
+                            <span>Shift+E</span>
+                        </div>
                     </div>
                 </div>
-            
+
                 <div class="menu-item" id="menuEdit">
                     Правка <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
-                        <div class="menu-entry" id="btnUndo"><i class="ri-arrow-go-back-line"></i> Отменить <span>Ctrl+Z</span>
+                        <div class="menu-entry" id="btnUndo"><i class="ri-arrow-go-back-line"></i> Отменить
+                            <span>Ctrl+Z</span>
                         </div>
-                        <div class="menu-entry" id="btnRedo"><i class="ri-arrow-go-forward-line"></i> Повторить <span>Ctrl+Y</span>
+                        <div class="menu-entry" id="btnRedo"><i class="ri-arrow-go-forward-line"></i> Повторить
+                            <span>Ctrl+Y</span>
                         </div>
                         <div class="menu-separator"></div>
-                        <div class="menu-entry" id="btnCut"><i class="ri-scissors-cut-line"></i> Вырезать <span>Ctrl+X</span></div>
-                        <div class="menu-entry" id="btnCopy"><i class="ri-file-copy-line"></i> Копировать <span>Ctrl+C</span></div>
-                        <div class="menu-entry" id="btnPaste"><i class="ri-clipboard-line"></i> Вставить <span>Ctrl+V</span></div>
+                        <div class="menu-entry" id="btnCut"><i class="ri-scissors-cut-line"></i> Вырезать
+                            <span>Ctrl+X</span>
+                        </div>
+                        <div class="menu-entry" id="btnCopy"><i class="ri-file-copy-line"></i> Копировать
+                            <span>Ctrl+C</span>
+                        </div>
+                        <div class="menu-entry" id="btnPaste"><i class="ri-clipboard-line"></i> Вставить
+                            <span>Ctrl+V</span>
+                        </div>
                         <div class="menu-separator"></div>
                         <div class="menu-entry" id="btnDuplicate"><i class="ri-file-copy-2-line"></i> Дублировать
-                            <span>Ctrl+D</span></div>
-                        <div class="menu-entry" id="btnDelete"><i class="ri-delete-bin-line"></i> Удалить <span>Del</span></div>
+                            <span>Ctrl+D</span>
+                        </div>
+                        <div class="menu-entry" id="btnDelete"><i class="ri-delete-bin-line"></i> Удалить
+                            <span>Del</span>
+                        </div>
                         <div class="menu-entry" id="btnSelectAll"><i class="ri-checkbox-multiple-line"></i> Выделить всё
-                            <span>Ctrl+A</span></div>
+                            <span>Ctrl+A</span>
+                        </div>
                     </div>
                 </div>
-            
+
                 <div class="menu-item" id="menuObjects">
                     Объекты <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
                         <div class="menu-entry" id="btnObjCreate"><i class="ri-add-box-line"></i> Создать объект</div>
-                        <div class="menu-entry" id="btnObjEmpty"><i class="ri-checkbox-blank-circle-line"></i> Пустой объект</div>
+                        <div class="menu-entry" id="btnObjEmpty"><i class="ri-checkbox-blank-circle-line"></i> Пустой
+                            объект</div>
                         <div class="menu-separator"></div>
                         <div class="menu-entry" id="btnObjCamera"><i class="ri-camera-fill"></i> Камера</div>
                         <div class="menu-entry" id="btnObjLight"><i class="ri-lightbulb-flash-line"></i> Свет</div>
@@ -103,7 +123,7 @@
                         <div class="menu-entry" id="btnObjPrefab"><i class="ri-shape-2-line"></i> Префабы...</div>
                     </div>
                 </div>
-            
+
                 <!-- <div class="menu-item" id="menuAssets">
                     Ассеты <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
@@ -115,19 +135,25 @@
                         </div>
                     </div>
                 </div> -->
-            
+
                 <div class="menu-item" id="menuRun">
                     Запуск <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
-                        <div class="menu-entry" id="btnRunMenu"><i class="ri-play-fill"></i> Запустить <span>F5</span></div>
-                        <div class="menu-entry" id="btnPauseMenu"><i class="ri-pause-line"></i> Пауза <span>F8</span></div>
-                        <div class="menu-entry" id="btnStopMenu"><i class="ri-stop-fill"></i> Остановить <span>Esc</span></div>
+                        <div class="menu-entry" id="btnRunMenu"><i class="ri-play-fill"></i> Запустить <span>F5</span>
+                        </div>
+                        <div class="menu-entry" id="btnPauseMenu"><i class="ri-pause-line"></i> Пауза <span>F8</span>
+                        </div>
+                        <div class="menu-entry" id="btnStopMenu"><i class="ri-stop-fill"></i> Остановить
+                            <span>Esc</span>
+                        </div>
                         <div class="menu-separator"></div>
                         <div class="menu-entry" id="btnRunWindow"><i class="ri-window-line"></i> Запуск в окне</div>
-                        <div class="menu-entry" id="btnRunFull"><i class="ri-fullscreen-line"></i> Полноэкранный режим <span>F11</span></div>
+                        <div class="menu-entry" id="btnRunFull"><i class="ri-fullscreen-line"></i> Полноэкранный режим
+                            <span>F11</span>
+                        </div>
                     </div>
                 </div>
-            
+
                 <!-- <div class="menu-item" id="menuTools">
                     Инструменты <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
@@ -139,28 +165,65 @@
                         <div class="menu-entry" id="btnToolExt"><i class="ri-puzzle-line"></i> Расширения</div>
                     </div>
                 </div> -->
-            
+
                 <div class="menu-item" id="menuWindow">
                     Окна <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
-                        <div class="menu-entry" id="winToggleHierarchy"><i class="ri-list-check"></i> Иерархия (Сцены)</div>
-                        <div class="menu-entry" id="winToggleInspector"><i class="ri-settings-4-line"></i> Инспектор</div>
-                        <div class="menu-entry" id="winToggleScene"><i class="ri-drag-move-line"></i> Сцена (Canvas)</div>
+                        <div class="menu-entry" id="winToggleHierarchy"><i class="ri-list-check"></i> Иерархия (Сцены)
+                        </div>
+                        <div class="menu-entry" id="winToggleInspector"><i class="ri-settings-4-line"></i> Инспектор
+                        </div>
+                        <div class="menu-entry" id="winToggleScene"><i class="ri-drag-move-line"></i> Сцена (Canvas)
+                        </div>
                         <div class="menu-entry" id="winToggleToolbox"><i class="ri-function-line"></i> Инструменты</div>
                         <div class="menu-separator"></div>
-                        <div class="menu-entry" id="winResetLayout"><i class="ri-layout-grid-fill"></i> Сброс интерфейса</div>
+                        <div class="menu-entry" id="winResetLayout"><i class="ri-layout-grid-fill"></i> Сброс интерфейса
+                        </div>
                     </div>
                 </div>
-            
+
                 <div class="menu-item" id="menuHelp">
                     Помощь <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
                         <div class="menu-entry" id="hlpDocs"><i class="ri-book-open-line"></i> Документация</div>
-                        <div class="menu-entry" id="hlpShortcuts"><i class="ri-keyboard-box-line"></i> Горячие клавиши</div>
                         <div class="menu-separator"></div>
-                        <div class="menu-entry" id="hlpCommunity"><i class="ri-telegram-line"></i> Сообщество / Telegram</div>
+                        <div class="menu-entry" id="hlpCommunity"><i class="ri-telegram-line"></i> Сообщество / Telegram
+                        </div>
                         <div class="menu-entry" id="hlpAbout"><i class="ri-information-line"></i> О движке</div>
-                        <div class="menu-entry" style="font-size: 10px; opacity: 0.5;">Версия: ECX 2025.05.01-bf3</div>
+                        <div class="menu-entry" style="font-size: 10px; opacity: 0.5;">Версия: ECX 2025.09.01</div>
+                    </div>
+                </div>
+
+                <div class="menu-item" id="menuEditorOptions">
+                    Настройки <i class="ri-arrow-down-s-line"></i>
+                    <div class="menu-dropdown">
+                        <div class="menu-entry" id="btnEditorOptions" onclick="openEditorOptions()">
+                            <i class="ri-settings-5-fill"></i> Настройки редактора
+                        </div>
+                        <div class="menu-entry" id="btnOpenHotkeys" onclick="openHotkeysModal()">
+                            <i class="ri-keyboard-line"></i> Горячие клавиши
+                        </div>
+
+                        <div class="menu-separator"></div>
+
+                        <div class="menu-entry" id="btnOpenAutosave" onclick="openAutosaveModal()">
+                            <i class="ri-save-3-line"></i> Автосохранение
+                        </div>
+
+                        <div class="menu-separator"></div>
+
+                        <div class="menu-entry" id="btnImportSettings" onclick="importEditorSettings()">
+                            <i class="ri-upload-2-line"></i> Импорт настроек
+                        </div>
+                        <div class="menu-entry" id="btnExportSettings" onclick="exportEditorSettings()">
+                            <i class="ri-download-2-line"></i> Экспорт настроек
+                        </div>
+                        <div class="menu-entry" id="btnResetSettings" onclick="resetEditorSettings()">
+                            <i class="ri-refresh-line"></i> Сбросить настройки
+                        </div>
+                        
+                        <input type="file" id="settingsFileInput" accept=".json" style="display: none;"
+                            onchange="handleSettingsFileSelect(this)">
                     </div>
                 </div>
             </div>
@@ -170,7 +233,8 @@
             <!-- <button class="icon-btn" onclick="openScreenshotModal()" title="Сделать красивый скриншот">
                 <i class="ri-camera-3-line"></i> Beta
             </button> -->
-            <button id="btnToggleToolbox" class="icon-btn" title="Скрыть/Показать инструменты" style="margin-right: 10px;">
+            <button id="btnToggleToolbox" class="icon-btn" title="Скрыть/Показать инструменты"
+                style="margin-right: 10px;">
                 <i class="ri-layout-right-line"></i>
             </button>
             <button id="btnRun" class="play-btn">
@@ -190,9 +254,9 @@
                 </div>
             </div>
             <div class="list-container" id="sceneList"></div>
-            
+
             <div class="divider"></div>
-            
+
             <div class="section-title">
                 <span><i class="ri-box-3-line"></i> ОБЪЕКТЫ</span>
                 <div style="display:flex; gap:5px;">
@@ -207,16 +271,18 @@
             </div>
 
             <div class="divider"></div>
-            
+
             <div class="section-title">
                 <span><i class="ri-folder-image-line"></i> АССЕТЫ</span>
                 <div style="display:flex; gap:10px;">
-                    <i class="ri-brush-line action-icon" onclick="openPaintModal()" title="Нарисовать спрайт (Ecrous Paint)"></i> <i
-                        class="ri-folder-add-line action-icon" onclick="createAssetFolder()" title="Создать папку"></i>
+                    <i class="ri-brush-line action-icon" onclick="openPaintModal()"
+                        title="Нарисовать спрайт (Ecrous Paint)"></i> <i class="ri-folder-add-line action-icon"
+                        onclick="createAssetFolder()" title="Создать папку"></i>
                     <i class="ri-upload-2-line action-icon" onclick="document.getElementById('assetFileInput').click()"
                         title="Загрузить файл"></i>
                 </div>
-                <input type="file" id="assetFileInput" style="display: none;" multiple accept="image/*,audio/*,.ttf,.otf,.woff">
+                <input type="file" id="assetFileInput" style="display: none;" multiple
+                    accept="image/*,audio/*,.ttf,.otf,.woff">
             </div>
             <div class="list-container" id="assetList">
                 <div style="padding:10px; color:#666; font-size:11px; text-align:center;">Нет файлов</div>
@@ -240,14 +306,15 @@
             <div id="canvas-container">
                 <svg id="connections-layer"></svg>
             </div>
-        
+
             <div class="canvas-controls">
                 <div class="mode-switch hint-text" style="padding: 4px; display:flex; gap:5px; pointer-events:auto;">
                     <button id="btnModeStack" class="mode-btn active" title="Режим списков (Stack)"><i
                             class="ri-list-check-2"></i></button>
-                    <button id="btnModeNodes" class="mode-btn" title="Режим узлов (Nodes)"><i class="ri-node-tree"></i></button>
+                    <button id="btnModeNodes" class="mode-btn" title="Режим узлов (Nodes)"><i
+                            class="ri-node-tree"></i></button>
                 </div>
-        
+
                 <div class="hint-text"><i class="ri-mouse-line"></i> ПКМ: Меню | Колесо: Двигать</div>
                 <button class="zoom-btn" id="resetView" title="Сброс камеры"><i class="ri-focus-3-line"></i></button>
             </div>
@@ -255,7 +322,7 @@
 
         <div class="toolbox">
             <div class="resizer resizer-left" id="toolboxResizer"></div>
-        
+
             <div class="panel-header">
                 <i class="ri-tools-line"></i><i class="ri-tool-line"></i> Инструменты
             </div>
@@ -331,16 +398,16 @@
                     <div class="card-icon ios-icon">
                         <i class="ri-apple-fill"></i>
                     </div>
-                
+
                     <div class="card-info">
                         <div class="card-title">iOS (PWA)</div>
                         <div class="card-desc">Web-сборка для запуска на iPhone / iPad.</div>
                     </div>
-                
+
                     <div class="card-action">
                         <i class="ri-download-line"></i>
                     </div>
-                
+
                     <div class="card-badge">PWA</div>
                 </button>
                 <button class="export-card" id="exportEcr" style="--delay: 0.5s">
@@ -395,7 +462,7 @@
             </div>
         </div>
     </div>
-    
+
     <div id="modal-tpl-import" class="modal-overlay hidden">
         <div class="modal-window" style="width: 400px;">
             <div class="modal-title">
@@ -450,10 +517,10 @@
             </div>
             <div class="modal-message">
                 <p style="margin-bottom: 10px;">Выберите, какие шаблоны включить в файл:</p>
-    
+
                 <div class="tpl-list-container" id="tpl-export-list">
                 </div>
-    
+
                 <div onclick="toggleAllTemplates()"
                     style="font-size:12px; color:var(--accent); cursor:pointer; margin-top:8px; display:inline-block;">
                     Выбрать / Снять все
@@ -473,7 +540,7 @@
             </div>
             <div class="modal-message">
                 <p>Добавлено новых шаблонов: <b id="import-count-val" style="color:var(--text)">0</b></p>
-    
+
                 <div class="imported-list-container" id="imported-tpl-names">
                 </div>
             </div>
@@ -484,8 +551,9 @@
     </div>
 
     <div id="modal-screenshot" class="modal-overlay hidden">
-        <div class="modal-window" style="width: 900px; max-width: 95vw; height: 85vh; display:flex; flex-direction:column;">
-    
+        <div class="modal-window"
+            style="width: 900px; max-width: 95vw; height: 85vh; display:flex; flex-direction:column;">
+
             <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
                 <div class="modal-title">
                     <i class="ri-camera-lens-line" style="color:var(--accent)"></i> Снимок кода
@@ -494,15 +562,15 @@
                     <i class="ri-close-line"></i>
                 </button>
             </div>
-    
+
             <div class="screenshot-preview-container"
                 style="flex:1; overflow:auto; background:#111; border-radius:8px; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; padding:20px; position: relative;">
-    
+
                 <div id="screenshot-capture-area" class="screenshot-card" style="position: relative;">
-    
+
                     <div id="crop-overlay"></div>
                     <div id="crop-selection-box"></div>
-    
+
                     <div class="screenshot-bg" id="shot-bg">
                         <div class="screenshot-inner-window">
                             <div class="window-controls">
@@ -511,7 +579,7 @@
                                 <span style="background:#27c93f"></span>
                             </div>
                             <div class="window-title">Ecrous Script</div>
-    
+
                             <div id="shot-nodes-container" style="position: relative;">
                                 <svg id="shot-connections-layer"
                                     style="position: absolute; top:0; left:0; width:100%; height:100%; z-index: 0; pointer-events: none;"></svg>
@@ -519,11 +587,11 @@
                         </div>
                     </div>
                 </div>
-    
+
             </div>
-    
+
             <div class="screenshot-controls" style="margin-top:20px; display:flex; gap:15px; align-items:center;">
-    
+
                 <div style="display:flex; gap:5px;">
                     <div class="color-dot" onclick="setShotBg('linear-gradient(135deg, #f093fb 0%, #f5576c 100%)')"
                         style="background:linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" title="Sunset"></div>
@@ -537,14 +605,14 @@
                     </div>
                     <div class="color-dot" onclick="setShotBg('#1e1e1e')" style="background:#1e1e1e" title="Dark"></div>
                 </div>
-    
+
                 <div style="flex:1"></div>
-    
+
                 <button id="btn-toggle-crop" class="modal-btn secondary" onclick="toggleCropMode()"
                     title="Выделить область мышкой">
                     <i class="ri-crop-line"></i> Обрезать
                 </button>
-    
+
                 <button class="modal-btn secondary" onclick="closeScreenshotModal()">Отмена</button>
                 <button class="modal-btn primary" onclick="downloadScreenshot()">
                     <i class="ri-download-2-line"></i> Скачать PNG
@@ -554,7 +622,7 @@
     </div>
 
     <div id="block-tooltip" class="tooltip hidden"></div>
-    
+
     <input type="file" id="templateFileInput" accept=".json" style="display: none;">
 
     <div id="mobile-nav">
@@ -577,19 +645,19 @@
             <div class="modal-title">
                 <i class="ri-settings-4-fill" style="color:var(--accent)"></i> Настройки проекта
             </div>
-    
+
             <div class="modal-message" style="text-align: left; margin-top: 15px;">
-    
+
                 <div class="setting-group">
                     <label>Название игры</label>
                     <input type="text" id="set-proj-name" class="modal-input" placeholder="My Awesome Game">
                 </div>
-    
+
                 <div class="setting-group">
                     <label>Автор / Студия</label>
                     <input type="text" id="set-proj-author" class="modal-input" placeholder="Indie Dev">
                 </div>
-    
+
                 <div class="setting-group">
                     <label>Стадия разработки</label>
                     <div class="select-wrapper">
@@ -605,13 +673,13 @@
                         <i class="ri-arrow-down-s-line"></i>
                     </div>
                 </div>
-    
+
                 <div class="setting-group">
                     <label>Иконка (Favicon & Mobile)</label>
                     <div style="display: flex; align-items: center; gap: 15px;">
                         <img id="set-proj-icon-preview" src=""
                             style="width: 64px; height: 64px; border-radius: 12px; object-fit: cover; background: #222; border: 1px solid var(--border); box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-    
+
                         <div style="display: flex; flex-direction: column; gap: 5px;">
                             <input type="file" id="set-proj-icon-input" accept="image/png, image/jpeg, image/jpg"
                                 style="display: none;">
@@ -623,7 +691,7 @@
                         </div>
                     </div>
                 </div>
-    
+
                 <div class="setting-group">
                     <label>Ориентация экрана:</label>
                     <select id="set-proj-orientation" class="ui-input">
@@ -632,17 +700,17 @@
                         <option value="any">Автоматически (Any)</option>
                     </select>
                 </div>
-                
+
                 <div class="setting-group">
                     <label>Пакет приложения (ID):</label>
                     <input type="text" id="set-proj-package" class="ui-input" placeholder="com.company.game">
                 </div>
-                
+
                 <div class="input-group checkbox-group">
                     <input type="checkbox" id="set-disable-splash">
                     <label for="set-disable-splash">Отключить Splash Screen (Заставку)</label>
                 </div>
-    
+
                 <div class="setting-group">
                     <label>Стартовая сцена</label>
                     <div class="select-wrapper">
@@ -650,14 +718,14 @@
                         <i class="ri-arrow-down-s-line"></i>
                     </div>
                 </div>
-    
+
                 <div class="setting-group">
                     <label>Версия</label>
                     <input type="text" id="set-proj-version" class="modal-input" value="1.0" style="width: 100px;">
                 </div>
-    
+
             </div>
-    
+
             <div class="modal-buttons">
                 <button class="modal-btn secondary" onclick="closeProjectSettings()">Отмена</button>
                 <button class="modal-btn primary" id="btn-save-settings">Применить</button>
@@ -679,14 +747,14 @@
             </div>
         </div>
     </div>
-    
+
     <style>
         .modal-btn.danger {
             background: #ff4757;
             color: white;
             border: none;
         }
-    
+
         .modal-btn.danger:hover {
             background: #ff6b81;
         }
@@ -710,11 +778,12 @@
 
     <div id="modal-paint" class="modal-overlay hidden" style="background: var(--bg);">
         <div class="paint-full-window">
-    
+
             <div class="paint-header">
                 <div class="paint-brand"><i class="ri-brush-fill"></i> Ecrous Art</div>
-    
-                <button class="icon-btn" onclick="openNewSpriteModal()" title="Новый холст"><i class="ri-file-add-line"></i></button>
+
+                <button class="icon-btn" onclick="openNewSpriteModal()" title="Новый холст"><i
+                        class="ri-file-add-line"></i></button>
 
                 <div class="divider-vertical"></div>
 
@@ -724,16 +793,17 @@
                     <div class="divider-vertical"></div>
                     <label>Сетка: <input type="checkbox" id="chk-grid" checked onchange="toggleGrid()"></label>
                 </div>
-    
+
                 <div class="paint-actions">
                     <input type="text" id="paint-filename" class="paint-name-input" placeholder="Sprite Name">
                     <button class="modal-btn primary" onclick="savePaintSprite()">Сохранить</button>
-                    <button class="icon-btn close-btn" onclick="closePaintModal()"><i class="ri-close-line"></i></button>
+                    <button class="icon-btn close-btn" onclick="closePaintModal()"><i
+                            class="ri-close-line"></i></button>
                 </div>
             </div>
-    
+
             <div class="paint-main-area">
-    
+
                 <div class="paint-sidebar-left">
                     <div class="tool-btn active" id="t-pencil" onclick="setPaintTool('pencil')" title="Карандаш (P)"><i
                             class="ri-pencil-fill"></i></div>
@@ -747,29 +817,30 @@
                             class="ri-subtract-line"></i></div>
                     <div class="tool-btn" id="t-rect" onclick="setPaintTool('rect')" title="Квадрат (R)"><i
                             class="ri-shape-line"></i></div>
-    
+
                     <div class="divider-horizontal"></div>
-                    
-                    <div class="tool-settings" style="display:flex; flex-direction:column; gap:5px; align-items:center;">
-                        <button class="tool-btn active" id="mode-pixel" onclick="setBrushMode('pixel')" title="Пиксельный режим"
-                            style="font-size:12px;">Pix</button>
+
+                    <div class="tool-settings"
+                        style="display:flex; flex-direction:column; gap:5px; align-items:center;">
+                        <button class="tool-btn active" id="mode-pixel" onclick="setBrushMode('pixel')"
+                            title="Пиксельный режим" style="font-size:12px;">Pix</button>
                         <button class="tool-btn" id="mode-smooth" onclick="setBrushMode('smooth')" title="Гладкая кисть"
                             style="font-size:12px;">Smt</button>
                     </div>
-                    
+
                     <div class="divider-horizontal"></div>
-    
+
                     <div class="tool-btn" onclick="importImageToLayer()" title="Импорт фото"><i
                             class="ri-image-add-line"></i></div>
                     <input type="file" id="paint-file-import" style="display:none" accept="image/*">
                 </div>
-    
+
                 <div class="paint-viewport" id="paintViewport">
                     <div class="canvas-stack" id="canvasStack">
                         <div id="paint-grid-overlay"></div>
                     </div>
                 </div>
-    
+
                 <div class="paint-sidebar-right">
                     <div class="paint-panel-section">
                         <div class="section-head">Инструмент</div>
@@ -793,7 +864,7 @@
                             </select>
                         </div>
                     </div>
-    
+
                     <div class="paint-panel-section" style="flex:1; display:flex; flex-direction:column;">
                         <div class="section-head">
                             <span>Слои</span>
@@ -803,7 +874,7 @@
                         </div>
                     </div>
                 </div>
-    
+
             </div>
         </div>
     </div>
@@ -813,16 +884,16 @@
             <div class="modal-title">
                 <i class="ri-image-add-line" style="color:var(--accent)"></i> Новый спрайт
             </div>
-    
+
             <div class="modal-message">
                 <p style="margin-bottom:15px">Выберите размер холста:</p>
-    
+
                 <div class="size-presets">
                     <button class="preset-btn" onclick="setPresetSize(16, 16)">16x16</button>
                     <button class="preset-btn active" onclick="setPresetSize(32, 32)">32x32</button>
                     <button class="preset-btn" onclick="setPresetSize(64, 64)">64x64</button>
                 </div>
-    
+
                 <div class="size-inputs-row">
                     <div class="input-group-small">
                         <label>Ширина</label>
@@ -835,7 +906,7 @@
                     </div>
                 </div>
             </div>
-    
+
             <div class="modal-buttons">
                 <button class="modal-btn secondary" onclick="closeNewSpriteModal()">Отмена</button>
                 <button class="modal-btn primary" onclick="confirmNewSprite()">Создать</button>
@@ -856,13 +927,148 @@
                     <i class="ri-close-line"></i>
                 </button>
             </div>
-    
+
             <div class="bs-nav-header hidden" id="bs-nav-header">
                 <button onclick="showCategories()"><i class="ri-arrow-left-s-line"></i> Назад</button>
                 <span id="bs-current-category">Категория</span>
             </div>
-    
+
             <div class="bs-content" id="bs-content-area">
+            </div>
+        </div>
+    </div>
+
+    <div id="formula-editor-overlay" class="modal-overlay hidden" style="z-index: 20000; background: #0b181e;">
+        <div class="formula-window">
+            <div class="formula-header">
+                <i class="ri-arrow-left-line" onclick="FormulaEditor.close()"></i>
+                <span>Редактор формул</span>
+                <div style="display:flex; gap:15px;">
+                    <i class="ri-arrow-go-back-line" title="Отменить"></i>
+                    <i class="ri-arrow-go-forward-line" title="Повторить"></i>
+                </div>
+            </div>
+
+            <div class="formula-preview-bar">
+                <div class="formula-label">Значение:</div>
+                <input type="text" id="formula-display-input" class="formula-main-input" autocomplete="off" autofocus>
+            </div>
+
+            <div class="formula-keyboard">
+
+                <div class="fk-row tabs">
+                    <button class="fk-btn tab" onclick="FormulaEditor.switchTab('funcs')">Функции</button>
+                    <button class="fk-btn tab" onclick="FormulaEditor.switchTab('props')">Свойства</button>
+                </div>
+
+                <div class="fk-row categories">
+                    <button class="fk-btn cat" onclick="FormulaEditor.showCategory('device')">Устройство</button>
+                    <button class="fk-btn cat" onclick="FormulaEditor.showCategory('logic')">Логические</button>
+                    <button class="fk-btn cat" onclick="FormulaEditor.showCategory('data')">Данные</button>
+                </div>
+
+                <div class="fk-grid" id="fk-main-grid">
+                    <button class="fk-btn icon" onclick="FormulaEditor.toggleKeyboard()"><i
+                            class="ri-arrow-down-s-line"></i></button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('7')">7</button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('8')">8</button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('9')">9</button>
+                    <button class="fk-btn action" onclick="FormulaEditor.backspace()"><i
+                            class="ri-delete-back-2-line"></i></button>
+
+                    <button class="fk-btn text" onclick="FormulaEditor.insertTextMode()">Абв</button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('4')">4</button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('5')">5</button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('6')">6</button>
+                    <button class="fk-btn op" onclick="FormulaEditor.insert(' / ')">÷</button>
+                    <button class="fk-btn op" onclick="FormulaEditor.insert(' * ')">×</button>
+
+                    <button class="fk-btn color-picker-btn" onclick="FormulaEditor.openColor()">
+                        <div class="rainbow-circle"></div>
+                    </button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('1')">1</button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('2')">2</button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('3')">3</button>
+                    <button class="fk-btn op" onclick="FormulaEditor.insert(' - ')">-</button>
+                    <button class="fk-btn op" onclick="FormulaEditor.insert(' + ')">+</button>
+
+                    <button class="fk-btn" onclick="FormulaEditor.insert('(')">(</button>
+                    <button class="fk-btn" onclick="FormulaEditor.insert(')')">)</button>
+                    <button class="fk-btn num" onclick="FormulaEditor.insert('0')">0</button>
+                    <button class="fk-btn" onclick="FormulaEditor.insert('.')">.</button>
+                    <button class="fk-btn done" onclick="FormulaEditor.apply()">Готово</button>
+                </div>
+
+                <div class="fk-scroll-panel hidden" id="fk-funcs-panel">
+                    <button class="fk-list-item" onclick="FormulaEditor.insert('sin( ')">sin()</button>
+                    <button class="fk-list-item" onclick="FormulaEditor.insert('cos( ')">cos()</button>
+                    <button class="fk-list-item" onclick="FormulaEditor.insert('tan( ')">tan()</button>
+                    <button class="fk-list-item" onclick="FormulaEditor.insert('sqrt( ')">sqrt()</button>
+                    <button class="fk-list-item" onclick="FormulaEditor.insert('abs( ')">abs()</button>
+                    <button class="fk-list-item" onclick="FormulaEditor.insert('round( ')">round()</button>
+                    <button class="fk-list-item" onclick="FormulaEditor.insert('random(1, 10)')">random</button>
+                    <button class="fk-list-item close-panel" onclick="FormulaEditor.closeSubPanel()"><i
+                            class="ri-close-line"></i></button>
+                </div>
+
+                <div class="fk-scroll-panel hidden" id="fk-vars-panel">
+                    <div id="fk-vars-list" style="display:contents"></div>
+                    <button class="fk-list-item close-panel" onclick="FormulaEditor.closeSubPanel()"><i
+                            class="ri-close-line"></i></button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-hotkeys-settings" class="modal-overlay">
+        <div class="modal-window" style="width: 500px; max-height: 80vh; display: flex; flex-direction: column;">
+            <div class="modal-title">
+                <i class="ri-keyboard-line" style="color:var(--accent)"></i> Горячие клавиши
+            </div>
+    
+            <div class="modal-message" style="flex: 1; overflow-y: auto; padding-right: 5px;">
+                <p style="margin-bottom: 15px; font-size: 12px;">Нажмите на кнопку с сочетанием, чтобы изменить его.</p>
+    
+                <div id="hotkeys-list-container" style="display: flex; flex-direction: column; gap: 8px;">
+                </div>
+            </div>
+    
+            <div class="modal-buttons" style="margin-top: 15px; border-top: 1px solid var(--border); padding-top: 15px;">
+                <button class="modal-btn secondary" onclick="resetDefaultHotkeys()">Сбросить</button>
+                <div style="flex:1"></div>
+                <button class="modal-btn secondary" onclick="closeHotkeysModal()">Отмена</button>
+                <button class="modal-btn primary" onclick="saveHotkeysSettings()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-autosave-settings" class="modal-overlay">
+        <div class="modal-window" style="width: 380px;">
+            <div class="modal-title">
+                <i class="ri-save-3-line" style="color:var(--accent)"></i> Автосохранение
+            </div>
+
+            <div class="modal-message">
+                <p style="margin-bottom: 15px;">Настройте частоту автоматического сохранения проекта.</p>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                    <label for="as-enable-check" style="cursor: pointer;">Включить автосохранение</label>
+                    <input type="checkbox" id="as-enable-check" style="transform: scale(1.2); cursor: pointer;" checked>
+                </div>
+
+                <div class="input-group">
+                    <label
+                        style="display: block; margin-bottom: 5px; font-size: 12px; color: var(--text-soft);">Интервал
+                        (секунды):</label>
+                    <input type="number" id="as-interval-input" class="modal-input" value="30" min="5" max="3600"
+                        style="width: 100%;">
+                </div>
+            </div>
+
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" onclick="closeAutosaveModal()">Отмена</button>
+                <button class="modal-btn primary" onclick="applyAutosaveSettings()">Применить</button>
             </div>
         </div>
     </div>
@@ -880,6 +1086,7 @@
     <script src="src/core/helps.js"></script>
     <script src="src/core/bar.js"></script>
     <script src="src/core/paint.js"></script>
+    <script src="src/core/formula-editor.js"></script>
     <script src="src/core/mobile.js"></script>
 
     <!-- Editor Scripts -->
@@ -912,4 +1119,5 @@
     <script src="../src/scripts/Menu/Settings.js"></script>
 
 </body>
+
 </html>

@@ -1,0 +1,410 @@
+/* === FORMULA EDITOR (THEMED) === */
+
+.formula-window {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg); /* Основной фон темы */
+    color: var(--text);
+    font-family: var(--font-main);
+}
+
+/* --- ШАПКА --- */
+.formula-header {
+    height: 56px;
+    background-color: var(--bg-elevated);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 16px;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
+    z-index: 10;
+}
+
+.formula-header i {
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-soft);
+    transition: color 0.2s;
+    padding: 8px;
+    border-radius: 50%;
+}
+
+.formula-header i:hover {
+    color: var(--accent);
+    background: var(--bg-elevated-soft);
+}
+
+/* --- ОБЛАСТЬ ПРЕДПРОСМОТРА И ВВОДА --- */
+.formula-preview-bar {
+    background-color: var(--bg-elevated-soft);
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.formula-label {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent); /* Цвет акцента вместо красного */
+}
+
+.formula-main-input {
+    width: 100%;
+    background: var(--code-bg); /* Фон для кода */
+    border: 1px solid var(--border);
+    padding: 12px 16px;
+    font-size: 20px;
+    color: var(--text);
+    border-radius: var(--radius-lg);
+    font-family: 'Courier New', monospace; /* Моноширинный шрифт */
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.formula-main-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* --- КЛАВИАТУРА --- */
+.formula-keyboard {
+    margin-top: auto;
+    background-color: var(--bg-elevated);
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--border);
+    position: relative;
+    padding-bottom: env(safe-area-inset-bottom); /* Для iPhone */
+}
+
+/* Вкладки и Категории */
+.fk-row {
+    display: flex;
+    width: 100%;
+}
+
+.fk-btn {
+    border: none;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s;
+    position: relative;
+}
+
+.fk-btn:active {
+    background: var(--bg-elevated-soft);
+    transform: scale(0.95);
+}
+
+/* Стилизация табов */
+.fk-row.tabs {
+    height: 48px;
+    background: var(--bg);
+}
+.fk-btn.tab {
+    flex: 1;
+    background: transparent;
+    font-size: 14px;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    border-bottom: 2px solid transparent;
+}
+.fk-btn.tab:hover {
+    color: var(--text);
+}
+/* Тут можно добавить класс active через JS, но пока просто стиль */
+
+/* Категории */
+.fk-row.categories {
+    height: 40px;
+}
+.fk-btn.cat {
+    flex: 1;
+    background: var(--bg-elevated-soft);
+    font-size: 12px;
+    color: var(--text-soft);
+}
+
+/* --- ОСНОВНАЯ СЕТКА КНОПОК --- */
+.fk-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 60px; /* Чуть выше кнопки, удобнее нажимать */
+    background: var(--border); /* Цвет линий между кнопками */
+    gap: 1px; /* Тонкие линии */
+    padding: 1px 0 0 0;
+}
+
+/* Обычные кнопки (цифры) */
+.fk-btn.num {
+    background: var(--bg-elevated);
+    font-size: 22px;
+    font-weight: 400;
+}
+
+/* Операторы (+ - / *) */
+.fk-btn.op {
+    background: var(--bg-elevated-soft);
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+/* Кнопка действия (стереть) */
+.fk-btn.action {
+    background: var(--bg-elevated-soft);
+    color: var(--danger);
+}
+
+/* Кнопка Готово */
+.fk-btn.done {
+    background: var(--accent);
+    color: #fff; /* Всегда белый на акценте */
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.fk-btn.done:active {
+    opacity: 0.8;
+}
+
+/* Кнопка с цветом */
+.fk-btn.color-picker-btn {
+    background: var(--bg-elevated);
+}
+.rainbow-circle {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+    border: 2px solid var(--bg);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* --- ВЫПЛЫВАЮЩИЕ ПАНЕЛИ (ФУНКЦИИ / ПЕРЕМЕННЫЕ) --- */
+.fk-scroll-panel {
+    position: absolute;
+    top: 88px; /* Высота Tabs + Categories */
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--bg); /* Фон панели */
+    z-index: 20;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 50px;
+    gap: 8px;
+    overflow-y: auto;
+    padding: 10px;
+    
+    /* Анимация появления */
+    transition: opacity 0.2s, transform 0.2s;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.fk-scroll-panel.hidden {
+    display: none;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+.fk-list-item {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text);
+    font-family: 'Courier New', monospace;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fk-list-item:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--bg-elevated-soft);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
+}
+
+.fk-list-item.close-panel {
+    background: var(--bg-elevated-soft);
+    color: var(--text-soft);
+    border-color: transparent;
+}
+.fk-list-item.close-panel:hover {
+    color: var(--danger);
+}
+
+.formula-trigger {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    padding: 2px 4px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-family: monospace;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+}
+
+.formula-trigger:hover {
+    opacity: 1;
+}
+
+/* Исправляем сетку кнопок */
+.fk-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: 60px;
+    background: var(--border);
+    gap: 1px;
+    padding: 1px 0 0 0;
+}
+
+/* Стили для разных типов кнопок */
+.fk-btn.num {
+    background: var(--bg-elevated);
+    font-size: 22px;
+    font-weight: 400;
+}
+
+.fk-btn.op {
+    background: var(--bg-elevated-soft);
+    color: var(--accent);
+    font-size: 24px;
+    font-weight: 600;
+}
+
+.fk-btn.func {
+    background: var(--bg-elevated-soft);
+    color: #7c4dff;
+    font-size: 16px;
+    font-weight: 500;
+    font-family: 'Courier New', monospace;
+}
+
+.fk-btn.action {
+    background: var(--bg-elevated-soft);
+    color: var(--danger);
+    font-size: 18px;
+}
+
+.fk-btn.cat {
+    background: var(--bg-elevated);
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.fk-btn.done {
+    background: var(--accent);
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* Стили для списка переменных */
+.fk-list-header {
+    grid-column: 1 / -1;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--accent);
+    margin: 8px 0 4px;
+    padding: 4px 8px;
+    background: var(--bg-elevated-soft);
+    border-radius: 4px;
+}
+
+/* Анимация кнопок */
+.fk-btn {
+    transition: all 0.1s ease;
+}
+
+.fk-btn:active {
+    transform: scale(0.95);
+}
+
+/* Улучшаем внешний вид панели переменных */
+.fk-scroll-panel {
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+}
+
+.fk-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 13px;
+}
+
+.fk-list-item i {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+/* Стили для input в редакторе */
+.formula-main-input {
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 18px;
+    letter-spacing: 0.5px;
+}
+
+/* Подсветка активной кнопки */
+.fk-btn.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .fk-grid {
+        grid-auto-rows: 50px;
+    }
+    
+    .fk-btn {
+        font-size: 16px;
+    }
+    
+    .fk-btn.num {
+        font-size: 18px;
+    }
+    
+    .fk-btn.op {
+        font-size: 20px;
+    }
+}

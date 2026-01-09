@@ -156,3 +156,41 @@
 .game-window-resizer:hover {
     opacity: 1;
 }
+
+/* Класс для всех создаваемых через блоки UI элементов */
+.ui-element {
+    position: absolute;
+    box-sizing: border-box; /* Важно: чтобы padding не менял размер */
+    z-index: 1000; /* Поверх канваса */
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+}
+
+/* Красивые поля ввода */
+.ui-input-widget {
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: 1px solid #555;
+    border-radius: 4px;
+    padding: 5px;
+    outline: none;
+}
+.ui-input-widget:focus {
+    border-color: #7c4dff; /* Цвет акцента */
+    background: rgba(0, 0, 0, 0.9);
+}
+
+/* Скролл контейнер */
+.ui-scroll-box {
+    overflow: auto;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+/* Скроллбар для контейнера */
+.ui-scroll-box::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.ui-scroll-box::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 3px;
+}

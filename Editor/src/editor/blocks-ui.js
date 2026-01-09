@@ -86,14 +86,25 @@ function createBlock(typeId, clientX, clientY, restoreData = null) {
                     </div>
                 </div>`
 			}
-			// -------------------------------------------
 			else {
-				// ВАРИАНТ 2: ОБЫЧНЫЙ ТЕКСТОВЫЙ ВВОД
-				inputsHTML += `<div class="input-row"><span>${
-					inp.label || inp.name
-				}</span><input type="text" class="node-input" value="${val}"></div>`
+				// ВАРИАНТ 2: ОБЫЧНЫЙ ТЕКСТОВЫЙ ВВОД + РЕДАКТОР ФОРМУЛ
+
+				// Генерируем уникальный ID
+				const inputId = `inp_${el.id}_${idx}`
+
+				inputsHTML += `
+				<div class="input-row">
+						<span>${inp.label || inp.name}</span>
+						<div style="position:relative; flex:1;">
+								<input type="text" class="node-input" value="${val}" id="${inputId}">
+								<div class="formula-trigger" 
+										onclick="window.FormulaEditor.open(document.getElementById('${inputId}'))">
+										fx
+								</div>
+						</div>
+				</div>`
 			}
-		})
+    })
 	}
 
 	el.innerHTML = `<div class="node-header" style="border-left: 4px solid ${def.color}"><div style="display:flex; align-items:center; gap:8px;"><i class="${def.icon}"></i> <span>${def.label}</span></div><i class="ri-close-line action-close"></i></div><div class="node-content">${inputsHTML}</div><div class="node-port port-in" title="Вход"></div><div class="node-port port-out" title="Выход"></div>`

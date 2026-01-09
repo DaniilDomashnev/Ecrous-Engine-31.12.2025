@@ -198,42 +198,119 @@ function loadWorkspace() {
 }
 
 // ==========================================
-// --- АВТОСОХРАНЕНИЕ ---
+// --- АВТОСОХРАНЕНИЕ (ДИНАМИЧЕСКОЕ) ---
 // ==========================================
-const AUTOSAVE_INTERVAL = 30000 // 30 секунд
 
-function saveProjectLocal() {
-	// [ВАЖНО] Защита от перезаписи хорошего сохранения пустым состоянием
-	if (!projectData || !projectData.scenes || projectData.scenes.length === 0) {
-		return
-	}
+let autosaveTimer = null;
+let autosaveConfig = {
+    enabled: true,
+    intervalSec: 30 // Значение по умолчанию
+};
 
-	try {
-		// Сначала обновляем модель данными из UI
-		if (typeof saveCurrentWorkspace === 'function') saveCurrentWorkspace()
-
-		// Готовим данные без ассетов (ассеты тяжелые, их в автосейв каждые 30сек писать не будем в localStorage, только при ручном)
-		// Или пишем, но только структуру.
-		const lightProjectData = { ...projectData, assets: [] }
-		const saveStr = JSON.stringify(lightProjectData)
-
-		const key =
-			typeof STORAGE_KEY !== 'undefined'
-				? STORAGE_KEY
-				: 'ecrous_autosave_default'
-
-		localStorage.setItem(key, saveStr)
-
-		const saveIcon = document.getElementById('btnSave')
-		if (saveIcon) {
-			saveIcon.style.color = '#00E676'
-			setTimeout(() => (saveIcon.style.color = ''), 500)
-		}
-		console.log('[AutoSave] Проект сохранен:', new Date().toLocaleTimeString())
-	} catch (e) {
-		console.error('Ошибка автосохранения:', e)
-	}
+// Загрузка настроек при старте
+function initAutosaveSystem() {
+    const savedConfig = localStorage.getItem('ecrous_autosave_config');
+    if (savedConfig) {
+        try {
+            autosaveConfig = JSON.parse(savedConfig);
+        } catch (e) {
+            console.warn('Ошибка чтения конфига автосейва');
+        }
+    }
+    restartAutosaveTimer();
 }
 
-// Запускаем таймер
-setInterval(saveProjectLocal, AUTOSAVE_INTERVAL)
+// Перезапуск таймера (нужен при изменении настроек)
+function restartAutosaveTimer() {
+    // 1. Очищаем старый таймер
+    if (autosaveTimer) {
+        clearInterval(autosaveTimer);
+        autosaveTimer = null;
+    }
+
+    // 2. Если включено — запускаем новый
+    if (autosaveConfig.enabled && autosaveConfig.intervalSec > 0) {
+        console.log(`[AutoSave] Запущен. Интервал: ${autosaveConfig.intervalSec} сек.`);
+        // Переводим секунды в миллисекунды
+        autosaveTimer = setInterval(saveProjectLocal, autosaveConfig.intervalSec * 1000);
+    } else {
+        console.log('[AutoSave] Отключен.');
+    }
+}
+
+// Функция сохранения (ваша, немного доработанная)
+function saveProjectLocal() {
+    // Защита от сохранения пустого проекта
+    if (!projectData || !projectData.scenes || projectData.scenes.length === 0) return;
+
+    try {
+        if (typeof saveCurrentWorkspace === 'function') saveCurrentWorkspace();
+
+        // Сохраняем без тяжелых ассетов (оптимизация)
+        const lightProjectData = { ...projectData, assets: [] }; // Либо assets: projectData.assets если хотите всё хранить
+        const saveStr = JSON.stringify(lightProjectData);
+        
+        const key = typeof STORAGE_KEY !== 'undefined' ? STORAGE_KEY : 'ecrous_autosave_default';
+        localStorage.setItem(key, saveStr);
+
+        // Визуальная индикация (мигание иконки в меню, если она видна)
+        // Но лучше сделать маленькое уведомление
+        const saveIcon = document.querySelector('#btnSave i'); // Ищем иконку в меню
+        if (saveIcon) {
+             const oldColor = saveIcon.style.color;
+             saveIcon.style.color = '#00E676'; // Зеленый
+             setTimeout(() => saveIcon.style.color = oldColor, 800);
+        }
+        
+        console.log(`[AutoSave] ${new Date().toLocaleTimeString()}`);
+    } catch (e) {
+        console.error('Ошибка автосохранения:', e);
+    }
+}
+
+// --- УПРАВЛЕНИЕ МОДАЛЬНЫМ ОКНОМ ---
+
+function openAutosaveModal() {
+    // Устанавливаем текущие значения в поля
+    document.getElementById('as-enable-check').checked = autosaveConfig.enabled;
+    document.getElementById('as-interval-input').value = autosaveConfig.intervalSec;
+    
+    // Показываем окно (используем class 'active' согласно вашему CSS)
+    const modal = document.getElementById('modal-autosave-settings');
+    modal.classList.remove('hidden'); // На случай если есть hidden
+    // Небольшая задержка для анимации opacity
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function closeAutosaveModal() {
+    const modal = document.getElementById('modal-autosave-settings');
+    modal.classList.remove('active');
+    setTimeout(() => modal.classList.add('hidden'), 200);
+}
+
+function applyAutosaveSettings() {
+    const isEnabled = document.getElementById('as-enable-check').checked;
+    let seconds = parseInt(document.getElementById('as-interval-input').value);
+
+    // Валидация
+    if (isNaN(seconds) || seconds < 5) seconds = 5; // Минимум 5 секунд
+
+    // Обновляем конфиг
+    autosaveConfig.enabled = isEnabled;
+    autosaveConfig.intervalSec = seconds;
+
+    // Сохраняем настройки в localStorage, чтобы помнить их после перезагрузки
+    localStorage.setItem('ecrous_autosave_config', JSON.stringify(autosaveConfig));
+
+    // Перезапускаем таймер
+    restartAutosaveTimer();
+    
+    closeAutosaveModal();
+    
+    if (typeof showNotification === 'function') {
+        showNotification(`Автосохранение: ${isEnabled ? seconds + ' сек' : 'Выкл'}`);
+    }
+}
+
+// Запускаем систему при старте
+document.addEventListener('DOMContentLoaded', initAutosaveSystem);

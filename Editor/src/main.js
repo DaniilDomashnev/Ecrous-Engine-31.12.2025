@@ -156,6 +156,26 @@ async function executeChain(currentBlock, allBlocks, objConnections) {
 		}
 	}
 
+	// --- 2.1. ЦИКЛ FOREVER ---
+	else if (currentBlock.type === 'flow_forever') {
+		const loopBodyStart = getNextBlock(currentBlock, allBlocks, objConnections)
+		const loopEnd = findClosingBlock(currentBlock, allBlocks, objConnections)
+
+		if (loopBodyStart && loopEnd) {
+			// Бесконечный цикл, пока игра запущена и сессия актуальна
+			while (isRunning && window.currentSessionId === mySession) {
+				// Выполняем тело цикла
+				await executeSection(loopBodyStart, loopEnd, allBlocks, objConnections)
+
+				// ВАЖНО: Делаем небольшую паузу, чтобы не завис браузер
+				// и чтобы работали остальные скрипты/рендер
+				await new Promise(resolve => setTimeout(resolve, 0))
+			}
+			// Выхода из вечного цикла обычно нет, пока не остановят игру
+			return
+		}
+	}
+
 	// --- ВЫПОЛНЕНИЕ ЛОГИКИ БЛОКА ---
 	if (!skipToBlock) {
 		await executeBlockLogic(currentBlock)
@@ -523,6 +543,91 @@ function executeBlockLogic(block) {
 						// Автоскролл вниз
 						consoleEl.scrollTop = consoleEl.scrollHeight
 					}
+					break
+				}
+				// Ограничение числа (Clamp)
+				case 'var_clamp': {
+					const resVar = v[0] // Куда записать
+					const val = parseFloat(resolveValue(v[1])) || 0
+					const min = parseFloat(resolveValue(v[2])) || 0
+					const max = parseFloat(resolveValue(v[3])) || 0
+
+					// Формула: не меньше min и не больше max
+					gameVariables[resVar] = Math.min(Math.max(val, min), max)
+
+					if (typeof updateDynamicText === 'function') updateDynamicText()
+					break
+				}
+
+				// Плавное приближение (Lerp)
+				case 'var_lerp': {
+					const resVar = v[0]
+					const start = parseFloat(resolveValue(v[1])) || 0
+					const end = parseFloat(resolveValue(v[2])) || 0
+					const t = parseFloat(resolveValue(v[3])) || 0.1 // Скорость
+
+					// Формула: a + (b - a) * t
+					gameVariables[resVar] = start + (end - start) * t
+
+					if (typeof updateDynamicText === 'function') updateDynamicText()
+					break
+				}
+
+				// Переключатель (Toggle True/False)
+				case 'var_toggle': {
+					const varName = v[0]
+					// Если там было что-то true (или 1), станет false. И наоборот.
+					const current = gameVariables[varName]
+					gameVariables[varName] = !current
+
+					if (typeof updateDynamicText === 'function') updateDynamicText()
+					break
+				}
+
+				// Объединение текста (Join)
+				// ВАЖНО: Обычно для этого нужен блок, возвращающий значение,
+				// но если ты хочешь команду "Записать результат склейки в переменную":
+				case 'var_join': {
+					const resVar = v[0]
+					const textA = resolveValue(v[1])
+					const textB = resolveValue(v[2])
+
+					gameVariables[resVar] = String(textA) + String(textB)
+
+					if (typeof updateDynamicText === 'function') updateDynamicText()
+					break
+				}
+
+				// --- СОХРАНЕНИЕ / ЗАГРУЗКА ---
+
+				case 'var_save_local': {
+					const varName = v[0] // Имя переменной игры
+					const saveKey = resolveValue(v[1]) // Ключ для localStorage
+
+					if (gameVariables.hasOwnProperty(varName)) {
+						const val = gameVariables[varName]
+						localStorage.setItem('GAME_SAVE_' + saveKey, val)
+						// console.log(`Saved ${varName} as ${saveKey}:`, val)
+					}
+					break
+				}
+
+				case 'var_load_local': {
+					const varName = v[0] // Куда загрузить
+					const saveKey = resolveValue(v[1])
+					const defVal = resolveValue(v[2]) // Если сохранения нет
+
+					const savedData = localStorage.getItem('GAME_SAVE_' + saveKey)
+
+					if (savedData !== null) {
+						// Пытаемся превратить в число, если похоже
+						const num = parseFloat(savedData)
+						gameVariables[varName] = isNaN(num) ? savedData : num
+					} else {
+						gameVariables[varName] = defVal
+					}
+
+					if (typeof updateDynamicText === 'function') updateDynamicText()
 					break
 				}
 
@@ -3070,6 +3175,228 @@ function executeBlockLogic(block) {
 					break
 				}
 
+				// --- DEVICE ---
+				case 'dev_vibrate': {
+					const ms = parseInt(resolveValue(v[0])) || 200
+					if (navigator.vibrate) navigator.vibrate(ms)
+					break
+				}
+				case 'dev_fullscreen': {
+					if (v[0] === 'enter') {
+						if (document.documentElement.requestFullscreen)
+							document.documentElement.requestFullscreen()
+					} else {
+						if (document.exitFullscreen) document.exitFullscreen()
+					}
+					break
+				}
+				case 'dev_hide_keyboard': {
+					if (document.activeElement) document.activeElement.blur()
+					break
+				}
+
+				// --- WEBVIEW ---
+				case 'ui_webview_create': {
+					if (document.getElementById(v[0])) break // Уже есть
+					const web = document.createElement('iframe')
+					web.id = v[0]
+					web.src = resolveValue(v[1])
+					web.className = 'ui-element'
+					web.style.border = 'none'
+
+					// Применяем координаты через resolveValue
+					web.style.left = resolveValue(v[2]) + 'px'
+					web.style.top = resolveValue(v[3]) + 'px'
+					web.style.width = resolveValue(v[4]) + 'px'
+					web.style.height = resolveValue(v[5]) + 'px'
+
+					document.getElementById('game-ui').appendChild(web)
+					break
+				}
+				case 'ui_webview_control': {
+					const web = document.getElementById(v[0])
+					if (web && web.contentWindow) {
+						const action = v[1]
+						if (action === 'reload') web.contentWindow.location.reload()
+						if (action === 'back') web.contentWindow.history.back()
+						if (action === 'forward') web.contentWindow.history.forward()
+					}
+					break
+				}
+				case 'ui_webview_url': {
+					const web = document.getElementById(v[0])
+					if (web) web.src = resolveValue(v[1])
+					break
+				}
+
+				// --- INPUTS & TEXTAREA ---
+				case 'ui_input_create':
+				case 'ui_textarea_create': {
+					const id = v[0]
+					if (document.getElementById(id)) break
+
+					const isArea = block.type === 'ui_textarea_create'
+					const el = document.createElement(isArea ? 'textarea' : 'input')
+					el.id = id
+					el.className = 'ui-element ui-input-widget'
+
+					// Переменные для координат и размеров
+					let x, y, w, h
+
+					if (isArea) {
+						// У Textarea индексы: ID(0), X(1), Y(2), W(3), H(4)
+						x = resolveValue(v[1])
+						y = resolveValue(v[2])
+						w = resolveValue(v[3])
+						h = resolveValue(v[4])
+					} else {
+						// У Input индексы: ID(0), Подсказка(1), Тип(2), X(3), Y(4), W(5), H(6)
+						el.placeholder = resolveValue(v[1])
+						el.type = v[2] // text, password, number
+						x = resolveValue(v[3])
+						y = resolveValue(v[4])
+						w = resolveValue(v[5])
+						h = resolveValue(v[6])
+					}
+
+					el.style.left = x + 'px'
+					el.style.top = y + 'px'
+					el.style.width = w + 'px'
+					el.style.height = h + 'px'
+
+					// Важно для корректного отображения размеров
+					el.style.boxSizing = 'border-box'
+
+					el.oninput = () => {
+						triggerUiChangeEvent(id)
+					}
+
+					document.getElementById('game-ui').appendChild(el)
+					break
+				}
+
+				case 'ui_input_set': {
+					const el = document.getElementById(v[0])
+					if (!el) break
+					const action = v[1]
+					const val = resolveValue(v[2])
+
+					if (action === 'set_text') el.value = val
+					if (action === 'clear') el.value = ''
+					if (action === 'disable') el.disabled = true
+					if (action === 'enable') el.disabled = false
+					if (action === 'focus') el.focus()
+					break
+				}
+
+				case 'ui_input_get': {
+					const el = document.getElementById(v[0])
+					if (el) {
+						gameVariables[v[1]] = el.value
+						if (typeof updateDynamicText === 'function') updateDynamicText()
+					}
+					break
+				}
+
+				// --- SLIDER (Исправленный) ---
+				case 'ui_slider_adv': {
+					if (document.getElementById(v[0])) break
+					const sl = document.createElement('input')
+					sl.type = 'range'
+					sl.id = v[0]
+					sl.className = 'ui-element'
+
+					const axis = v[1] // horizontal/vertical
+					const varName = v[2]
+
+					sl.min = resolveValue(v[3])
+					sl.max = resolveValue(v[4])
+
+					const x = resolveValue(v[5])
+					const y = resolveValue(v[6])
+					const len = resolveValue(v[7])
+
+					sl.style.position = 'absolute'
+					sl.style.left = x + 'px'
+					sl.style.top = y + 'px'
+
+					if (axis === 'vertical') {
+						// Вертикальный слайдер через CSS transform
+						sl.style.width = len + 'px'
+						sl.style.transformOrigin = '0 0' // Вращаем от верхнего левого угла
+						sl.style.transform = 'rotate(90deg) translateY(-100%)'
+						// Компенсация позиции после поворота
+						sl.style.left = parseFloat(x) + 20 + 'px' // +20 примерная ширина ползунка
+					} else {
+						sl.style.width = len + 'px'
+					}
+
+					sl.oninput = e => {
+						gameVariables[varName] = e.target.value
+						if (typeof updateDynamicText === 'function') updateDynamicText()
+						triggerUiChangeEvent(v[0])
+					}
+
+					document.getElementById('game-ui').appendChild(sl)
+					break
+				}
+
+				// --- SCROLL ---
+				case 'ui_scroll_create': {
+					if (document.getElementById(v[0])) break
+					const d = document.createElement('div')
+					d.id = v[0]
+					d.className = 'ui-element ui-scroll-box'
+
+					d.style.left = resolveValue(v[1]) + 'px'
+					d.style.top = resolveValue(v[2]) + 'px'
+					d.style.width = resolveValue(v[3]) + 'px'
+					d.style.height = resolveValue(v[4]) + 'px'
+					d.style.backgroundColor = resolveValue(v[5]) // Цвет
+
+					document.getElementById('game-ui').appendChild(d)
+					break
+				}
+				case 'ui_scroll_add': {
+					const scroll = document.getElementById(v[0])
+					const widget = document.getElementById(v[1])
+					if (scroll && widget) {
+						scroll.appendChild(widget)
+						// При добавлении в скролл, позиция становится относительной контента скролла
+						widget.style.position = 'absolute'
+						// Можно сбросить координаты, если нужно чтобы они были 0,0 внутри скролла:
+						// widget.style.left = '0px'; widget.style.top = '0px';
+					}
+					break
+				}
+				case 'ui_widget_delete': {
+					const w = document.getElementById(v[0])
+					if (w) w.remove()
+					break
+				}
+				case 'ui_widget_prop': {
+					const w = document.getElementById(v[0])
+					const type = v[1] // 'position' или 'size'
+					// v[2] - это первое число (X или Ширина)
+					// v[3] - это второе число (Y или Высота)
+					const val1 = resolveValue(v[2])
+					const val2 = resolveValue(v[3])
+
+					if (w) {
+						if (type === 'position') {
+							w.style.left = val1 + 'px'
+							w.style.top = val2 + 'px'
+						} else if (type === 'size') {
+							w.style.width = val1 + 'px'
+							w.style.height = val2 + 'px'
+						} else if (type === 'visible') {
+							// Дополнительная полезная опция
+							w.style.display = val1 === 'true' || val1 === 1 ? 'block' : 'none'
+						}
+					}
+					break
+				}
+
 				// --- СИСТЕМНЫЕ ---
 				case 'flow_comment':
 				case 'flow_else':
@@ -3078,6 +3405,28 @@ function executeBlockLogic(block) {
 			}
 			resolve()
 		}, 10)
+	})
+}
+
+function triggerUiChangeEvent(elementId) {
+	if (!window.globalCurrentSceneData) return
+
+	// Пробегаем по всем объектам сцены
+	window.globalCurrentSceneData.objects.forEach(obj => {
+		if (!obj.scripts) return
+
+		// Ищем блоки события "evt_ui_change"
+		obj.scripts.forEach(scriptBlock => {
+			// Проверяем, что это тот самый блок и ID элемента совпадает
+			if (
+				scriptBlock.id === 'evt_ui_change' &&
+				scriptBlock.values &&
+				scriptBlock.values[0] === elementId
+			) {
+				// Запускаем цепочку блоков, привязанную к этому событию
+				executeChain(scriptBlock, obj.scripts, obj.connections)
+			}
+		})
 	})
 }
 

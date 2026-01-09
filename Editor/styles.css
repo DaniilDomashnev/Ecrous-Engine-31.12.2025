@@ -21,7 +21,7 @@ body.theme-night {
 body {
 	background-color: var(--bg);
 	color: var(--text);
-	font-family: 'ubuntu', sans-serif; 
+	font-family: 'ubuntu', sans-serif;
 	height: 100vh;
 	display: flex;
 	flex-direction: column;
@@ -761,24 +761,77 @@ header {
 
 /* Настраиваем ширину и фон дорожки */
 ::-webkit-scrollbar {
-    width: 6px;               /* Тонкий скролл */
-    height: 6px;              /* Для горизонтального скролла */
-    background: transparent;  /* Фон прозрачный, чтобы не конфликтовал с темой */
+	width: 6px; /* Тонкий скролл */
+	height: 6px; /* Для горизонтального скролла */
+	background: transparent; /* Фон прозрачный, чтобы не конфликтовал с темой */
 }
 
 /* Сам ползунок (Thumb) */
 ::-webkit-scrollbar-thumb {
-    background-color: var(--border); /* Цвет берется из текущей темы! */
-    border-radius: 3px;
-    opacity: 0.5;
+	background-color: var(--border); /* Цвет берется из текущей темы! */
+	border-radius: 3px;
+	opacity: 0.5;
 }
 
 /* Ползунок при наведении */
 ::-webkit-scrollbar-thumb:hover {
-    background-color: var(--text-soft); /* Становится ярче при наведении */
+	background-color: var(--text-soft); /* Становится ярче при наведении */
 }
 
 /* Уголок (где сходятся вертикальный и горизонтальный скролл) */
 ::-webkit-scrollbar-corner {
-    background: transparent;
+	background: transparent;
+}
+
+/* Стили для строк с хоткеями */
+.hk-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	background: var(--bg);
+	padding: 8px 12px;
+	border-radius: 6px;
+	border: 1px solid transparent;
+}
+.hk-row:hover {
+	border-color: var(--border);
+	background: var(--bg-elevated-soft);
+}
+.hk-label {
+	font-size: 13px;
+	color: var(--text);
+	font-weight: 500;
+}
+.hk-btn {
+	background: var(--bg-elevated);
+	border: 1px solid var(--border);
+	color: var(--accent);
+	padding: 4px 10px;
+	border-radius: 4px;
+	font-size: 12px;
+	font-family: monospace;
+	cursor: pointer;
+	min-width: 80px;
+	text-align: center;
+	transition: 0.2s;
+}
+.hk-btn:hover {
+	border-color: var(--accent);
+}
+.hk-btn.recording {
+	background: var(--accent);
+	color: white;
+	border-color: var(--accent);
+	animation: pulse-border 1s infinite;
+}
+@keyframes pulse-border {
+	0% {
+		box-shadow: 0 0 0 0 rgba(124, 77, 255, 0.4);
+	}
+	70% {
+		box-shadow: 0 0 0 6px rgba(124, 77, 255, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(124, 77, 255, 0);
+	}
 }
