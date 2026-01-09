@@ -223,30 +223,24 @@ function createHeaderBtn(id, iconClass, title, marginLeftValue) {
 
 function runProject() {
 	stopGame()
-	saveCurrentWorkspace()
+	saveCurrentWorkspace() // Убедитесь, что эта функция доступна глобально (из main.js или inicialization.js)
 	initConsoleControls()
 
 	// UI
 	document.getElementById('game-overlay').classList.remove('hidden')
 
-	// Сброс флага видимости при новом запуске (по желанию можно убрать)
 	isConsoleVisible = true
 
-	// === [ИСПРАВЛЕНИЕ] ===
-	// 1. Сначала объявляем переменную!
+	// === [ИСПРАВЛЕНО] Убрано дублирование const gameWindow ===
 	const gameWindow = document.querySelector('.game-window')
 
-	// 2. Теперь настраиваем позицию
+	// Настраиваем позицию
 	if (gameWindow) {
-		// Сбрасываем координаты от перетаскивания и возвращаем в центр
 		gameWindow.style.top = '50%'
 		gameWindow.style.left = '50%'
 		gameWindow.style.transform = 'translate(-50%, -50%)'
-
-		// Важно: убираем плавность на момент сброса, чтобы окно не "ехало", а сразу встало
 		gameWindow.style.transition = 'none'
 
-		// Размеры из конфига
 		const w =
 			window.gameConfig && window.gameConfig.width
 				? window.gameConfig.width
@@ -257,41 +251,39 @@ function runProject() {
 				: 600
 
 		gameWindow.style.width = w + 'px'
-		gameWindow.style.height = parseInt(h) + 40 + 'px' // +40 на шапку
+		gameWindow.style.height = parseInt(h) + 40 + 'px'
 
-		// Сброс размеров внутренней сцены
 		const stage = document.getElementById('game-stage')
 		if (stage) {
 			stage.style.width = '100%'
 			stage.style.height = h + 'px'
 		}
 	}
-	// =====================
 
 	// --- ИНИЦИАЛИЗАЦИЯ MATTER.JS ---
-	const Engine = Matter.Engine,
-		World = Matter.World,
-		Runner = Matter.Runner
+	// [ИСПРАВЛЕНО] Проверка наличия Matter перед использованием
+	if (typeof Matter !== 'undefined') {
+		const Engine = Matter.Engine
+		// const World = Matter.World // Не используется напрямую, берем из engine
 
-	// ВАЖНО: Делаем движок глобальным через window
-	window.matterEngine = Engine.create()
-	window.matterEngine.world.gravity.y = 1
+		window.matterEngine = Engine.create()
+		window.matterEngine.world.gravity.y = 1
 
-	// Обработка коллизий
-	Matter.Events.on(window.matterEngine, 'collisionStart', event => {
-		event.pairs.forEach(pair => {
-			const idA = pair.bodyA.label
-			const idB = pair.bodyB.label
-			triggerCollisionEvent(idA, idB)
+		Matter.Events.on(window.matterEngine, 'collisionStart', event => {
+			event.pairs.forEach(pair => {
+				const idA = pair.bodyA.label
+				const idB = pair.bodyB.label
+				triggerCollisionEvent(idA, idB) // Теперь эта функция существует
+			})
 		})
-	})
+	} else {
+		console.error('Matter.js не найден! Физика не будет работать.')
+	}
 
 	bodyMap.clear()
 
 	document.querySelector('.game-header span').innerText = 'ИГРОВОЙ ПРОЦЕСС'
 	document.getElementById('game-console').style.display = 'block'
-
-	// (Ниже удалите повторное объявление const gameWindow, если оно осталось)
 
 	// Сброс данных
 	gameVariables = {}
@@ -310,8 +302,7 @@ function runProject() {
 
 	activeCollisionsPair.clear()
 
-	const audioUnlock = new Audio()
-	audioUnlock.play().catch(e => {})
+	// ... (остальной код runProject без изменений) ...
 
 	// --- ФИНАЛЬНЫЙ ЗАПУСК ---
 	isRunning = true
@@ -631,41 +622,39 @@ function updatePhysics(dt) {
 
 // Функция запуска скриптов при столкновении
 function triggerCollisionEvent(id1, id2) {
-	// Если сцена не загружена корректно, выходим
 	if (!window.globalCurrentSceneData) return
 
+	// Получаем объекты сцены
 	const objectsData = window.globalCurrentSceneData.objects
+	if (!objectsData) return
 
-	// Проходим по всем объектам, чтобы найти, у кого есть блок "При столкновении"
 	objectsData.forEach(obj => {
 		if (!obj.scripts) return
 
-		// Событие может быть на одном из участников столкновения
+		// Проверяем, участвует ли этот объект в столкновении
 		if (obj.id === id1 || obj.id === id2) {
+			// Ищем блоки "Столкновение"
 			const events = obj.scripts.filter(b => b.type === 'evt_collision')
 
 			events.forEach(evt => {
-				const targetName = evt.values[1] // С кем должно быть столкновение?
+				// evt.values[0] - обычно "Кто" (по умолчанию self), evt.values[1] - "С кем"
+				const targetName = evt.values[1]
 
-				// Определяем "другого"
+				// Определяем ID второго объекта
 				const otherId = obj.id === id1 ? id2 : id1
 				const otherObjDef = objectsData.find(o => o.id === otherId)
 
-				// Логика фильтрации:
-				// 1. Поле пустое -> сталкиваемся с чем угодно
-				// 2. Имя совпадает с именем объекта
-				// 3. ID совпадает
+				// Логика проверки:
+				// Срабатывает, если в блоке не указано имя (пусто),
+				// ИЛИ если имя совпадает с именем второго объекта,
+				// ИЛИ если ID совпадает.
 				const isMatch =
 					!targetName ||
 					(otherObjDef && otherObjDef.name === targetName) ||
 					targetName === otherId
 
 				if (isMatch) {
-					// Запускаем цепочку блоков!
-					// executeChain находится в main.js, но доступна глобально
-					if (typeof executeChain === 'function') {
-						executeChain(evt, obj.scripts, obj.connections)
-					}
+					executeChain(evt, obj.scripts, obj.connections)
 				}
 			})
 		}

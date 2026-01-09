@@ -3107,44 +3107,46 @@ function executeBlockLogic(block) {
 				}
 				case 'obj_create_sprite': {
 					const id = resolveValue(v[0])
-
-					// Защита: если объект с таким ID уже есть, не создаем дубль
 					if (document.getElementById(id)) break
 
-					// Получаем параметры
 					const url = getAssetUrl(resolveValue(v[1]))
 					const x = parseFloat(resolveValue(v[2]))
 					const y = parseFloat(resolveValue(v[3]))
 					const wVal = parseFloat(resolveValue(v[4]))
 					const hVal = parseFloat(resolveValue(v[5]))
-					const physType = v[6] // Значения: 'Static', 'Dynamic', 'None'
+					const physType = resolveValue(v[6])
 					const zIdx = parseInt(resolveValue(v[7])) || 1
 
-					// 1. Создаем визуальный элемент (DOM)
 					const el = document.createElement('div')
 					el.id = id
-					el.className = 'game-object' // Полезно для общих стилей
 					el.style.position = 'absolute'
 					el.style.left = x + 'px'
 					el.style.top = y + 'px'
 					el.style.width = wVal + 'px'
 					el.style.height = hVal + 'px'
-
-					// Настройка картинки
-					el.style.backgroundImage = `url('${url}')`
-					el.style.backgroundSize = 'contain' // Вписать картинку целиком
+					el.style.backgroundImage = "url('" + url + "')"
+					el.style.backgroundSize = 'contain'
 					el.style.backgroundRepeat = 'no-repeat'
 					el.style.backgroundPosition = 'center'
 					el.style.zIndex = zIdx
 
-					// Добавляем на сцену
-					document.getElementById('game-stage').appendChild(el)
+					// ВАЖНО: w - это document.getElementById('game-world'), определенный в начале функции
+					// Если w не существует (ошибка инициализации), фоллбек на stage
+					if (w) {
+						w.appendChild(el)
+					} else {
+						;(
+							document.getElementById('game-stage') || document.body
+						).appendChild(el)
+					}
 
-					// 2. ФИЗИКА
-					// Проверяем window.matterEngine
-					if (physType !== 'None' && window.Matter && window.matterEngine) {
-						const isStatic = physType === 'Static'
-
+					// Физика (Matter.js)
+					if (
+						physType !== 'None' &&
+						typeof Matter !== 'undefined' &&
+						window.matterEngine
+					) {
+						const isStatic = physType === 'Static' || physType === 'static'
 						const centerX = x + wVal / 2
 						const centerY = y + hVal / 2
 
@@ -3156,11 +3158,9 @@ function executeBlockLogic(block) {
 							angle: 0,
 						})
 
-						// Принудительно фиксируем, если статичный
 						if (isStatic) Matter.Body.setStatic(body, true)
-
 						Matter.World.add(window.matterEngine.world, body)
-						bodyMap.set(id, body) // Сохраняем ссылку
+						bodyMap.set(id, body)
 					}
 					break
 				}
