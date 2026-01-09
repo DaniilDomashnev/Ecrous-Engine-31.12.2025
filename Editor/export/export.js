@@ -1,5 +1,5 @@
 // ==========================================
-// EXPORT LOGIC (Ecrous Engine) - FIXED & ROBUST
+// EXPORT LOGIC (Ecrous Engine) - FULL & FIXED
 // ==========================================
 
 function openExportModal() {
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const closeExport = document.getElementById('closeExport')
 	const menuFile = document.getElementById('menuFile')
 
-	const exportWinBtn = document.getElementById('exportWindows') // Web Build
+	const exportWinBtn = document.getElementById('exportWindows')
 	const exportExeBtn = document.getElementById('exportExe')
 	const exportAndroidBtn = document.getElementById('exportAndroid')
 	const exportIOSBtn = document.getElementById('exportIOS')
@@ -60,23 +60,21 @@ document.addEventListener('DOMContentLoaded', () => {
 	// --- EXE (Placeholder) ---
 	if (exportExeBtn) exportExeBtn.onclick = () => exportProjectAsExe()
 
-	// --- ANDROID (ZIP Bundle) ---
+	// --- ANDROID / iOS ---
 	if (exportAndroidBtn)
 		exportAndroidBtn.onclick = async () => {
 			try {
 				await exportMobileBundle('Android')
 			} catch (err) {
-				alert('Ошибка Android экспорта: ' + err.message)
+				alert('Ошибка: ' + err.message)
 			}
 		}
-
-	// --- iOS (ZIP Bundle) ---
 	if (exportIOSBtn)
 		exportIOSBtn.onclick = async () => {
 			try {
 				await exportMobileBundle('iOS')
 			} catch (err) {
-				alert('Ошибка iOS экспорта: ' + err.message)
+				alert('Ошибка: ' + err.message)
 			}
 		}
 
@@ -102,6 +100,7 @@ async function getProjectIconData() {
 	} catch (e) {
 		console.warn('Logo file not found, using fallback.')
 	}
+	// Fallback Icon
 	const cvs = document.createElement('canvas')
 	cvs.width = 512
 	cvs.height = 512
@@ -149,14 +148,18 @@ async function generateGameHTML() {
 		exportedAt: new Date().toISOString(),
 	}
 
-	// Внедряем JS код движка
+	// ВАЖНО: Здесь мы используем ${} БЕЗ слеша для вставки данных при экспорте,
+	// и \${} СО слешем для кода, который должен работать внутри игры.
 	const runtimeScript = `
+        // Данные проекта
         const PROJECT = ${JSON.stringify(buildData.project)};
+        const projectData = PROJECT; // Алиас для совместимости
         const START_SCENE_ID = "${buildData.startSceneId}";
         const DISABLE_SPLASH = ${buildData.disableSplash}; 
-        
         let gameConfig = ${JSON.stringify(buildData.config)};
-        
+        const currentProjectName = projectData.settings?.name || 'ExportedGame';
+
+        // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
         let gameVariables = {};
         let physicsObjects = {};
         let activeKeys = {};
@@ -176,7 +179,8 @@ async function generateGameHTML() {
         let isRunning = false;
         let isGamePaused = false;
         let lastTime = performance.now();
-        let currentSceneId = null;
+        let currentSceneId = null; 
+        let runtimeSceneId = null;
         let currentSessionId = 0; 
         let activeCollisionsPair = new Set();
         let globalCurrentSceneData = null;
@@ -184,15 +188,12 @@ async function generateGameHTML() {
         let activeTimers = [];
         let showFps = false;
 
+        // --- ФУНКЦИИ УТИЛИТЫ ---
+
         function getAssetUrl(input) {
             if (!input) return '';
-            // Если это dataURL или внешняя ссылка
             if (input.startsWith('data:') || input.startsWith('http')) return input;
-            
-            // Если переменная
             if (input.startsWith('{') && input.endsWith('}')) return resolveValue(input);
-            
-            // Если ID из ассетов проекта
             if (PROJECT.assets) {
                 const asset = PROJECT.assets.find(a => a.id === input);
                 if (asset) return asset.data;
@@ -223,6 +224,21 @@ async function generateGameHTML() {
             });
         }
 
+        function triggerUiChangeEvent(elementId) {
+            if (!globalCurrentSceneData) return;
+            globalCurrentSceneData.objects.forEach(obj => {
+                if (!obj.scripts) return;
+                obj.scripts.forEach(scriptBlock => {
+                    if (scriptBlock.id === 'evt_ui_change' && scriptBlock.values && scriptBlock.values[0] === elementId) {
+                        executeChain(scriptBlock, obj.scripts, obj.connections);
+                    }
+                });
+            });
+        }
+
+        // Заглушка для поиска пути (можно расширить)
+        function findPath(grid, sx, sy, ex, ey) { return []; } 
+
         // --- ЗАПУСК ---
         window.onload = function() {
             const splash = document.getElementById('ecrous-splash');
@@ -248,16 +264,15 @@ async function generateGameHTML() {
                     if(startMsg) {
                         startMsg.classList.add('visible');
                         splash.addEventListener('click', () => {
-                        splash.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
-                        splash.style.opacity = '0';
-                        splash.style.transform = 'scale(1.1)';
-                        setTimeout(() => {
-                            splash.style.display = 'none';
-                            startGame();
-                        }, 600);
+                            splash.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+                            splash.style.opacity = '0';
+                            splash.style.transform = 'scale(1.1)';
+                            setTimeout(() => {
+                                splash.style.display = 'none';
+                                startGame();
+                            }, 600);
                         }, { once: true });
                     } else {
-                        // Автостарт если нет сообщения
                         splash.style.display = 'none';
                         startGame();
                     }
@@ -288,20 +303,20 @@ async function generateGameHTML() {
                 console.warn('Matter.js physics engine not loaded.');
             }
 
+            // Audio unlock
             const audioUnlock = new Audio();
             audioUnlock.play().catch(e => {});
 
             isRunning = true;
             resizeGame();
             
+            // Input Listeners Global
             window.addEventListener('mousemove', e => {
                 const stage = document.getElementById('game-stage');
                 if(stage) {
                     const rect = stage.getBoundingClientRect();
-                    const currentWidth = rect.width;
-                    const currentHeight = rect.height;
-                    const scaleX = gameConfig.width / currentWidth;
-                    const scaleY = gameConfig.height / currentHeight;
+                    const scaleX = gameConfig.width / rect.width;
+                    const scaleY = gameConfig.height / rect.height;
                     window.mouseX = (e.clientX - rect.left) * scaleX;
                     window.mouseY = (e.clientY - rect.top) * scaleY;
                 }
@@ -336,67 +351,82 @@ async function generateGameHTML() {
             const now = performance.now();
             const dt = Math.min(now - lastTime, 50);
 
-            // --- 1. ФИЗИКА (Matter) ---
-            if(matterEngine) {
-                Matter.Engine.update(matterEngine, dt);
-                bodyMap.forEach((body, domId) => {
-                    const el = document.getElementById(domId);
-                    if (!el) return;
-                    const w = body.bounds.max.x - body.bounds.min.x;
-                    const h = body.bounds.max.y - body.bounds.min.y;
-                    const x = body.position.x - w / 2;
-                    const y = body.position.y - h / 2;
-                    const angleDeg = body.angle * (180 / Math.PI);
-                    el.style.left = \`\${x}px\`;
-                    el.style.top = \`\${y}px\`;
-                    el.style.transform = \`rotate(\${angleDeg}deg)\`;
-                });
-            }
-            
-            // --- 2. КАМЕРА (2D Follow & Shake) ---
-            const world = document.getElementById('game-world');
-            const is3D = world && world.style.transformStyle === 'preserve-3d';
-
-            if (!is3D && world) {
-                 if (cameraState.target) {
-                    const targetEl = document.getElementById(cameraState.target);
-                    if (targetEl) {
-                        const tx = parseFloat(targetEl.style.left || 0);
-                        const ty = parseFloat(targetEl.style.top || 0);
-                        cameraState.x += (tx - cameraState.x) * cameraState.lerp;
-                        cameraState.y += (ty - cameraState.y) * cameraState.lerp;
-                    }
+            if (!isGamePaused) {
+                // 1. ФИЗИКА
+                if(matterEngine) {
+                    Matter.Engine.update(matterEngine, dt);
+                    updateDOMFromPhysics();
                 }
-                let shakeX = 0, shakeY = 0;
-                if (cameraState.shakeInfo.time > 0) {
-                     cameraState.shakeInfo.time -= 0.016;
-                     const p = cameraState.shakeInfo.power;
-                     shakeX = (Math.random() - 0.5) * p;
-                     shakeY = (Math.random() - 0.5) * p;
-                }
-                if (cameraState.target || cameraState.x !== 0 || cameraState.y !== 0) {
-                     const cx = gameConfig.width / 2;
-                     const cy = gameConfig.height / 2;
-                     // Округление для четкости
-                     const fx = Math.round(-cameraState.x + cx + shakeX);
-                     const fy = Math.round(-cameraState.y + cy + shakeY);
-                     
-                     world.style.transform = \`translate(\${fx}px, \${fy}px) scale(\${cameraState.zoom})\`;
-                     
-                     // Параллакс
-                     document.querySelectorAll('[data-parallax]').forEach(el => {
-                        const factor = parseFloat(el.dataset.parallax) || 1;
-                        if (factor !== 1) {
-                            const offsetX = -fx * (1 - factor);
-                            const offsetY = -fy * (1 - factor);
-                            el.style.transform = \`translate(\${offsetX}px, \${offsetY}px)\`;
-                        }
-                     });
-                }
+                
+                // 2. КАМЕРА
+                updateCamera(dt / 1000);
             }
             
             lastTime = now;
             requestAnimationFrame(gameLoop);
+        }
+
+        function updateDOMFromPhysics() {
+            bodyMap.forEach((body, domId) => {
+                const el = document.getElementById(domId);
+                if (!el) return;
+                const w = body.bounds.max.x - body.bounds.min.x;
+                const h = body.bounds.max.y - body.bounds.min.y;
+                const x = body.position.x - w / 2;
+                const y = body.position.y - h / 2;
+                const angleDeg = body.angle * (180 / Math.PI);
+                el.style.left = \`\${x}px\`;
+                el.style.top = \`\${y}px\`;
+                el.style.transform = \`rotate(\${angleDeg}deg)\`;
+            });
+        }
+
+        function updateCamera(dt) {
+            const world = document.getElementById('game-world');
+            if(!world) return;
+            const is3D = world.style.transformStyle === 'preserve-3d';
+
+            if (!is3D) {
+                 if (cameraState.target) {
+                    const targetEl = document.getElementById(cameraState.target);
+                    if (targetEl) {
+                        const stage = document.getElementById('game-stage');
+                        const winW = stage ? stage.offsetWidth : gameConfig.width;
+                        const winH = stage ? stage.offsetHeight : gameConfig.height;
+
+                        const tX = parseFloat(targetEl.style.left) + targetEl.offsetWidth / 2;
+                        const tY = parseFloat(targetEl.style.top) + targetEl.offsetHeight / 2;
+                        const targetCamX = tX - winW / 2 / cameraState.zoom;
+                        const targetCamY = tY - winH / 2 / cameraState.zoom;
+                        
+                        cameraState.x += (targetCamX - cameraState.x) * cameraState.lerp;
+                        cameraState.y += (targetCamY - cameraState.y) * cameraState.lerp;
+                    }
+                }
+                let shakeX = 0, shakeY = 0;
+                if (cameraState.shakeInfo.time > 0) {
+                     cameraState.shakeInfo.time -= dt;
+                     const p = cameraState.shakeInfo.power;
+                     shakeX = (Math.random() - 0.5) * p;
+                     shakeY = (Math.random() - 0.5) * p;
+                }
+                
+                const finalX = -cameraState.x + shakeX;
+                const finalY = -cameraState.y + shakeY;
+                
+                world.style.transformOrigin = 'top left';
+                world.style.transform = \`scale(\${cameraState.zoom}) translate(\${finalX}px, \${finalY}px)\`;
+                
+                // Параллакс
+                document.querySelectorAll('[data-parallax]').forEach(el => {
+                    const factor = parseFloat(el.dataset.parallax) || 1;
+                    if (factor !== 1) {
+                        const offsetX = -finalX * (1 - factor);
+                        const offsetY = -finalY * (1 - factor);
+                        el.style.transform = \`translate(\${offsetX}px, \${offsetY}px)\`;
+                    }
+                });
+            }
         }
 
         function resizeGame() {
@@ -423,6 +453,7 @@ async function generateGameHTML() {
             if(!scene) return;
             currentSessionId++;
             currentSceneId = sceneId;
+            runtimeSceneId = sceneId;
             globalCurrentSceneData = scene;
             
             // Очистка
@@ -436,6 +467,7 @@ async function generateGameHTML() {
             bodyMap.clear();
             
             Object.values(loadedSounds).forEach(s => { try{s.pause(); s.currentTime=0;}catch(e){} });
+            loadedSounds = {};
             document.title = scene.name;
             if(updateInterval) clearInterval(updateInterval);
             activeTimers.forEach(t => clearInterval(t));
@@ -443,7 +475,7 @@ async function generateGameHTML() {
             
             const allScripts = scene.objects.flatMap(o => o.scripts || []);
 
-            // Start
+            // Start Block
             allScripts.filter(b => b.type === 'evt_start').forEach(block => {
                 if (block.disabled) return;
                 const owner = scene.objects.find(o => o.scripts.some(s => s.id === block.id));
@@ -568,6 +600,18 @@ async function generateGameHTML() {
                     skipToBlock = loopEnd;
                 }
             }
+            // --- ЦИКЛ FOREVER ---
+            else if (currentBlock.type === 'flow_forever') {
+                const loopBodyStart = getNextBlock(currentBlock, allBlocks, connections)
+                const loopEnd = findClosingBlock(currentBlock, allBlocks, connections)
+                if (loopBodyStart && loopEnd) {
+                    while (isRunning && window.currentSessionId === mySession) {
+                        await executeSection(loopBodyStart, loopEnd, allBlocks, connections)
+                        await new Promise(resolve => setTimeout(resolve, 0))
+                    }
+                    return
+                }
+            }
 
             if (!skipToBlock) await executeBlockLogic(currentBlock);
             if (skipToBlock) nextBlock = getNextBlock(skipToBlock, allBlocks, connections);
@@ -576,12 +620,11 @@ async function generateGameHTML() {
         }
 
         function getNextBlock(block, allBlocks, connections) {
-             // Ищем по связям (Nodes)
              if (connections && connections.length > 0) {
                  const conn = connections.find(c => c.from === block.id);
                  if (conn) return allBlocks.find(b => b.id === conn.to);
              }
-             // Fallback для Stack (по вертикали)
+             // Stack Mode Fallback
              const SEARCH_HEIGHT = 500;
              const ALIGN_TOLERANCE = 50;
              let candidates = allBlocks.filter(b => {
@@ -624,19 +667,28 @@ async function generateGameHTML() {
             while(curr && curr.id !== end.id) {
                 if (!isRunning) return;
                 await executeBlockLogic(curr);
+                if (curr.type === 'flow_if') {
+                    const valA = resolveValue(curr.values[0]);
+                    const op = curr.values[1];
+                    const valB = resolveValue(curr.values[2]);
+                    let cond = false;
+                    if (op === '=') cond = valA == valB;
+                    if (op === '>') cond = parseFloat(valA) > parseFloat(valB);
+                    if (op === '<') cond = parseFloat(valA) < parseFloat(valB);
+                    if (!cond) {
+                        const closer = findClosingBlock(curr, allBlocks, conns);
+                        if (closer) curr = closer;
+                    }
+                }
                 curr = getNextBlock(curr, allBlocks, conns);
             }
         }
         
-        // --- ПРОСТАЯ ФУНКЦИЯ ДЛЯ ПОИСКА ПУТИ (A* Mini) ---
-        function findPath(mapData, sx, sy, tx, ty) { return []; } // Заглушка, если нужна полная - скопировать из main.js
-
-        // --- ГЛАВНАЯ ЛОГИКА БЛОКОВ (Синхронизировано с Main.js) ---
+        // --- ГЛАВНАЯ ЛОГИКА БЛОКОВ (ПОЛНАЯ КОПИЯ ИЗ MAIN.JS) ---
         function executeBlockLogic(block) {
             return new Promise(resolve => {
                 if (!isRunning) return resolve();
                 
-                // Используем setTimeout 0 для асинхронности
                 setTimeout(async () => {
                     const v = block.values;
                     const w = document.getElementById('game-world');
@@ -644,17 +696,15 @@ async function generateGameHTML() {
                     const stage = document.getElementById('game-stage');
 
                     switch (block.type) {
-                        // --- ИСПРАВЛЕННЫЙ СПИСОК БЛОКОВ (3D, Video, FX, и т.д.) ---
-                        
-                        // 1. ДВИЖЕНИЕ
+                        // --- ДВИЖЕНИЕ ---
                         case 'mov_set_pos': { const el=document.getElementById(v[0]); if(el){ el.style.left=v[1]+'px'; el.style.top=v[2]+'px'; } break; }
                         case 'mov_change_pos': { const el=document.getElementById(v[0]); if(el){ el.style.left=(parseFloat(el.style.left)||0)+parseFloat(v[1])+'px'; el.style.top=(parseFloat(el.style.top)||0)+parseFloat(v[2])+'px'; } break; }
                         case 'mov_look_at': { 
                             const me = document.getElementById(v[0]); const target = document.getElementById(v[1]);
                             if (me && target) {
-                                const r1 = me.getBoundingClientRect(); const r2 = target.getBoundingClientRect();
-                                const dx = (r2.left+r2.width/2) - (r1.left+r1.width/2);
-                                const dy = (r2.top+r2.height/2) - (r1.top+r1.height/2);
+                                const rect1 = me.getBoundingClientRect(); const rect2 = target.getBoundingClientRect();
+                                const dx = (rect2.left+rect2.width/2) - (rect1.left+rect1.width/2);
+                                const dy = (rect2.top+rect2.height/2) - (rect1.top+rect1.height/2);
                                 const deg = (Math.atan2(dy, dx) * 180) / Math.PI;
                                 me.style.transform = \`rotate(\${deg}deg)\`;
                             }
@@ -664,50 +714,106 @@ async function generateGameHTML() {
                         case 'mov_align': { 
                             const el=document.getElementById(v[0]); 
                             if(el){
-                                const GW=gameConfig.width; const GH=gameConfig.height;
+                                const winW = gameConfig.width; const winH = gameConfig.height;
                                 const width = el.offsetWidth; const height = el.offsetHeight;
-                                if(v[1]==='center'){ el.style.left=(GW/2 - width/2)+'px'; el.style.top=(GH/2 - height/2)+'px'; }
+                                if(v[1]==='center'){ el.style.left=(winW/2 - width/2)+'px'; el.style.top=(winH/2 - height/2)+'px'; }
                                 else if(v[1]==='left') el.style.left='0px';
-                                else if(v[1]==='right') el.style.left=(GW - width)+'px';
+                                else if(v[1]==='right') el.style.left=(winW - width)+'px';
                                 else if(v[1]==='top') el.style.top='0px';
-                                else if(v[1]==='bottom') el.style.top=(GH - height)+'px';
+                                else if(v[1]==='bottom') el.style.top=(winH - height)+'px';
                             } 
                             break; 
                         }
 
-                        // 2. ГРУППЫ
+                        // --- ГРУППЫ ---
                         case 'grp_add': { const el=document.getElementById(v[0]); if(el) el.classList.add('grp_'+v[1]); break; }
                         case 'grp_remove': { const el=document.getElementById(v[0]); if(el) el.classList.remove('grp_'+v[1]); break; }
                         case 'grp_move': { document.querySelectorAll('.grp_'+v[0]).forEach(el=>{ el.style.left=(parseFloat(el.style.left)||0)+parseFloat(v[1])+'px'; el.style.top=(parseFloat(el.style.top)||0)+parseFloat(v[2])+'px'; }); break; }
                         case 'grp_state': { document.querySelectorAll('.grp_'+v[0]).forEach(el=>{ el.style.display=(v[1]==='hide'?'none':'block'); }); break; }
                         case 'grp_delete': { document.querySelectorAll('.grp_'+v[0]).forEach(el=>el.remove()); break; }
 
-                        // 3. ОКНО
+                        // --- ОКНО ---
                         case 'win_set_title': { document.title = resolveValue(v[0]); break; }
                         case 'win_bg_color': { stage.style.background = v[0]; break; }
                         case 'win_bg_image': { const url=getAssetUrl(resolveValue(v[0])); stage.style.backgroundImage=\`url('\${url}')\`; stage.style.backgroundSize='cover'; break; }
                         case 'win_scale_mode': { gameConfig.scaleMode = v[0]; resizeGame(); break; }
+                        case 'win_set_size': {
+                            const w = parseInt(v[0]); const h = parseInt(v[1]);
+                            gameConfig.width = w; gameConfig.height = h;
+                            resizeGame();
+                            break;
+                        }
                         case 'win_set_cursor': { stage.style.cursor = v[0]; break; }
                         case 'win_fullscreen': { if(v[0]==='1') { if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); } else { if(document.exitFullscreen) document.exitFullscreen(); } break; }
-                        case 'win_console_state': { /* игнор в экспорте */ break; }
+                        case 'win_console_state': { break; } 
 
-                        // 4. ПЕРЕМЕННЫЕ
+                        // --- ПЕРЕМЕННЫЕ ---
                         case 'var_set': { gameVariables[v[0]] = resolveValue(v[1]); updateDynamicText(); break; }
                         case 'var_change': { gameVariables[v[0]] = (parseFloat(gameVariables[v[0]] || 0)) + parseFloat(resolveValue(v[1])); updateDynamicText(); break; }
-                        case 'log_print': { console.log('[LOG]:', resolveValue(v[0])); break; }
+                        case 'log_print': { 
+                            const msg = resolveValue(v[0]); console.log(msg); 
+                            break; 
+                        }
+                        case 'var_clamp': {
+                            const resVar = v[0]; const val = parseFloat(resolveValue(v[1])) || 0; const min = parseFloat(resolveValue(v[2])) || 0; const max = parseFloat(resolveValue(v[3])) || 0;
+                            gameVariables[resVar] = Math.min(Math.max(val, min), max); updateDynamicText();
+                            break;
+                        }
+                        case 'var_lerp': {
+                            const resVar = v[0]; const start = parseFloat(resolveValue(v[1])) || 0; const end = parseFloat(resolveValue(v[2])) || 0; const t = parseFloat(resolveValue(v[3])) || 0.1;
+                            gameVariables[resVar] = start + (end - start) * t; updateDynamicText();
+                            break;
+                        }
+                        case 'var_toggle': { const varName = v[0]; gameVariables[varName] = !gameVariables[varName]; updateDynamicText(); break; }
+                        case 'var_join': { const resVar = v[0]; const textA = resolveValue(v[1]); const textB = resolveValue(v[2]); gameVariables[resVar] = String(textA) + String(textB); updateDynamicText(); break; }
+                        
+                        // --- СОХРАНЕНИЕ ---
+                        case 'var_save_local': { const varName = v[0]; const saveKey = resolveValue(v[1]); if (gameVariables.hasOwnProperty(varName)) localStorage.setItem('GAME_SAVE_' + saveKey, gameVariables[varName]); break; }
+                        case 'var_load_local': { 
+                            const varName = v[0]; const saveKey = resolveValue(v[1]); const defVal = resolveValue(v[2]);
+                            const savedData = localStorage.getItem('GAME_SAVE_' + saveKey);
+                            if (savedData !== null) { const num = parseFloat(savedData); gameVariables[varName] = isNaN(num) ? savedData : num; } else { gameVariables[varName] = defVal; }
+                            updateDynamicText(); break; 
+                        }
+
+                        // --- МАТЕМАТИКА ---
                         case 'var_math': {
-                            const val1 = parseFloat(resolveValue(v[1]))||0; const op = v[2]; const val2 = parseFloat(resolveValue(v[3]))||0;
+                            const varName = v[0]; const val1 = parseFloat(resolveValue(v[1]))||0; const op = v[2]; const val2 = parseFloat(resolveValue(v[3]))||0;
                             let res = 0;
-                            if(op==='+')res=val1+val2; else if(op==='-')res=val1-val2; else if(op==='*')res=val1*val2; else if(op==='/')res=val2!==0?val1/val2:0; else if(op==='%')res=val1%val2; else if(op==='^')res=Math.pow(val1,val2);
-                            else if(op==='random')res=Math.random()*(val2-val1)+val1;
-                            else if(op==='min')res=Math.min(val1,val2); else if(op==='max')res=Math.max(val1,val2);
-                            else if(op==='sin')res=Math.sin(val1); else if(op==='cos')res=Math.cos(val1);
-                            gameVariables[v[0]] = res; updateDynamicText();
+                            switch (op) {
+                                case '+': res = val1 + val2; break;
+                                case '-': res = val1 - val2; break;
+                                case '*': res = val1 * val2; break;
+                                case '/': res = val2 !== 0 ? val1 / val2 : 0; break;
+                                case '%': res = val1 % val2; break;
+                                case '^': case 'pow': res = Math.pow(val1, val2); break;
+                                case 'min': res = Math.min(val1, val2); break;
+                                case 'max': res = Math.max(val1, val2); break;
+                                case 'random': res = Math.random() * (val2 - val1) + val1; break;
+                                case 'sqrt': res = Math.sqrt(val1); break;
+                                case 'abs': res = Math.abs(val1); break;
+                                case 'round': res = Math.round(val1); break;
+                                case 'floor': res = Math.floor(val1); break;
+                                case 'ceil': res = Math.ceil(val1); break;
+                                case 'sin': res = Math.sin(val1); break;
+                                case 'cos': res = Math.cos(val1); break;
+                                case 'tan': res = Math.tan(val1); break;
+                                case 'asin': res = Math.asin(val1); break;
+                                case 'acos': res = Math.acos(val1); break;
+                                case 'atan': res = Math.atan(val1); break;
+                                case 'deg2rad': res = val1 * (Math.PI / 180); break;
+                                case 'rad2deg': res = val1 * (180 / Math.PI); break;
+                                case 'log': case 'ln': res = Math.log(val1); break;
+                                case 'log10': res = Math.log10(val1); break;
+                                case 'exp': res = Math.exp(val1); break;
+                                default: res = val1; break;
+                            }
+                            gameVariables[varName] = res; updateDynamicText();
                             break;
                         }
                         case 'var_random': { gameVariables[v[0]] = Math.floor(Math.random() * (parseFloat(v[2]) - parseFloat(v[1]) + 1)) + parseFloat(v[1]); break; }
 
-                        // 5. ОБЪЕКТЫ
+                        // --- ОБЪЕКТЫ ---
                         case 'obj_create_rect_custom': { const d=document.createElement('div'); d.id=v[0]; d.style.position='absolute'; d.style.left=v[3]+'px'; d.style.top=v[4]+'px'; d.style.width=v[1]+'px'; d.style.height=v[2]+'px'; d.style.backgroundColor=v[5]; d.style.borderRadius=v[6]+'px'; w.appendChild(d); break; }
                         case 'obj_create_circle': { const d=document.createElement('div'); d.id=v[0]; d.style.position='absolute'; d.style.left=v[1]+'px'; d.style.top=v[2]+'px'; const s=parseInt(v[3])*2; d.style.width=s+'px'; d.style.height=s+'px'; d.style.backgroundColor=v[4]; d.style.borderRadius='50%'; w.appendChild(d); break; }
                         case 'obj_create_line': {
@@ -729,15 +835,16 @@ async function generateGameHTML() {
                         case 'obj_clone': { const src=document.getElementById(v[0]); if(src){ const c=src.cloneNode(true); c.id=v[1]; w.appendChild(c); } break; }
                         case 'obj_delete': { const el=document.getElementById(v[0]); if(el) el.remove(); break; }
                         case 'obj_set_size': { const el=document.getElementById(v[0]); if(el){ el.style.width=v[1]+'px'; el.style.height=v[2]+'px'; } break; }
+                        case 'obj_set_scale': { const el = document.getElementById(v[0]); if (el) el.style.transform = \`scale(\${v[1]}, \${v[2]})\`; break; }
                         case 'obj_set_rotate': { const el=document.getElementById(v[0]); if(el) el.style.transform=\`rotate(\${v[1]}deg)\`; break; }
                         case 'obj_set_color': { const el=document.getElementById(v[0]); if(el) el.style.backgroundColor=v[1]; break; }
+                        case 'obj_set_stroke': { const el = document.getElementById(v[0]); if (el) el.style.border = \`\${v[2]}px solid \${v[1]}\`; break; }
                         case 'obj_set_texture': { const el=document.getElementById(v[0]); if(el){ const url=getAssetUrl(resolveValue(v[1])); el.style.backgroundImage=\`url('\${url}')\`; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.style.backgroundRepeat='no-repeat'; } break; }
                         case 'obj_get_pos': { const el=document.getElementById(v[0]); if(el){ gameVariables[v[1]]=parseFloat(el.style.left)||0; gameVariables[v[2]]=parseFloat(el.style.top)||0; } break; }
                         case 'obj_set_zindex': { const el=document.getElementById(v[0]); if(el) el.style.zIndex=v[1]; break; }
                         case 'obj_set_shadow': { const el=document.getElementById(v[0]); if(el) el.style.boxShadow=\`5px 5px \${v[2]}px \${v[1]}\`; break; }
                         case 'obj_set_blur': { const el=document.getElementById(v[0]); if(el) el.style.filter=\`blur(\${v[1]}px)\`; break; }
                         case 'obj_set_visible': { const el=document.getElementById(v[0]); if(el){ if(v[1]==='show')el.style.display='block'; else if(v[1]==='hide')el.style.display='none'; else el.style.display=(el.style.display==='none'?'block':'none'); } break; }
-
                         case 'obj_set_border_adv': {
                             const targetId = v[0]; const el = document.getElementById(targetId);
                             if (el) {
@@ -755,69 +862,61 @@ async function generateGameHTML() {
                             }
                             break;
                         }
-
+                        
+                        // --- СПРАЙТЫ ---
                         case 'obj_create_sprite': {
                             const id = resolveValue(v[0]);
                             if (document.getElementById(id)) break;
-
                             const url = getAssetUrl(resolveValue(v[1]));
                             const x = parseFloat(resolveValue(v[2]));
                             const y = parseFloat(resolveValue(v[3]));
-                            const w = parseFloat(resolveValue(v[4]));
-                            const h = parseFloat(resolveValue(v[5]));
+                            const wVal = parseFloat(resolveValue(v[4]));
+                            const hVal = parseFloat(resolveValue(v[5]));
                             const physType = resolveValue(v[6]); 
                             const zIdx = parseInt(resolveValue(v[7])) || 1;
-
-                            // 1. Создаем DIV
                             const el = document.createElement('div');
-                            el.id = id;
-                            el.style.position = 'absolute';
-                            el.style.left = x + 'px';
-                            el.style.top = y + 'px';
-                            el.style.width = w + 'px';
-                            el.style.height = h + 'px';
+                            el.id = id; el.style.position = 'absolute';
+                            el.style.left = x + 'px'; el.style.top = y + 'px';
+                            el.style.width = wVal + 'px'; el.style.height = hVal + 'px';
                             el.style.backgroundImage = "url('" + url + "')";
                             el.style.backgroundSize = 'contain';
                             el.style.backgroundRepeat = 'no-repeat';
                             el.style.backgroundPosition = 'center';
                             el.style.zIndex = zIdx;
-                            
                             (document.getElementById('game-stage') || document.body).appendChild(el);
-
-                            // 2. ФИЗИКА (FIX: Use matterEngine instead of window.engine)
                             if (physType !== 'None' && typeof Matter !== 'undefined' && matterEngine) {
                                 const isStatic = (physType === 'Static' || physType === 'static');
-                                const centerX = x + w / 2;
-                                const centerY = y + h / 2;
-
-                                const body = Matter.Bodies.rectangle(centerX, centerY, w, h, {
-                                    isStatic: isStatic,
-                                    label: id,
-                                    friction: 0.5,
-                                    restitution: 0.2,
-                                    angle: 0
+                                const centerX = x + wVal / 2;
+                                const centerY = y + hVal / 2;
+                                const body = Matter.Bodies.rectangle(centerX, centerY, wVal, hVal, {
+                                    isStatic: isStatic, label: id, friction: 0.5, restitution: 0.2, angle: 0
                                 });
-
+                                if(isStatic) Matter.Body.setStatic(body, true);
                                 Matter.World.add(matterEngine.world, body);
-                                
-                                // Привязка спрайта
                                 bodyMap.set(id, body);
                             }
                             break;
                         }
-
                         case 'obj_set_sprite_frame': {
-                            const id = resolveValue(v[0]);
-                            const el = document.getElementById(id);
-                            if (el) {
-                                const url = getAssetUrl(resolveValue(v[1]));
-                                el.style.backgroundImage = "url('" + url + "')";
+                            const id = resolveValue(v[0]); const el = document.getElementById(id);
+                            if (el) { const url = getAssetUrl(resolveValue(v[1])); el.style.backgroundImage = "url('" + url + "')"; }
+                            break;
+                        }
+                        case 'obj_spawn_clone': {
+                            const original = document.getElementById(v[0]); const newName = resolveValue(v[1]);
+                            const x = parseFloat(resolveValue(v[2])); const y = parseFloat(resolveValue(v[3]));
+                            if (original) {
+                                const clone = original.cloneNode(true); clone.id = newName;
+                                clone.style.left = x + 'px'; clone.style.top = y + 'px';
+                                clone.style.display = 'block';
+                                clone.classList.remove('ui-draggable', 'ui-draggable-handle');
+                                document.getElementById('game-world').appendChild(clone);
                             }
                             break;
                         }
 
-                        // 6. ТЕКСТ
-                        case 'txt_create': { if(document.getElementById(v[0])) break; const d=document.createElement('div'); d.id=v[0]; d.style.position='absolute'; d.style.left=v[1]+'px'; d.style.top=v[2]+'px'; d.dataset.template=v[3]; d.innerText=resolveText(v[3]); d.style.fontSize=v[4]+'px'; d.style.color=v[5]; w.appendChild(d); break; }
+                        // --- ТЕКСТ ---
+                        case 'txt_create': { if(document.getElementById(v[0])) break; const d=document.createElement('div'); d.id=v[0]; d.style.position='absolute'; d.style.left=v[1]+'px'; d.style.top=v[2]+'px'; d.dataset.template=v[3]; d.innerText=resolveText(v[3]); d.style.fontSize=v[4]+'px'; d.style.color=v[5]; d.style.whiteSpace='nowrap'; w.appendChild(d); break; }
                         case 'txt_modify': { 
                             const t=document.getElementById(v[0]); if(!t) break;
                             if(v[1]==='add') t.innerText += resolveText(v[2]);
@@ -839,14 +938,14 @@ async function generateGameHTML() {
                         case 'txt_hide': { const t=document.getElementById(v[0]); if(t) t.style.display='none'; break; }
                         case 'txt_set_opacity': { const t=document.getElementById(v[0]); if(t) t.style.opacity=v[1]; break; }
                         
-                        // 7. АНИМАЦИЯ
+                        // --- АНИМАЦИЯ ---
                         case 'anim_move_to': { const el=document.getElementById(v[0]); if(el){ el.style.transition=\`all \${v[3]}s ease-in-out\`; el.offsetHeight; el.style.left=v[1]+'px'; el.style.top=v[2]+'px'; } break; }
                         case 'anim_rotate_to': { const el=document.getElementById(v[0]); if(el){ el.style.transition=\`transform \${v[2]}s ease-in-out\`; el.style.transform=\`rotate(\${v[1]}deg)\`; } break; }
                         case 'anim_scale_to': { const el=document.getElementById(v[0]); if(el){ el.style.transition=\`transform \${v[3]}s ease-in-out\`; el.style.transform=\`scale(\${v[1]}, \${v[2]})\`; } break; }
                         case 'anim_fade': { const el=document.getElementById(v[0]); if(el){ el.style.transition=\`opacity \${v[2]}s ease-in-out\`; el.style.opacity=v[1]; } break; }
                         case 'anim_stop': { const el=document.getElementById(v[0]); if(el){ const s=window.getComputedStyle(el); el.style.left=s.left; el.style.top=s.top; el.style.transform=s.transform; el.style.opacity=s.opacity; el.style.transition='none'; } break; }
                         
-                        // 8. ЗВУК
+                        // --- ЗВУК ---
                         case 'snd_load': { 
                             const id=v[0]; const src=getAssetUrl(resolveValue(v[1]));
                             if(id && src) {
@@ -862,10 +961,9 @@ async function generateGameHTML() {
                         case 'snd_stop': { const s=loadedSounds[v[0]]; if(s){ s.pause(); s.currentTime=0; } break; }
                         case 'snd_loop': { const s=loadedSounds[v[0]]; if(s) s.loop=(v[1]==='1'||v[1]==='true'); break; }
                         case 'snd_stop_all': { Object.values(loadedSounds).forEach(s=>{s.pause(); s.currentTime=0;}); break; }
-                        case 'snd_set_volume': { const s=loadedSounds[v[0]]; if(s){ let vol=parseFloat(resolveValue(v[1])); if(vol<0)vol=0;if(vol>1)vol=1; s.volume=vol; } break; }
                         
-                        // 9. UI
-                        case 'ui_panel': { if(document.getElementById(v[0])) break; const p=document.createElement('div'); p.id=v[0]; p.className='ui-element'; p.style.left=v[1]+'px'; p.style.top=v[2]+'px'; p.style.width=v[3]+'px'; p.style.height=v[4]+'px'; p.style.backgroundColor=v[5]; p.style.borderRadius='12px'; ui.appendChild(p); break; }
+                        // --- UI ---
+                        case 'ui_panel': { if(document.getElementById(v[0])) break; const p=document.createElement('div'); p.id=v[0]; p.className='ui-element'; p.style.left=v[1]+'px'; p.style.top=v[2]+'px'; p.style.width=v[3]+'px'; p.style.height=v[4]+'px'; p.style.backgroundColor=v[5]; p.style.borderRadius='12px'; p.style.boxShadow='0 10px 30px rgba(0,0,0,0.5)'; ui.appendChild(p); break; }
                         case 'ui_button_create': { if(document.getElementById(v[0])) break; const b=document.createElement('button'); b.id=v[0]; b.className='ui-element ui-btn'; b.innerText=v[1]; b.style.left=v[2]+'px'; b.style.top=v[3]+'px'; b.style.width=v[4]+'px'; b.style.height=v[5]+'px'; b.style.fontSize=parseInt(v[5])*0.4+'px'; ui.appendChild(b); break; }
                         case 'ui_progressbar': { 
                             let bar=document.getElementById(v[0]); let val=parseFloat(resolveText(v[1])); if(val>100)val=100; if(val<0)val=0;
@@ -878,62 +976,95 @@ async function generateGameHTML() {
                              const vName=v[1]; s.min=v[2]; s.max=v[3]; s.style.left=v[4]+'px'; s.style.top=v[5]+'px'; s.style.width='150px';
                              s.oninput=(e)=>{ gameVariables[vName]=e.target.value; updateDynamicText(); }; ui.appendChild(s); break;
                         }
-                        case 'ui_toggle': { const el=document.getElementById(v[0]); if(el) { if(v[1]==='show') el.style.display='block'; else if(v[1]==='hide') el.style.display='none'; else el.style.display = (el.style.display==='none' ? 'block' : 'none'); } break; }
+                        case 'ui_toggle': { const el=document.getElementById(v[0]); if(el) { const mode=v[1]; const isHidden = el.style.display==='none'; if(mode==='show') el.style.display='block'; else if(mode==='hide') el.style.display='none'; else { el.style.display = (isHidden ? 'block' : 'none'); } } break; }
                         case 'ui_anchor': {
-                            const el=document.getElementById(v[0]); const anc=v[1]; const ox=parseFloat(resolveValue(v[2]))||0; const oy=parseFloat(resolveValue(v[3]))||0;
+                            const el=document.getElementById(v[0]); const anchor=v[1]; const offX=parseFloat(resolveValue(v[2]))||0; const offY=parseFloat(resolveValue(v[3]))||0;
                             if(el){
                                 el.style.left='auto'; el.style.right='auto'; el.style.top='auto'; el.style.bottom='auto'; el.style.position='absolute'; el.style.margin='0';
-                                let tr = el.style.transform || '';
-                                tr = tr.replace(/translate\\([^)]+\\)/g, '').replace(/translateX\\([^)]+\\)/g, '').replace(/translateY\\([^)]+\\)/g, '').trim();
-                                let nt = '';
-                                switch(anc){
-                                    case 'top-left': el.style.left=ox+'px'; el.style.top=oy+'px'; break;
-                                    case 'top-center': el.style.left='50%'; el.style.top=oy+'px'; nt=\`translateX(calc(-50% + \${ox}px))\`; break;
-                                    case 'top-right': el.style.right=ox+'px'; el.style.top=oy+'px'; break;
-                                    case 'center-left': el.style.left=ox+'px'; el.style.top='50%'; nt=\`translateY(calc(-50% + \${oy}px))\`; break;
-                                    case 'center': el.style.left='50%'; el.style.top='50%'; nt=\`translate(calc(-50% + \${ox}px), calc(-50% + \${oy}px))\`; break;
-                                    case 'center-right': el.style.right=ox+'px'; el.style.top='50%'; nt=\`translateY(calc(-50% + \${oy}px))\`; break;
-                                    case 'bottom-left': el.style.left=ox+'px'; el.style.bottom=oy+'px'; break;
-                                    case 'bottom-center': el.style.left='50%'; el.style.bottom=oy+'px'; nt=\`translateX(calc(-50% + \${ox}px))\`; break;
-                                    case 'bottom-right': el.style.right=ox+'px'; el.style.bottom=oy+'px'; break;
+                                let currentTransform = el.style.transform || '';
+                                currentTransform = currentTransform.replace(/translate\\([^)]+\\)/g, '').replace(/translateX\\([^)]+\\)/g, '').replace(/translateY\\([^)]+\\)/g, '').trim();
+                                let newTranslate = '';
+                                switch(anchor){
+                                    case 'top-left': el.style.left=offX+'px'; el.style.top=offY+'px'; break;
+                                    case 'top-center': el.style.left='50%'; el.style.top=offY+'px'; newTranslate=\`translateX(calc(-50% + \${offX}px))\`; break;
+                                    case 'top-right': el.style.right=offX+'px'; el.style.top=offY+'px'; break;
+                                    case 'center-left': el.style.left=offX+'px'; el.style.top='50%'; newTranslate=\`translateY(calc(-50% + \${offY}px))\`; break;
+                                    case 'center': el.style.left='50%'; el.style.top='50%'; newTranslate=\`translate(calc(-50% + \${offX}px), calc(-50% + \${offY}px))\`; break;
+                                    case 'center-right': el.style.right=offX+'px'; el.style.top='50%'; newTranslate=\`translateY(calc(-50% + \${offY}px))\`; break;
+                                    case 'bottom-left': el.style.left=offX+'px'; el.style.bottom=offY+'px'; break;
+                                    case 'bottom-center': el.style.left='50%'; el.style.bottom=offY+'px'; newTranslate=\`translateX(calc(-50% + \${offX}px))\`; break;
+                                    case 'bottom-right': el.style.right=offX+'px'; el.style.bottom=offY+'px'; break;
                                     case 'stretch-full': el.style.left='0'; el.style.top='0'; el.style.width='100%'; el.style.height='100%'; break;
                                 }
-                                el.style.transform = nt ? \`\${nt} \${tr}\` : tr;
+                                el.style.transform = newTranslate ? \`\${newTranslate} \${currentTransform}\` : currentTransform;
                             }
                             break;
                         }
+
+                        // --- ДИАЛОГИ ---
                         case 'ui_dialog_show': {
-                            const nm=resolveValue(v[0]); const tx=resolveValue(v[1]); const av=resolveValue(v[2]); const showAv=v[3]==='yes';
+                            const name=resolveValue(v[0])||'NPC'; const text=resolveValue(v[1])||'...'; const avaUrl=resolveValue(v[2]); const showAvatar=v[3]==='yes';
+                            const position=v[4]||'bottom'; const style=v[5]||'classic'; const closeMode=v[6]||'click_anywhere'; const statusVar=v[7];
+                            
                             const old=document.getElementById('game-dialog-overlay'); if(old)old.remove();
                             const dlg=document.createElement('div'); dlg.id='game-dialog-overlay';
-                            dlg.style.cssText='position:absolute; bottom:20px; left:5%; width:90%; background:rgba(0,0,0,0.85); border:2px solid #fff; border-radius:8px; padding:15px; color:#fff; z-index:10000; display:flex; gap:15px; align-items:start; opacity:0; transition:opacity 0.3s; box-sizing:border-box;';
-                            dlg.innerHTML=\`\${showAv && av ? \`<img src="\${getAssetUrl(av)}" style="width:60px; height:60px; border-radius:50%; object-fit:cover; border:2px solid rgba(255,255,255,0.2);">\` : ''}<div style="flex:1;"><div style="color:#ff9800;font-weight:bold;margin-bottom:5px;font-size:1.1em;">\${nm}</div><div style="font-size:14px;line-height:1.4;white-space:pre-wrap;">\${tx}</div></div><div style="position:absolute; bottom:5px; right:10px; font-size:10px; opacity:0.5;">▼</div>\`;
+
+                            let bgColor='rgba(0,0,0,0.85)', textColor='#fff', nameColor='#ff9800', borderColor='#fff', radius='8px', boxCSS='';
+                            if(style==='pixel'){ bgColor='#2d2d2d'; textColor='#fff'; borderColor='#fff'; radius='0'; nameColor='#ffcc00'; boxCSS=\`left:0; width:100%; border-top:4px solid \${borderColor}; border-bottom:4px solid \${borderColor}; font-family:'Courier New',monospace; image-rendering:pixelated; \${position==='center'?'':position==='top'?'top:0;':'bottom:0;'}\`; }
+                            else if(style==='modern'){ bgColor='rgba(255,255,255,0.95)'; textColor='#333'; borderColor='transparent'; radius='12px'; nameColor='#E91E63'; boxCSS=\`left:50%; width:600px; max-width:90%; \${position==='center'?'transform:translate(-50%,-50%);':'transform:translateX(-50%);'} box-shadow:0 10px 40px rgba(0,0,0,0.3); font-family:sans-serif;\`; }
+                            else { boxCSS=\`left:5%; width:90%; border:2px solid \${borderColor}; font-family:monospace; \${position==='center'?'transform:translateY(-50%);':''}\`; }
+
+                            let posCSS=''; if(style!=='pixel'){ if(position==='top')posCSS='top:20px;bottom:auto;'; else if(position==='center')posCSS='top:50%;bottom:auto;'; else posCSS='bottom:20px;top:auto;'; }
+
+                            dlg.style.cssText=\`position:absolute; z-index:10000; display:flex; align-items:flex-start; gap:15px; box-sizing:border-box; padding:15px; transition:opacity 0.3s; opacity:0; background:\${bgColor}; color:\${textColor}; border-radius:\${radius}; \${posCSS} \${boxCSS}\`;
+
+                            const htmlAvatar = (showAvatar && avaUrl) ? \`<img src="\${getAssetUrl(avaUrl)}" style="width:60px; height:60px; object-fit:cover; flex-shrink:0; border-radius:\${style==='pixel'?'0':'50%'}; border:2px solid rgba(255,255,255,0.2);">\` : '';
+                            const btnHtml = closeMode==='button_next' ? \`<button id="dlg-next-btn" style="align-self:flex-end;margin-left:10px;flex-shrink:0;background:\${style==='modern'?'#E91E63':'#fff'};color:\${style==='modern'?'#fff':'#000'};border:none;padding:8px 16px;border-radius:4px;font-weight:bold;cursor:pointer;">OK</button>\` : \`<div style="position:absolute;bottom:5px;right:10px;font-size:10px;opacity:0.5;">▼</div>\`;
+
+                            dlg.innerHTML=\`\${htmlAvatar}<div style="flex:1;min-width:0;"><div style="font-weight:bold;color:\${nameColor};margin-bottom:6px;font-size:1.1em;">\${name}</div><div style="line-height:1.4;white-space:pre-wrap;word-wrap:break-word;color:\${textColor};">\${text}</div></div>\${btnHtml}\`;
                             stage.appendChild(dlg); setTimeout(()=>dlg.style.opacity='1',10);
-                            return new Promise(r=>{ dlg.onclick=()=>{ dlg.style.opacity='0'; setTimeout(()=>{dlg.remove(); if(v[7])gameVariables[v[7]]=1; r();},250); }; });
+
+                            return new Promise(r=>{ 
+                                const close=()=>{ dlg.style.opacity='0'; setTimeout(()=>{if(dlg.parentNode)dlg.remove(); if(statusVar)gameVariables[statusVar]=1; r();},250); };
+                                if(closeMode==='wait_3s') setTimeout(close, 3000);
+                                else if(closeMode==='button_next'){ const b=document.getElementById('dlg-next-btn'); if(b)b.onclick=(e)=>{e.stopPropagation();close();}; }
+                                else setTimeout(()=>{dlg.onclick=close;},100);
+                            });
                         }
                         case 'ui_dialog_hide': { const d=document.getElementById('game-dialog-overlay'); if(d)d.remove(); break; }
-
-                        // 10. ФИЗИКА
-                        case 'phys_enable': { 
-                             const el=document.getElementById(v[0]); 
-                             if(el && matterEngine) {
-                                const valStatic = resolveValue(v[2]);
-                                const isStatic = (valStatic === '1' || valStatic === 'true' || valStatic === 'Static' || valStatic === true);
-                                const w=el.offsetWidth; const h=el.offsetHeight;
-                                const x=parseFloat(el.style.left)||0; const y=parseFloat(el.style.top)||0;
-                                const body = Matter.Bodies.rectangle(x+w/2, y+h/2, w, h, { isStatic: isStatic, restitution: parseFloat(v[3])||0, label:v[0] });
-                                Matter.World.add(matterEngine.world, body); bodyMap.set(v[0], body);
-                             }
-                             break; 
-                        }
-                        case 'phys_set_gravity': { worldGravity.x=parseFloat(v[0]); worldGravity.y=parseFloat(v[1]); if(matterEngine) matterEngine.world.gravity.y = worldGravity.y; break; }
-                        case 'phys_add_force': { const b=bodyMap.get(v[0]); if(b) Matter.Body.applyForce(b, b.position, {x:parseFloat(v[1])*0.001, y:parseFloat(v[2])*0.001}); break; }
-                        case 'phys_set_velocity': { /* для simple physics если нужно */ break; }
                         
-                        // 11. 3D & VIDEO & FX (ИЗ ВАШЕГО НОВОГО БЛОКА)
+                        case 'inv_add': { const item=resolveValue(v[0]); if(!window.gameInventory.includes(item)) window.gameInventory.push(item); break; }
+                        case 'inv_has': { const item=resolveValue(v[0]); gameVariables[v[1]] = window.gameInventory.includes(item)?1:0; break; }
+                        case 'quest_set': { window.gameQuests[v[0]] = resolveValue(v[1]); break; }
+
+                        case 'cam_follow': { const tid=v[0]; if(document.getElementById(tid)){ cameraState.target=tid; cameraState.lerp=parseFloat(v[1])||0.1; } break; }
+                        case 'cam_set_pos': { cameraState.target=null; cameraState.x=parseFloat(v[0]); cameraState.y=parseFloat(v[1]); break; }
+                        case 'cam_zoom': { cameraState.zoom=parseFloat(v[0]); break; }
+                        case 'cam_shake': { cameraState.shakeInfo={power:parseFloat(v[0]), time:parseFloat(v[1])}; break; }
+                        case 'cam_reset': { cameraState={x:0,y:0,zoom:1,target:null,lerp:0.1,shakeInfo:{power:0,time:0}}; break; }
+                        case 'cam_zoom_to': { const tZ=parseFloat(v[0]); const dur=parseFloat(v[1]); if(w) { w.style.transition=\`transform \${dur}s ease-in-out\`; cameraState.zoom=tZ; } break; }
+                        case 'cam_set_parallax': { const t=v[0]; const f=v[1]; const el=document.getElementById(t); if(el)el.dataset.parallax=f; else document.querySelectorAll('.grp_'+t).forEach(i=>i.dataset.parallax=f); break; }
+
+                        case 'data_save': { localStorage.setItem(\`ecrous_data_\${currentProjectName}_\${v[0]}\`, resolveValue(v[1])); break; }
+                        case 'data_load': { const val=localStorage.getItem(\`ecrous_data_\${currentProjectName}_\${v[0]}\`); if(val!==null) gameVariables[v[1]] = isNaN(val)?val:parseFloat(val); updateDynamicText(); break; }
+                        case 'data_clear': { Object.keys(localStorage).forEach(k=>{ if(k.startsWith(\`ecrous_data_\${currentProjectName}_\`)) localStorage.removeItem(k); }); break; }
+
+                        case 'input_key_down': { gameVariables[v[1]] = activeKeys[v[0]]?1:0; break; }
+                        case 'input_mouse_pos': { gameVariables[v[0]] = window.mouseX||0; gameVariables[v[1]] = window.mouseY||0; break; }
+                        case 'input_touch': { gameVariables[v[0]] = window.isTouching?1:0; break; }
+                        case 'input_axis': { const min=v[0], max=v[1]; let val=0; if(activeKeys[min]) val-=1; if(activeKeys[max]) val+=1; gameVariables[v[2]]=val; break; }
+
+                        case 'logic_obj_exists': { gameVariables[v[1]] = document.getElementById(v[0])?1:0; break; }
+                        case 'logic_is_visible': { const el=document.getElementById(v[0]); if(!el) gameVariables[v[1]]=0; else { const s=window.getComputedStyle(el); gameVariables[v[1]] = (s.display!=='none' && s.visibility!=='hidden' && s.opacity!=='0')?1:0; } break; }
+                        case 'interact_dist': { const a=document.getElementById(v[0]), b=document.getElementById(v[1]); if(a&&b){ const r1=a.getBoundingClientRect(), r2=b.getBoundingClientRect(); const x1=r1.left+r1.width/2, y1=r1.top+r1.height/2, x2=r2.left+r2.width/2, y2=r2.top+r2.height/2; gameVariables[v[2]] = Math.sqrt(Math.pow(x2-x1,2)+Math.pow(y2-y1,2)) / (window.zoomLevel||1); } else gameVariables[v[2]]=999999; break; }
+                        case 'zone_check': { const me=document.getElementById(v[0]), zone=document.getElementById(v[1]); let res=0; if(me&&zone){ const r1=me.getBoundingClientRect(), r2=zone.getBoundingClientRect(); if(!(r2.left>r1.right || r2.right<r1.left || r2.top>r1.bottom || r2.bottom<r1.top)) res=1; } gameVariables[v[2]]=res; break; }
+
+                        case 'ai_move_to': { const me=document.getElementById(v[0]), target=document.getElementById(v[1]), speed=parseFloat(v[2]); if(me&&target){ const mx=parseFloat(me.style.left||0), my=parseFloat(me.style.top||0); const tx=parseFloat(target.style.left||0), ty=parseFloat(target.style.top||0); const dx=tx-mx, dy=ty-my, dist=Math.sqrt(dx*dx+dy*dy); if(dist>speed){ me.style.left=mx+(dx/dist)*speed+'px'; me.style.top=my+(dy/dist)*speed+'px'; } } break; }
+                        case 'ai_flee': { const me=document.getElementById(v[0]), target=document.getElementById(v[1]), speed=parseFloat(v[2]); if(me&&target){ const mx=parseFloat(me.style.left||0), my=parseFloat(me.style.top||0); const tx=parseFloat(target.style.left||0), ty=parseFloat(target.style.top||0); const dx=mx-tx, dy=my-ty, dist=Math.sqrt(dx*dx+dy*dy); if(dist>0){ me.style.left=mx+(dx/dist)*speed+'px'; me.style.top=my+(dy/dist)*speed+'px'; } } break; }
+
                         case 'scene_3d_init': { 
                             if(stage && w){ stage.style.perspective=v[0]+'px'; stage.style.overflow='hidden'; w.style.transformStyle='preserve-3d'; w.style.width="100%"; w.style.height="100%"; } 
-                            if(!document.getElementById('css-3d-s')){const s=document.createElement('style');s.id='css-3d-s';s.innerHTML='.ecr-cube,.ecr-plane{position:absolute;transform-style:preserve-3d;} .ecr-face{position:absolute;width:100%;height:100%;display:flex;align-items:center;justify-content:center;}.ecr-face.front{transform:rotateY(0deg) translateZ(calc(var(--s)/2));}.ecr-face.back{transform:rotateY(180deg) translateZ(calc(var(--s)/2));}.ecr-face.right{transform:rotateY(90deg) translateZ(calc(var(--s)/2));}.ecr-face.left{transform:rotateY(-90deg) translateZ(calc(var(--s)/2));}.ecr-face.top{transform:rotateX(90deg) translateZ(calc(var(--s)/2));}.ecr-face.bottom{transform:rotateX(-90deg) translateZ(calc(var(--s)/2));}';document.head.appendChild(s);}
+                            if(!document.getElementById('css-3d-s')){const s=document.createElement('style');s.id='css-3d-s';s.innerHTML='.ecr-cube,.ecr-plane{position:absolute;transform-style:preserve-3d;} .ecr-face{position:absolute;width:100%;height:100%;border:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;}.ecr-face.front{transform:rotateY(0deg) translateZ(calc(var(--s)/2));}.ecr-face.back{transform:rotateY(180deg) translateZ(calc(var(--s)/2));}.ecr-face.right{transform:rotateY(90deg) translateZ(calc(var(--s)/2));}.ecr-face.left{transform:rotateY(-90deg) translateZ(calc(var(--s)/2));}.ecr-face.top{transform:rotateX(90deg) translateZ(calc(var(--s)/2));}.ecr-face.bottom{transform:rotateX(-90deg) translateZ(calc(var(--s)/2));}';document.head.appendChild(s);}
                             break; 
                         }
                         case 'obj_3d_create_cube': { 
@@ -943,6 +1074,37 @@ async function generateGameHTML() {
                             ['front','back','right','left','top','bottom'].forEach(f=>{const d=document.createElement('div');d.className='ecr-face '+f;d.style.backgroundColor=resolveValue(v[2]);d.style.opacity='0.9';c.appendChild(d);});
                             w.appendChild(c); break; 
                         }
+                        case 'obj_3d_transform': { const el=document.getElementById(v[0]); if(el) el.style.transform=\`translate3d(\${resolveValue(v[1])}px,\${resolveValue(v[2])}px,\${resolveValue(v[3])}px) rotateX(\${resolveValue(v[4])}deg) rotateY(\${resolveValue(v[5])}deg) rotateZ(\${resolveValue(v[6])}deg)\`; break; }
+                        case 'cam_3d_move': { const x=resolveValue(v[0]), y=resolveValue(v[1]), z=resolveValue(v[2]), ry=resolveValue(v[3]); if(w) w.style.transform=\`translateZ(\${z}px) rotateY(\${-ry}deg) translate3d(\${-x}px, \${-y}px, 0px)\`; break; }
+                        case 'obj_3d_create_plane': {
+                             const id=v[0]; if(document.getElementById(id))break;
+                             const pl=document.createElement('div'); pl.id=id; pl.className='ecr-plane';
+                             pl.style.position='absolute'; pl.style.width=resolveValue(v[1])+'px'; pl.style.height=resolveValue(v[2])+'px'; pl.style.backgroundColor=resolveValue(v[3]);
+                             pl.style.transform=\`translate3d(\${resolveValue(v[4])}px,\${resolveValue(v[5])}px,\${resolveValue(v[6])}px) rotateX(\${resolveValue(v[7])}deg)\`;
+                             pl.style.transformOrigin='center center'; w.appendChild(pl); break;
+                        }
+                        case 'obj_3d_billboard': {
+                            const id=v[0]; if(document.getElementById(id))break;
+                            const s=document.createElement('div'); s.id=id; s.style.position='absolute';
+                            s.style.width=resolveValue(v[2])+'px'; s.style.height=resolveValue(v[3])+'px';
+                            s.style.backgroundImage=\`url('\${getAssetUrl(resolveValue(v[1]))}')\`; s.style.backgroundSize='contain'; s.style.backgroundRepeat='no-repeat'; s.style.backgroundPosition='center bottom';
+                            s.style.transformStyle='preserve-3d';
+                            s.style.transform=\`translate3d(\${resolveValue(v[4])}px,\${resolveValue(v[5])}px,\${resolveValue(v[6])}px) translate(-50%, -100%)\`;
+                            s.dataset.pos3d=JSON.stringify({x:resolveValue(v[4]),y:resolveValue(v[5]),z:resolveValue(v[6])});
+                            w.appendChild(s); break;
+                        }
+                        case 'cam_3d_look_at': {
+                            const el=document.getElementById(v[0]); 
+                            if(el && w.style.transform){
+                                const match=w.style.transform.match(/rotateY\\(([-\\d.]+)deg\\)/);
+                                const camRotY = match ? parseFloat(match[1]) : 0;
+                                let bx=0,by=0,bz=0;
+                                if(el.dataset.pos3d){ const p=JSON.parse(el.dataset.pos3d); bx=p.x;by=p.y;bz=p.z; }
+                                el.style.transform=\`translate3d(\${bx}px,\${by}px,\${bz}px) rotateY(\${-camRotY}deg) translate(-50%, -100%)\`;
+                            }
+                            break;
+                        }
+                        
                         case 'video_load': {
                             const vidId=v[0]; const src=getAssetUrl(resolveValue(v[1]));
                             const old=document.getElementById(vidId); if(old) old.remove();
@@ -950,21 +1112,46 @@ async function generateGameHTML() {
                             vid.controls=false; 
                             vid.onended=()=>{
                                 if(globalCurrentSceneData){
-                                    globalCurrentSceneData.objects.forEach(o=>{
-                                        if(!o.scripts)return;
-                                        o.scripts.filter(b=>b.type==='video_on_end'&&b.values[0]===vidId).forEach(trig=>executeChain(trig,o.scripts,o.connections||[]));
-                                    });
+                                    globalCurrentSceneData.objects.forEach(o=>{ if(!o.scripts)return; o.scripts.filter(b=>b.type==='video_on_end'&&b.values[0]===vidId).forEach(trig=>executeChain(trig,o.scripts,o.connections||[])); });
                                 }
                             };
-                            stage.appendChild(vid);
-                            break;
+                            stage.appendChild(vid); break;
                         }
                         case 'video_control': { const vid=document.getElementById(v[0]); const act=v[1]; if(vid){ if(act==='play')vid.play().catch(e=>{}); else if(act==='pause')vid.pause(); else if(act==='stop'){vid.pause();vid.currentTime=0;} else if(act==='remove')vid.remove(); } break; }
-                        case 'pp_filter_set': { const t=v[0]; const val=parseFloat(resolveValue(v[1])); if(w){ w.style.filter = (t==='blur')?\`blur(\${val}px)\`:\`\${t}(\${val}%)\`; } break; }
-                        case 'pp_vignette': { if(v[0]==='1'){ const d=document.createElement('div'); d.id='pp-vignette'; d.style.cssText=\`position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800;background:radial-gradient(circle,transparent 50%,\${v[2]} 100%);opacity:\${resolveValue(v[1])};mix-blend-mode:multiply;\`; stage.appendChild(d); } else { const d=document.getElementById('pp-vignette'); if(d)d.remove(); } break; }
-                        case 'pp_crt_effect': { if(v[0]==='1'){ const d=document.createElement('div'); d.id='pp-crt'; d.style.cssText=\`position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9990;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.25) 50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06));background-size:100% 4px,6px 100%;opacity:\${resolveValue(v[1])};\`; stage.appendChild(d); } else { const d=document.getElementById('pp-crt'); if(d)d.remove(); } break; }
+                        case 'video_settings': { const vid=document.getElementById(v[0]); if(vid){ vid.volume=parseFloat(resolveValue(v[1])); vid.loop=(v[2]==='1'||v[2]==='true'); vid.style.opacity=resolveValue(v[3]); } break; }
 
-                        // 12. СЦЕНЫ И ДАННЫЕ
+                        case 'pp_filter_set': { const t=v[0]; const val=parseFloat(resolveValue(v[1])); if(w){ let f=''; if(t==='blur')f=\`blur(\${val}px)\`; else if(t==='hue-rotate')f=\`hue-rotate(\${val}deg)\`; else f=\`\${t}(\${val}%)\`; w.style.filter=f; } break; }
+                        case 'pp_vignette': { if(v[0]==='1'||v[0]==='true'){ const d=document.createElement('div'); d.id='pp-overlay-vignette'; d.style.cssText=\`position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800;background:radial-gradient(circle,transparent 50%,\${v[2]} 100%);opacity:\${resolveValue(v[1])};mix-blend-mode:multiply;\`; stage.appendChild(d); } else { const d=document.getElementById('pp-overlay-vignette'); if(d)d.remove(); } break; }
+                        case 'pp_crt_effect': { if(v[0]==='1'||v[0]==='true'){ const d=document.createElement('div'); d.id='pp-overlay-crt'; d.style.cssText=\`position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9990;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.25) 50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06));background-size:100% 4px,6px 100%;opacity:\${resolveValue(v[1])};\`; stage.appendChild(d); } else { const d=document.getElementById('pp-overlay-crt'); if(d)d.remove(); } break; }
+                        case 'pp_clear_all': { if(w)w.style.filter='none'; ['pp-overlay-vignette','pp-overlay-crt'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();}); break; }
+
+                        case 'ui_webview_create': { if(document.getElementById(v[0]))break; const wb=document.createElement('iframe'); wb.id=v[0]; wb.src=resolveValue(v[1]); wb.className='ui-element'; wb.style.border='none'; wb.style.left=resolveValue(v[2])+'px'; wb.style.top=resolveValue(v[3])+'px'; wb.style.width=resolveValue(v[4])+'px'; wb.style.height=resolveValue(v[5])+'px'; ui.appendChild(wb); break; }
+                        case 'ui_webview_control': { const wb=document.getElementById(v[0]); if(wb&&wb.contentWindow){ if(v[1]==='reload')wb.contentWindow.location.reload(); if(v[1]==='back')wb.contentWindow.history.back(); } break; }
+
+                        case 'ui_input_create': case 'ui_textarea_create': {
+                            const id=v[0]; if(document.getElementById(id))break;
+                            const isArea = block.type==='ui_textarea_create';
+                            const el=document.createElement(isArea?'textarea':'input'); el.id=id; el.className='ui-element ui-input-widget';
+                            let x,y,width,height;
+                            if(isArea){ x=resolveValue(v[1]);y=resolveValue(v[2]);width=resolveValue(v[3]);height=resolveValue(v[4]); }
+                            else { el.placeholder=resolveValue(v[1]); el.type=v[2]; x=resolveValue(v[3]);y=resolveValue(v[4]);width=resolveValue(v[5]);height=resolveValue(v[6]); }
+                            el.style.left=x+'px';el.style.top=y+'px';el.style.width=width+'px';el.style.height=height+'px';
+                            el.oninput=()=>triggerUiChangeEvent(id);
+                            ui.appendChild(el); break;
+                        }
+                        case 'ui_input_get': { const el=document.getElementById(v[0]); if(el){ gameVariables[v[1]]=el.value; updateDynamicText(); } break; }
+                        case 'ui_slider_adv': {
+                            if(document.getElementById(v[0]))break;
+                            const sl=document.createElement('input'); sl.type='range'; sl.id=v[0]; sl.className='ui-element';
+                            const axis=v[1], varName=v[2]; sl.min=resolveValue(v[3]); sl.max=resolveValue(v[4]);
+                            const x=resolveValue(v[5]), y=resolveValue(v[6]), len=resolveValue(v[7]);
+                            sl.style.position='absolute'; sl.style.left=x+'px'; sl.style.top=y+'px';
+                            if(axis==='vertical'){ sl.style.width=len+'px'; sl.style.transformOrigin='0 0'; sl.style.transform='rotate(90deg) translateY(-100%)'; sl.style.left=(parseFloat(x)+20)+'px'; } else { sl.style.width=len+'px'; }
+                            sl.oninput=(e)=>{ gameVariables[varName]=e.target.value; updateDynamicText(); triggerUiChangeEvent(v[0]); }; ui.appendChild(sl); break;
+                        }
+                        case 'ui_scroll_create': { if(document.getElementById(v[0]))break; const sc=document.createElement('div'); sc.id=v[0]; sc.className='ui-element ui-scroll-box'; sc.style.left=resolveValue(v[1])+'px'; sc.style.top=resolveValue(v[2])+'px'; sc.style.width=resolveValue(v[3])+'px'; sc.style.height=resolveValue(v[4])+'px'; sc.style.backgroundColor=resolveValue(v[5]); sc.style.overflow='auto'; ui.appendChild(sc); break; }
+                        case 'ui_scroll_add': { const sc=document.getElementById(v[0]), wgt=document.getElementById(v[1]); if(sc&&wgt){ sc.appendChild(wgt); wgt.style.position='relative'; wgt.style.left='0'; wgt.style.top='0'; } break; }
+
                         case 'scene_load': { const next = PROJECT.scenes.find(s=>s.name===v[0]); if(next) loadScene(next.id); break; }
                         case 'scene_reload': { loadScene(currentSceneId); break; }
                         case 'scene_next': { const idx = PROJECT.scenes.findIndex(s => s.id === currentSceneId); if (idx !== -1 && idx < PROJECT.scenes.length - 1) loadScene(PROJECT.scenes[idx + 1].id); break; }
@@ -972,8 +1159,17 @@ async function generateGameHTML() {
                         case 'scene_load_state': { const d=localStorage.getItem('ecrous_save_'+PROJECT.settings?.name+'_'+(v[0]||'auto')); if(d){ gameVariables=JSON.parse(d).vars||{}; updateDynamicText(); } break; }
                         case 'game_pause': { isGamePaused=(v[0]==='1'||v[0]==='true'); stage.style.filter=isGamePaused?'grayscale(100%)':'none'; break; }
                         case 'game_restart': { const cur=PROJECT.scenes.find(s=>s.id===currentSceneId); if(cur){ gameVariables={}; loadScene(cur.id); } break; }
+                        case 'game_over_screen': {
+                             isGamePaused=true; const scr=document.createElement('div');
+                             scr.style.cssText='position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;color:white;';
+                             scr.innerHTML=\`<h1 style="font-size:60px;color:#ff3d00;margin-bottom:20px;">\${resolveValue(v[0])}</h1><button id="btn-restart-go" style="padding:15px 30px;font-size:24px;cursor:pointer;background:#fff;color:#000;border:none;border-radius:5px;">RETRY</button>\`;
+                             stage.appendChild(scr);
+                             document.getElementById('btn-restart-go').onclick=()=>{ scr.remove(); isGamePaused=false; gameVariables={}; loadScene(currentSceneId); };
+                             break;
+                        }
 
                         case 'evt_wait': { await new Promise(r => setTimeout(r, parseFloat(v[0]) * 1000)); break; }
+                        case 'sys_exec_js': { try { const func = new Function('gameVariables','container','window','document', v[0]); func(gameVariables, stage, window, document); updateDynamicText(); } catch(e){console.error(e);} break; }
                     }
                     resolve();
                 }, 0);
@@ -981,7 +1177,6 @@ async function generateGameHTML() {
         }
     `
 
-	// 4. HTML
 	return `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -1000,19 +1195,12 @@ async function generateGameHTML() {
             display: flex; align-items: center; justify-content: center;
         }
         #game-container { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
-        
         #game-stage { 
-            width: 800px; height: 600px; 
-            background: #1a1a1a; 
-            overflow: hidden; 
-            position: absolute; 
-            left: 50%; top: 50%;
-            transform: translate(-50%, -50%);
+            width: 800px; height: 600px; background: #1a1a1a; overflow: hidden; 
+            position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
             box-shadow: 0 0 100px rgba(0,0,0,0.8); 
         }
-        
         #game-world { width: 100%; height: 100%; position: absolute; transform-origin: 0 0; will-change: transform; }
-        
         .ui-element { position: absolute; box-sizing: border-box; pointer-events: auto; }
         .ui-btn { border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-weight: 600; background: var(--accent); color: white; transition: 0.1s; }
         .ui-btn:active { transform: scale(0.95); opacity: 0.9; }
@@ -1020,6 +1208,7 @@ async function generateGameHTML() {
         .ui-progress-fill { height: 100%; background: #00E676; width: 50%; transition: width 0.2s; }
         .ui-slider { -webkit-appearance: none; height: 6px; background: #444; border-radius: 3px; outline: none; }
         .ui-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; background: #2979FF; border-radius: 50%; cursor: pointer; }
+        .ui-input-widget { border: 1px solid #444; background: rgba(0,0,0,0.7); color: white; padding: 5px; font-family: inherit; }
 
         /* SPLASH */
         #ecrous-splash {
@@ -1032,12 +1221,9 @@ async function generateGameHTML() {
         .splash-content { display: flex; flex-direction: column; align-items: center; animation: slideUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }
         .logo-box {
             width: 100px; height: 100px;
-            background: url('${iconBase64}') no-repeat center center;
-            background-size: cover;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(41, 121, 255, 0.3);
-            margin-bottom: 25px; position: relative;
-            animation: pulse 3s infinite ease-in-out;
+            background: url('${iconBase64}') no-repeat center center; background-size: cover;
+            border-radius: 20px; box-shadow: 0 20px 60px rgba(41, 121, 255, 0.3);
+            margin-bottom: 25px; position: relative; animation: pulse 3s infinite ease-in-out;
         }
         .logo-box::after { content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0; border-radius: 20px; border: 2px solid rgba(255,255,255,0.2); }
         .title-main { font-size: 32px; font-weight: 700; letter-spacing: -0.5px; background: linear-gradient(to right, #fff, #888); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
@@ -1057,18 +1243,16 @@ async function generateGameHTML() {
             <div class="logo-box"></div>
             <div class="title-main">Ecrous Engine</div>
             <div class="title-sub">
-                ${authorName} 
-                ${
-									gameStatus
-										? `<span style="opacity:0.5; margin-left:5px;">| ${gameStatus.toUpperCase()}</span>`
-										: ''
-								}
+                ${authorName} ${
+		gameStatus
+			? `<span style="opacity:0.5; margin-left:5px;">| ${gameStatus.toUpperCase()}</span>`
+			: ''
+	}
             </div>
         </div>
         <div id="splash-loader"><div id="splash-bar-fill"></div></div>
         <div id="splash-start-msg">НАЖМИТЕ, ЧТОБЫ НАЧАТЬ</div>
     </div>
-
     <div id="game-container"><div id="game-stage"><div id="game-world"></div></div></div>
     <script>${runtimeScript}</script>
 </body>
@@ -1077,13 +1261,12 @@ async function generateGameHTML() {
 
 async function exportMobileBundle(platform) {
 	if (typeof JSZip === 'undefined') {
-		alert('Ошибка: Библиотека JSZip не подключена. Экспорт в ZIP невозможен.')
+		alert('Ошибка: JSZip не подключен.')
 		return
 	}
 	const btn = document.getElementById(
 		platform === 'iOS' ? 'exportIOS' : 'exportAndroid'
 	)
-
 	let oldText = ''
 	if (btn) {
 		oldText = btn.innerHTML
@@ -1093,20 +1276,13 @@ async function exportMobileBundle(platform) {
 	const zip = new JSZip()
 	const html = await generateGameHTML()
 	const iconBase64 = await getProjectIconData()
-
-	// --- НАСТРОЙКИ ---
 	const orient = projectData.settings?.orientation || 'landscape'
-	const pkgId = projectData.settings?.packageId || 'com.ecrous.game'
 	const appName = projectData.settings?.name || 'Game'
 
-	// 1. Основной файл
 	zip.file('index.html', html)
-
-	// 2. Иконка
 	const [, iconData] = iconBase64.split('base64,')
 	zip.file('icon.png', iconData, { base64: true })
 
-	// 3. Манифест (PWA / Android TWA)
 	const manifest = {
 		name: appName,
 		short_name: appName,
@@ -1119,24 +1295,7 @@ async function exportMobileBundle(platform) {
 	}
 	zip.file('manifest.json', JSON.stringify(manifest, null, 2))
 
-	// 4. Инструкция для пользователя (так как браузер не делает .apk)
-	const readme = `
-ECROUS ENGINE - MOBILE EXPORT (${platform})
-===========================================
-
-Ваш проект экспортирован как "Web Bundle".
-Браузеры не могут создавать .APK или .IPA файлы напрямую.
-
-ЧТО ДЕЛАТЬ ДАЛЬШЕ:
-1. Воспользуйтесь онлайн-конвертером (например, websitetoapk.com).
-2. Или используйте Cordova / Capacitor.
-3. Загрузите содержимое этого архива.
-
-Файлы внутри:
-- index.html (Сама игра)
-- icon.png (Иконка)
-- manifest.json (Настройки)
-    `
+	const readme = `ECROUS ENGINE - ${platform} BUNDLE\n\nUse websitetoapk.com or Cordova/Capacitor to convert this zip content to an app.`
 	zip.file('README.txt', readme)
 
 	zip.generateAsync({ type: 'blob' }).then(content => {
