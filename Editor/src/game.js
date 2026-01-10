@@ -4,6 +4,7 @@
 
 // Глобальные переменные
 let currentKeyDownHandler = null
+let currentScreenTouchHandler = null
 let currentClickHandler = null
 let runtimeSceneId = null
 let isGameResizing = false
@@ -385,6 +386,37 @@ function loadRuntimeScene(sceneData) {
 		}, 16) // ~60 FPS
 	}
 
+	// Screen Touch (Глобальное касание)
+	const screenTouchEvents = allScripts.filter(
+		b => b.type === 'evt_screen_touch'
+	)
+	if (screenTouchEvents.length > 0) {
+		// Очищаем старый, если был
+		if (currentScreenTouchHandler) {
+			window.removeEventListener('pointerdown', currentScreenTouchHandler)
+		}
+
+		currentScreenTouchHandler = e => {
+			if (!isRunning || isGamePaused) return
+
+			// Игнорируем клики по кнопкам редактора, если случайно нажали
+			if (e.target.closest('.game-header') || e.target.closest('.console-line'))
+				return
+
+			screenTouchEvents.forEach(block => {
+				const owner = sceneData.objects.find(o =>
+					o.scripts.some(s => s.id === block.id)
+				)
+				if (owner) {
+					executeChain(block, owner.scripts, owner.connections)
+				}
+			})
+		}
+
+		// ВАЖНО: Слушаем window, чтобы ловить клики везде
+		window.addEventListener('pointerdown', currentScreenTouchHandler)
+	}
+
 	// Таймеры
 	const timerEvents = allScripts.filter(b => b.type === 'evt_timer')
 	timerEvents.forEach(block => {
@@ -449,6 +481,13 @@ function loadRuntimeScene(sceneData) {
 		document
 			.getElementById('game-stage')
 			.addEventListener('click', currentClickHandler)
+	}
+
+	if (currentScreenTouchHandler) {
+		document
+			.getElementById('game-stage')
+			?.removeEventListener('pointerdown', currentScreenTouchHandler)
+		currentScreenTouchHandler = null
 	}
 }
 
@@ -793,6 +832,10 @@ function stopGame() {
 			?.removeEventListener('click', currentClickHandler)
 	currentKeyDownHandler = null
 	currentClickHandler = null
+	if (currentScreenTouchHandler) {
+		window.removeEventListener('pointerdown', currentScreenTouchHandler) // Было getElementById...
+		currentScreenTouchHandler = null
+	}
 }
 
 function resolveValue(input) {

@@ -1,175 +1,129 @@
 /* =========================================
-   TOOLBOX (ИНСТРУМЕНТЫ)
+   ГЛАВНЫЙ КОНТЕЙНЕР (LAYOUT)
    ========================================= */
-#toolboxContent {
-    padding: 16px;
-    
-    /* Эти 3 строки критически важны для скролла: */
-    overflow-y: auto;  /* Разрешаем скролл */
-    flex: 1;           /* Занимаем всё место */
-    min-height: 0;     /* ЗАПРЕЩАЕМ растягиваться за пределы родителя */
-    
-    /* Дополнительно для красоты */
-    display: flex;
-    flex-direction: column;
-}
+#toolbox-layout {
+	display: flex;
+	flex-direction: row;
+	height: 100%;
 
-.category-title {
-	font-size: 10px;
-	color: var(--accent);
-	margin: 24px 0 10px;
-	font-weight: 800;
-	text-transform: uppercase;
-	letter-spacing: 1px;
-	opacity: 0.9;
-}
-.category-title:first-child {
-	margin-top: 5px;
-}
+	/* Дефолтная ширина */
+	width: 350px;
+	min-width: 280px;
+	max-width: 800px;
 
-.tool-item {
-	padding: 10px 14px;
 	background: var(--bg-elevated);
-	border-radius: 10px;
-	cursor: grab;
+	border-left: 1px solid var(--border);
+	position: relative; /* Важно для позиционирования ресайзера */
+	z-index: 20;
+	transition: transform 0.3s ease;
+}
+
+/* Класс для скрытия панели на ПК (если нужно) */
+#toolbox-layout.closed {
+	display: none;
+}
+
+/* =========================================
+   RESIZER (РУЧКА ИЗМЕНЕНИЯ РАЗМЕРА)
+   ========================================= */
+#toolboxResizer {
+	position: absolute;
+	left: 0; /* Прижимаем к левому краю панели */
+	top: 0;
+	bottom: 0;
+	width: 6px; /* Ширина зоны захвата */
+	cursor: col-resize;
+	z-index: 100;
+	background: transparent;
+	transition: background 0.2s;
+}
+
+/* Подсветка при наведении */
+#toolboxResizer:hover,
+#toolboxResizer.active {
+	background: var(--accent);
+	opacity: 0.5;
+}
+
+/* =========================================
+   ЛЕВАЯ ПАНЕЛЬ (НАВИГАЦИЯ КАТЕГОРИЙ)
+   ========================================= */
+.toolbox-nav {
+	width: 60px;
+	background: var(--bg-elevated);
+	border-right: 1px solid var(--border);
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	gap: 12px;
-	font-size: 13px;
-	font-weight: 500;
-	border: 1px solid var(--border);
-	color: var(--text);
-	margin-bottom: 8px;
-	transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
-	position: relative;
-	overflow: hidden;
+	padding-top: 10px;
+	padding-bottom: 20px;
+
+	overflow-y: auto;
+	flex-shrink: 0;
+	z-index: 10;
+	scrollbar-width: none;
+}
+.toolbox-nav::-webkit-scrollbar {
+	display: none;
 }
 
-.tool-item:hover {
-	border-color: var(--accent);
-	background: var(--bg-elevated-soft);
-	transform: translateX(5px); /* Сдвиг вправо */
-	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-}
-.tool-item:active {
-	cursor: grabbing;
-}
-
-.tool-item i {
-	color: var(--text-soft);
-	font-size: 16px;
-	transition: color 0.2s;
-}
-.tool-item:hover i {
-	color: var(--accent);
-}
-
-/* --- VARIABLES IN TOOLBOX --- */
-.btn-create-var {
-	width: 100%;
-	padding: 10px;
-	background: rgba(255, 255, 255, 0.02);
-	border: 1px dashed var(--text-soft);
-	color: var(--text-soft);
-	border-radius: 8px;
-	cursor: pointer;
-	margin-bottom: 16px;
-	transition: all 0.2s;
-	font-size: 12px;
+.nav-item {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
 	justify-content: center;
-	gap: 8px;
-}
-.btn-create-var:hover {
-	border-color: var(--accent);
-	color: var(--accent);
-	background: rgba(var(--accent-rgb), 0.05);
-}
-
-#toolbox-vars {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 8px;
-	margin-bottom: 20px;
+	width: 100%;
+	cursor: pointer;
+	margin-bottom: 16px;
+	opacity: 0.6;
+	transition: all 0.2s;
 }
 
-/* Стиль пилюли переменной (Glossy style) */
-.variable-pill {
-	background: linear-gradient(135deg, #ff9100, #ff6d00); /* Градиент */
-	color: white;
-	padding: 6px 14px;
-	border-radius: 20px;
-	font-size: 11px;
-	font-weight: 700;
-	cursor: grab;
-	user-select: none;
-	box-shadow: 0 4px 10px rgba(255, 109, 0, 0.3),
-		inset 0 1px 0 rgba(255, 255, 255, 0.3);
-	border: 1px solid rgba(0, 0, 0, 0.1);
-	transition: transform 0.1s;
-	text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+.nav-item:hover,
+.nav-item.active {
+	opacity: 1;
+	transform: scale(1.05);
 }
 
-.variable-pill:hover {
-	transform: translateY(-1px);
-	filter: brightness(1.1);
+.nav-circle {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	margin-bottom: 6px;
+	border: 2px solid rgba(0, 0, 0, 0.1);
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
-.variable-pill:active {
-	cursor: grabbing;
-	transform: scale(0.95);
-}
-
-/* --- СТИЛИ ДЛЯ ПОДРАЗДЕЛОВ ТУЛБОКСА --- */
-
-/* Главный заголовок категории (События, Движение...) */
-.category-title {
-	font-size: 11px;
-	text-transform: uppercase;
-	color: var(--text-soft); /* Серый цвет */
-	margin-top: 15px;
-	margin-bottom: 5px;
-	padding-left: 10px;
-	font-weight: 800;
-	letter-spacing: 1px;
-	opacity: 0.7;
-}
-
-/* Подзаголовок (Физика, Основные, Ввод...) */
-.toolbox-subheader {
-	font-size: 11px;
-	color: var(--accent); /* Цвет акцента (синий/фиолетовый) */
-	background: rgba(255, 255, 255, 0.03);
-	padding: 4px 10px;
-	margin-top: 8px;
-	margin-bottom: 4px;
-	border-radius: 4px;
+.nav-label {
+	font-size: 9px;
 	font-weight: 600;
+	text-align: center;
+	color: var(--text);
+	width: 100%;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	padding: 0 2px;
+}
+
+/* =========================================
+   ПРАВАЯ ЧАСТЬ (ОБЕРТКА КОНТЕНТА)
+   ========================================= */
+.toolbox-wrapper {
+	flex: 1;
 	display: flex;
-	align-items: center;
-	gap: 4px;
+	flex-direction: column;
+	min-width: 0;
+	height: 100%;
+	position: relative;
 }
 
-.toolbox-subheader i {
-	font-size: 14px;
-}
-
-/* Разделитель, если нужно отделить блоки без подкатегории */
-.toolbox-divider {
-	height: 1px;
-	background: var(--border);
-	margin: 8px 10px;
-	opacity: 0.3;
-}
-
-/* Стили для поиска в тулбоксе */
+/* --- Поиск --- */
 .toolbox-search {
-	padding: 10px;
+	flex-shrink: 0;
+	padding: 10px 12px;
 	background: var(--bg-elevated);
 	border-bottom: 1px solid var(--border);
-	position: sticky;
-	top: 0;
 	z-index: 5;
 }
 
@@ -177,11 +131,11 @@
 	width: 100%;
 	background: var(--bg-elevated-soft);
 	border: 1px solid var(--border);
-	padding: 8px 10px 8px 30px; /* Отступ слева под иконку */
+	padding: 8px 10px 8px 32px;
 	border-radius: 6px;
 	font-size: 13px;
 	color: var(--text);
-	box-sizing: border-box; /* Чтобы padding не ломал ширину */
+	box-sizing: border-box;
 	transition: border-color 0.2s;
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' fill='%23888'%3E%3Cpath d='M11 2c4.968 0 9 4.032 9 9s-4.032 9-9 9-9-4.032-9-9 4.032-9 9-9zm0 16c3.867 0 7-3.133 7-7 0-3.868-3.133-7-7-7-3.866 0-7 3.132-7 7 0 3.867 3.134 7 7 7zm8.485.071l2.829 2.828-1.415 1.415-2.829-2.829 1.415-1.415z'/%3E%3C/svg%3E");
 	background-repeat: no-repeat;
@@ -193,13 +147,185 @@
 	background-color: var(--bg);
 }
 
+/* --- Контент --- */
+#toolboxContent {
+	flex: 1;
+	overflow-y: auto;
+	padding: 12px;
+	min-height: 0;
+}
+
 /* =========================================
-   МОБИЛЬНЫЕ ПРАВКИ (MOBILE FIXES)
+   ЭЛЕМЕНТЫ ВНУТРИ TOOLBOX
+   ========================================= */
+
+.category-title {
+	font-size: calc(10px * var(--toolbox-scale, 1));
+	color: var(--accent);
+	margin: 20px 0 8px;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	opacity: 0.8;
+	padding-left: 4px;
+}
+.category-title:first-child {
+	margin-top: 5px;
+}
+
+.toolbox-subheader {
+	font-size: 11px;
+	color: var(--text);
+	background: rgba(255, 255, 255, 0.05);
+	padding: 6px 10px;
+	margin-top: 8px;
+	margin-bottom: 6px;
+	border-radius: 4px;
+	font-weight: 600;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.toolbox-divider {
+	height: 1px;
+	background: var(--border);
+	margin: 8px 4px;
+	opacity: 0.3;
+}
+
+.tool-item {
+	padding: calc(10px * var(--toolbox-scale, 1))
+		calc(12px * var(--toolbox-scale, 1));
+	background: var(--bg-elevated);
+	border-radius: 8px;
+	cursor: grab;
+	display: flex;
+	align-items: center;
+	gap: calc(10px * var(--toolbox-scale, 1));
+	font-size: var(--toolbox-font-size, 13px);
+	font-weight: 500;
+	border: 1px solid var(--border);
+	color: var(--text);
+	margin-bottom: 6px;
+	transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+	user-select: none;
+}
+
+.tool-item i {
+	color: var(--text-soft);
+	font-size: calc(16px * var(--toolbox-scale, 1));
+}
+
+.tool-item:hover {
+	border-color: var(--accent);
+	background: var(--bg-elevated-soft);
+	transform: translateX(3px);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.tool-item:active {
+	cursor: grabbing;
+}
+.tool-item:hover i {
+	color: var(--accent);
+}
+
+.tool-item.dragging-ghost {
+	opacity: 0.8;
+	background: var(--bg);
+	border: 2px solid var(--accent);
+	transform: scale(1.05);
+	box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Переменные --- */
+.btn-create-var {
+	width: 100%;
+	padding: 10px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px dashed var(--border);
+	color: var(--text-soft);
+	border-radius: 6px;
+	cursor: pointer;
+	margin-bottom: 15px;
+	font-size: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 6px;
+	transition: all 0.2s;
+}
+.btn-create-var:hover {
+	border-color: var(--accent);
+	color: var(--accent);
+	background: rgba(var(--accent-rgb), 0.1);
+}
+
+.variable-pill {
+	background: linear-gradient(135deg, #ff9100, #ff6d00);
+	color: white;
+	padding: 6px 12px;
+	border-radius: 100px;
+	font-size: 11px;
+	font-weight: 700;
+	cursor: grab;
+	display: inline-block;
+	margin: 3px;
+	box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* =========================================
+   МОБИЛЬНАЯ ВЕРСИЯ
    ========================================= */
 @media (max-width: 768px) {
-    #toolboxContent {
-        /* Добавляем большой отступ снизу, чтобы последние блоки 
-           можно было проскроллить выше навигационного меню */
-        padding-bottom: 120px !important; 
-    }
+	/* 1. По умолчанию скрываем тулбокс */
+	#toolbox-layout {
+		display: none !important; /* Force hide */
+	}
+
+	/* 2. Показываем, когда JS добавляет класс .mobile-visible */
+	#toolbox-layout.mobile-visible {
+		display: flex !important;
+		position: fixed;
+		top: 0;
+		left: 0;
+		/* Перебиваем инлайновый width от ресайза */
+		width: 100% !important;
+		height: calc(100% - 60px); /* Высота минус навбар */
+		z-index: 100;
+		border-left: none;
+	}
+
+	/* Скрываем ресайзер на мобилке */
+	#toolboxResizer {
+		display: none !important;
+	}
+
+	/* Адаптация размеров */
+	.tool-item {
+		padding: 14px;
+		margin-bottom: 10px;
+		font-size: 14px;
+	}
+
+	/* Увеличиваем ширину и добавляем БОЛЬШОЙ отступ снизу */
+	.toolbox-nav {
+		width: 70px;
+		padding-bottom: 120px !important; /* ВАЖНО: чтобы последние иконки не скрывались */
+	}
+
+	.nav-item {
+		margin-bottom: 25px;
+	}
+
+	/* Для правой части тоже добавляем отступ */
+	#toolboxContent {
+		padding-bottom: 120px !important;
+	}
+
+	.nav-circle {
+		width: 28px;
+		height: 28px;
+	}
 }

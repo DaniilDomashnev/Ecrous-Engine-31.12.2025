@@ -1,5 +1,5 @@
 // ==========================================
-// EXPORT LOGIC (Ecrous Engine) - FULL & FIXED
+// EXPORT LOGIC (Ecrous Engine) - COMPLETE
 // ==========================================
 
 function openExportModal() {
@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 	const closeExport = document.getElementById('closeExport')
 	const menuFile = document.getElementById('menuFile')
 
-	const exportWinBtn = document.getElementById('exportWindows')
+	const exportWinBtn = document.getElementById('exportWindows') // HTML Export
 	const exportExeBtn = document.getElementById('exportExe')
 	const exportAndroidBtn = document.getElementById('exportAndroid')
 	const exportIOSBtn = document.getElementById('exportIOS')
@@ -97,9 +97,7 @@ async function getProjectIconData() {
 				reader.readAsDataURL(blob)
 			})
 		}
-	} catch (e) {
-		console.warn('Logo file not found, using fallback.')
-	}
+	} catch (e) {}
 	// Fallback Icon
 	const cvs = document.createElement('canvas')
 	cvs.width = 512
@@ -148,12 +146,11 @@ async function generateGameHTML() {
 		exportedAt: new Date().toISOString(),
 	}
 
-	// ВАЖНО: Здесь мы используем ${} БЕЗ слеша для вставки данных при экспорте,
-	// и \${} СО слешем для кода, который должен работать внутри игры.
+	// Скрипт движка, который будет внедрен в HTML
 	const runtimeScript = `
         // Данные проекта
         const PROJECT = ${JSON.stringify(buildData.project)};
-        const projectData = PROJECT; // Алиас для совместимости
+        const projectData = PROJECT; // Алиас
         const START_SCENE_ID = "${buildData.startSceneId}";
         const DISABLE_SPLASH = ${buildData.disableSplash}; 
         let gameConfig = ${JSON.stringify(buildData.config)};
@@ -168,7 +165,7 @@ async function generateGameHTML() {
         let cameraState = { x: 0, y: 0, zoom: 1, target: null, lerp: 0.1, shakeInfo: { power: 0, time: 0 } };
         
         let matterEngine = null;
-        let bodyMap = new Map();
+        let bodyMap = new Map(); // ID -> MatterBody
 
         window.entityComponents = {}; 
         window.gameInventory = [];
@@ -203,10 +200,12 @@ async function generateGameHTML() {
 
         function resolveValue(val) {
             if (typeof val !== 'string') return val;
+            // Переменная
             if (val.startsWith('{') && val.endsWith('}')) {
                 const key = val.slice(1, -1);
                 return gameVariables.hasOwnProperty(key) ? gameVariables[key] : 0;
             }
+            // Число
             if (!isNaN(parseFloat(val)) && isFinite(val)) return parseFloat(val);
             return val;
         }
@@ -236,7 +235,7 @@ async function generateGameHTML() {
             });
         }
 
-        // Заглушка для поиска пути (можно расширить)
+        // Заглушка для Pathfinding (можно расширить)
         function findPath(grid, sx, sy, ex, ey) { return []; } 
 
         // --- ЗАПУСК ---
@@ -289,7 +288,7 @@ async function generateGameHTML() {
             worldGravity = { x: 0, y: 0 };
             activeCollisionsPair.clear();
             
-            // Matter JS Init
+            // Инициализация Matter JS
             if(typeof Matter !== 'undefined') {
                 const Engine = Matter.Engine, World = Matter.World;
                 matterEngine = Engine.create();
@@ -303,14 +302,14 @@ async function generateGameHTML() {
                 console.warn('Matter.js physics engine not loaded.');
             }
 
-            // Audio unlock
+            // Audio unlock hack
             const audioUnlock = new Audio();
             audioUnlock.play().catch(e => {});
 
             isRunning = true;
             resizeGame();
             
-            // Input Listeners Global
+            // Глобальные слушатели ввода
             window.addEventListener('mousemove', e => {
                 const stage = document.getElementById('game-stage');
                 if(stage) {
@@ -333,12 +332,15 @@ async function generateGameHTML() {
             const objectsData = globalCurrentSceneData.objects;
             objectsData.forEach(obj => {
                 if (!obj.scripts) return;
+                // Проверяем, участвует ли объект в коллизии
                 if (obj.id === id1 || obj.id === id2) {
                     const events = obj.scripts.filter(b => b.type === 'evt_collision');
                     events.forEach(evt => {
                         const targetName = evt.values[1];
                         const otherId = obj.id === id1 ? id2 : id1;
                         const otherObjDef = objectsData.find(o => o.id === otherId);
+                        
+                        // Логика проверки: имя совпадает, или ID совпадает, или фильтр пустой
                         const isMatch = !targetName || (otherObjDef && otherObjDef.name === targetName) || targetName === otherId;
                         if (isMatch) executeChain(evt, obj.scripts, obj.connections);
                     });
@@ -442,6 +444,7 @@ async function generateGameHTML() {
             let scaleX = winW / gameConfig.width;
             let scaleY = winH / gameConfig.height;
             let transformCmd = 'translate(-50%, -50%)';
+            
             if (gameConfig.scaleMode === 'fixed') { stage.style.transform = transformCmd; } 
             else if (gameConfig.scaleMode === 'stretch' || gameConfig.scaleMode === 'full') { stage.style.transform = \`\${transformCmd} scale(\${scaleX}, \${scaleY})\`; }
             else if (gameConfig.scaleMode === 'fill') { const scale = Math.max(scaleX, scaleY); stage.style.transform = \`\${transformCmd} scale(\${scale})\`; }
@@ -574,6 +577,7 @@ async function generateGameHTML() {
                 let condition = false;
                 const nA = parseFloat(valA), nB = parseFloat(valB);
                 const isNum = !isNaN(nA) && !isNaN(nB);
+                
                 if (op === '=') condition = valA == valB;
                 else if (op === '!=') condition = valA != valB;
                 else if (op === '>') condition = isNum ? nA > nB : valA > valB;
@@ -602,14 +606,14 @@ async function generateGameHTML() {
             }
             // --- ЦИКЛ FOREVER ---
             else if (currentBlock.type === 'flow_forever') {
-                const loopBodyStart = getNextBlock(currentBlock, allBlocks, connections)
-                const loopEnd = findClosingBlock(currentBlock, allBlocks, connections)
+                const loopBodyStart = getNextBlock(currentBlock, allBlocks, connections);
+                const loopEnd = findClosingBlock(currentBlock, allBlocks, connections);
                 if (loopBodyStart && loopEnd) {
                     while (isRunning && window.currentSessionId === mySession) {
-                        await executeSection(loopBodyStart, loopEnd, allBlocks, connections)
-                        await new Promise(resolve => setTimeout(resolve, 0))
+                        await executeSection(loopBodyStart, loopEnd, allBlocks, connections);
+                        await new Promise(resolve => setTimeout(resolve, 0));
                     }
-                    return
+                    return;
                 }
             }
 
@@ -684,7 +688,7 @@ async function generateGameHTML() {
             }
         }
         
-        // --- ГЛАВНАЯ ЛОГИКА БЛОКОВ (ПОЛНАЯ КОПИЯ ИЗ MAIN.JS) ---
+        // --- ГЛАВНАЯ ЛОГИКА БЛОКОВ (СИНХРОНИЗИРОВАНО С MAIN.JS) ---
         function executeBlockLogic(block) {
             return new Promise(resolve => {
                 if (!isRunning) return resolve();
@@ -745,15 +749,11 @@ async function generateGameHTML() {
                         }
                         case 'win_set_cursor': { stage.style.cursor = v[0]; break; }
                         case 'win_fullscreen': { if(v[0]==='1') { if(document.documentElement.requestFullscreen) document.documentElement.requestFullscreen(); } else { if(document.exitFullscreen) document.exitFullscreen(); } break; }
-                        case 'win_console_state': { break; } 
 
                         // --- ПЕРЕМЕННЫЕ ---
                         case 'var_set': { gameVariables[v[0]] = resolveValue(v[1]); updateDynamicText(); break; }
                         case 'var_change': { gameVariables[v[0]] = (parseFloat(gameVariables[v[0]] || 0)) + parseFloat(resolveValue(v[1])); updateDynamicText(); break; }
-                        case 'log_print': { 
-                            const msg = resolveValue(v[0]); console.log(msg); 
-                            break; 
-                        }
+                        case 'log_print': { const msg = resolveValue(v[0]); console.log(msg); break; }
                         case 'var_clamp': {
                             const resVar = v[0]; const val = parseFloat(resolveValue(v[1])) || 0; const min = parseFloat(resolveValue(v[2])) || 0; const max = parseFloat(resolveValue(v[3])) || 0;
                             gameVariables[resVar] = Math.min(Math.max(val, min), max); updateDynamicText();
@@ -863,7 +863,7 @@ async function generateGameHTML() {
                             break;
                         }
                         
-                        // --- СПРАЙТЫ ---
+                        // --- СПРАЙТЫ И ФИЗИКА ---
                         case 'obj_create_sprite': {
                             const id = resolveValue(v[0]);
                             if (document.getElementById(id)) break;
@@ -883,7 +883,9 @@ async function generateGameHTML() {
                             el.style.backgroundRepeat = 'no-repeat';
                             el.style.backgroundPosition = 'center';
                             el.style.zIndex = zIdx;
-                            (document.getElementById('game-stage') || document.body).appendChild(el);
+                            (document.getElementById('game-world') || document.body).appendChild(el);
+                            
+                            // Matter Physics Logic
                             if (physType !== 'None' && typeof Matter !== 'undefined' && matterEngine) {
                                 const isStatic = (physType === 'Static' || physType === 'static');
                                 const centerX = x + wVal / 2;
@@ -897,6 +899,35 @@ async function generateGameHTML() {
                             }
                             break;
                         }
+                        case 'phys_enable': {
+                             const id = resolveValue(v[0]); const shape=v[1]; 
+                             const valInput = resolveValue(v[2]);
+                             let isStatic = (valInput === 'Static' || String(valInput) === '1' || String(valInput) === 'true');
+                             let restitution = parseFloat(resolveValue(v[3])) || 0;
+                             const el = document.getElementById(id);
+
+                             if(el && matterEngine && matterEngine.world){
+                                 if(bodyMap.has(id)){ Matter.World.remove(matterEngine.world, bodyMap.get(id)); bodyMap.delete(id); }
+                                 const x = parseFloat(el.style.left)||0; const y = parseFloat(el.style.top)||0;
+                                 const w = el.offsetWidth; const h = el.offsetHeight;
+                                 const cx = x + w/2; const cy = y + h/2;
+                                 const opts = { isStatic: isStatic, restitution: restitution, friction: 0.5, label: id, angle: 0 };
+                                 let body;
+                                 if(shape==='circle') body = Matter.Bodies.circle(cx, cy, w/2, opts);
+                                 else body = Matter.Bodies.rectangle(cx, cy, w, h, opts);
+                                 Matter.Body.setStatic(body, isStatic);
+                                 Matter.World.add(matterEngine.world, body);
+                                 bodyMap.set(id, body);
+                             }
+                             break;
+                        }
+                        case 'phys_set_gravity': { if(matterEngine) matterEngine.world.gravity.x = parseFloat(v[0]); matterEngine.world.gravity.y = parseFloat(v[1]); break; }
+                        case 'phys_add_force': { 
+                            const body = bodyMap.get(v[0]); 
+                            if(body) { const fx=parseFloat(v[1]), fy=parseFloat(v[2]); Matter.Body.applyForce(body, body.position, {x:fx*0.001, y:fy*0.001}); } 
+                            break; 
+                        }
+
                         case 'obj_set_sprite_frame': {
                             const id = resolveValue(v[0]); const el = document.getElementById(id);
                             if (el) { const url = getAssetUrl(resolveValue(v[1])); el.style.backgroundImage = "url('" + url + "')"; }
@@ -1062,6 +1093,7 @@ async function generateGameHTML() {
                         case 'ai_move_to': { const me=document.getElementById(v[0]), target=document.getElementById(v[1]), speed=parseFloat(v[2]); if(me&&target){ const mx=parseFloat(me.style.left||0), my=parseFloat(me.style.top||0); const tx=parseFloat(target.style.left||0), ty=parseFloat(target.style.top||0); const dx=tx-mx, dy=ty-my, dist=Math.sqrt(dx*dx+dy*dy); if(dist>speed){ me.style.left=mx+(dx/dist)*speed+'px'; me.style.top=my+(dy/dist)*speed+'px'; } } break; }
                         case 'ai_flee': { const me=document.getElementById(v[0]), target=document.getElementById(v[1]), speed=parseFloat(v[2]); if(me&&target){ const mx=parseFloat(me.style.left||0), my=parseFloat(me.style.top||0); const tx=parseFloat(target.style.left||0), ty=parseFloat(target.style.top||0); const dx=mx-tx, dy=my-ty, dist=Math.sqrt(dx*dx+dy*dy); if(dist>0){ me.style.left=mx+(dx/dist)*speed+'px'; me.style.top=my+(dy/dist)*speed+'px'; } } break; }
 
+                        // --- 3D WORLD ---
                         case 'scene_3d_init': { 
                             if(stage && w){ stage.style.perspective=v[0]+'px'; stage.style.overflow='hidden'; w.style.transformStyle='preserve-3d'; w.style.width="100%"; w.style.height="100%"; } 
                             if(!document.getElementById('css-3d-s')){const s=document.createElement('style');s.id='css-3d-s';s.innerHTML='.ecr-cube,.ecr-plane{position:absolute;transform-style:preserve-3d;} .ecr-face{position:absolute;width:100%;height:100%;border:1px solid rgba(0,0,0,0.1);display:flex;align-items:center;justify-content:center;}.ecr-face.front{transform:rotateY(0deg) translateZ(calc(var(--s)/2));}.ecr-face.back{transform:rotateY(180deg) translateZ(calc(var(--s)/2));}.ecr-face.right{transform:rotateY(90deg) translateZ(calc(var(--s)/2));}.ecr-face.left{transform:rotateY(-90deg) translateZ(calc(var(--s)/2));}.ecr-face.top{transform:rotateX(90deg) translateZ(calc(var(--s)/2));}.ecr-face.bottom{transform:rotateX(-90deg) translateZ(calc(var(--s)/2));}';document.head.appendChild(s);}
@@ -1105,6 +1137,7 @@ async function generateGameHTML() {
                             break;
                         }
                         
+                        // --- MEDIA ---
                         case 'video_load': {
                             const vidId=v[0]; const src=getAssetUrl(resolveValue(v[1]));
                             const old=document.getElementById(vidId); if(old) old.remove();
@@ -1120,14 +1153,17 @@ async function generateGameHTML() {
                         case 'video_control': { const vid=document.getElementById(v[0]); const act=v[1]; if(vid){ if(act==='play')vid.play().catch(e=>{}); else if(act==='pause')vid.pause(); else if(act==='stop'){vid.pause();vid.currentTime=0;} else if(act==='remove')vid.remove(); } break; }
                         case 'video_settings': { const vid=document.getElementById(v[0]); if(vid){ vid.volume=parseFloat(resolveValue(v[1])); vid.loop=(v[2]==='1'||v[2]==='true'); vid.style.opacity=resolveValue(v[3]); } break; }
 
+                        // --- POST PROCESSING ---
                         case 'pp_filter_set': { const t=v[0]; const val=parseFloat(resolveValue(v[1])); if(w){ let f=''; if(t==='blur')f=\`blur(\${val}px)\`; else if(t==='hue-rotate')f=\`hue-rotate(\${val}deg)\`; else f=\`\${t}(\${val}%)\`; w.style.filter=f; } break; }
                         case 'pp_vignette': { if(v[0]==='1'||v[0]==='true'){ const d=document.createElement('div'); d.id='pp-overlay-vignette'; d.style.cssText=\`position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:800;background:radial-gradient(circle,transparent 50%,\${v[2]} 100%);opacity:\${resolveValue(v[1])};mix-blend-mode:multiply;\`; stage.appendChild(d); } else { const d=document.getElementById('pp-overlay-vignette'); if(d)d.remove(); } break; }
                         case 'pp_crt_effect': { if(v[0]==='1'||v[0]==='true'){ const d=document.createElement('div'); d.id='pp-overlay-crt'; d.style.cssText=\`position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9990;background:linear-gradient(rgba(18,16,16,0) 50%,rgba(0,0,0,0.25) 50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06));background-size:100% 4px,6px 100%;opacity:\${resolveValue(v[1])};\`; stage.appendChild(d); } else { const d=document.getElementById('pp-overlay-crt'); if(d)d.remove(); } break; }
                         case 'pp_clear_all': { if(w)w.style.filter='none'; ['pp-overlay-vignette','pp-overlay-crt'].forEach(id=>{const el=document.getElementById(id);if(el)el.remove();}); break; }
 
+                        // --- WEBVIEW ---
                         case 'ui_webview_create': { if(document.getElementById(v[0]))break; const wb=document.createElement('iframe'); wb.id=v[0]; wb.src=resolveValue(v[1]); wb.className='ui-element'; wb.style.border='none'; wb.style.left=resolveValue(v[2])+'px'; wb.style.top=resolveValue(v[3])+'px'; wb.style.width=resolveValue(v[4])+'px'; wb.style.height=resolveValue(v[5])+'px'; ui.appendChild(wb); break; }
                         case 'ui_webview_control': { const wb=document.getElementById(v[0]); if(wb&&wb.contentWindow){ if(v[1]==='reload')wb.contentWindow.location.reload(); if(v[1]==='back')wb.contentWindow.history.back(); } break; }
 
+                        // --- INPUTS ---
                         case 'ui_input_create': case 'ui_textarea_create': {
                             const id=v[0]; if(document.getElementById(id))break;
                             const isArea = block.type==='ui_textarea_create';
@@ -1152,6 +1188,7 @@ async function generateGameHTML() {
                         case 'ui_scroll_create': { if(document.getElementById(v[0]))break; const sc=document.createElement('div'); sc.id=v[0]; sc.className='ui-element ui-scroll-box'; sc.style.left=resolveValue(v[1])+'px'; sc.style.top=resolveValue(v[2])+'px'; sc.style.width=resolveValue(v[3])+'px'; sc.style.height=resolveValue(v[4])+'px'; sc.style.backgroundColor=resolveValue(v[5]); sc.style.overflow='auto'; ui.appendChild(sc); break; }
                         case 'ui_scroll_add': { const sc=document.getElementById(v[0]), wgt=document.getElementById(v[1]); if(sc&&wgt){ sc.appendChild(wgt); wgt.style.position='relative'; wgt.style.left='0'; wgt.style.top='0'; } break; }
 
+                        // --- SYSTEM ---
                         case 'scene_load': { const next = PROJECT.scenes.find(s=>s.name===v[0]); if(next) loadScene(next.id); break; }
                         case 'scene_reload': { loadScene(currentSceneId); break; }
                         case 'scene_next': { const idx = PROJECT.scenes.findIndex(s => s.id === currentSceneId); if (idx !== -1 && idx < PROJECT.scenes.length - 1) loadScene(PROJECT.scenes[idx + 1].id); break; }

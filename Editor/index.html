@@ -198,8 +198,8 @@
                 <div class="menu-item" id="menuEditorOptions">
                     Настройки <i class="ri-arrow-down-s-line"></i>
                     <div class="menu-dropdown">
-                        <div class="menu-entry" id="btnEditorOptions" onclick="openEditorOptions()">
-                            <i class="ri-settings-5-fill"></i> Настройки редактора
+                        <div class="menu-entry" id="btnOpenEditorSettings">
+                            <i class="ri-settings-3-line"></i> Настройки редактора
                         </div>
                         <div class="menu-entry" id="btnOpenHotkeys" onclick="openHotkeysModal()">
                             <i class="ri-keyboard-line"></i> Горячие клавиши
@@ -321,17 +321,31 @@
             </div>
         </div>
 
-        <div class="toolbox">
-            <div class="resizer resizer-left" id="toolboxResizer"></div>
-
-            <div class="panel-header">
-                <i class="ri-tools-line"></i><i class="ri-tool-line"></i> Инструменты
+        <div id="toolbox-layout" class="toolbox">
+            <div id="toolboxResizer"></div>
+        
+            <div class="toolbox-nav">
+                <div class="nav-item active">
+                    <div class="nav-circle" style="background: #00C853;"></div>
+                    <span class="nav-label">События</span>
+                </div>
+                <div class="nav-item">
+                    <div class="nav-circle" style="background: #6200EA;"></div>
+                    <span class="nav-label">Движение</span>
+                </div>
             </div>
-
-            <div class="toolbox-search">
-                <input type="text" id="blockSearchInput" placeholder="Поиск блоков..." autocomplete="off">
+        
+            <div class="toolbox-wrapper">
+                <div class="toolbox-search">
+                    <input type="text" placeholder="Поиск...">
+                </div>
+        
+                <div id="toolboxContent">
+                    <div class="category-title">События</div>
+                    <div class="tool-item">...</div>
+                </div>
             </div>
-            <div id="toolboxContent"></div>
+        
         </div>
     </div>
 
@@ -1018,6 +1032,81 @@
                             class="ri-close-line"></i></button>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-editor-settings" class="modal-overlay hidden">
+        <div class="modal-window" style="width: 450px;">
+            <div class="modal-title">Внешний вид редактора</div>
+    
+            <div style="background:var(--bg-elevated-soft); padding:10px; border-radius:8px; margin-bottom:15px;">
+                <div style="font-weight:bold; font-size:12px; margin-bottom:10px; opacity:0.7;">РАБОЧАЯ ОБЛАСТЬ (NODES)
+                </div>
+    
+                <div class="input-group">
+                    <label style="display:block; margin-bottom:5px; font-size:12px; color:var(--text-soft);">Масштаб
+                        блоков</label>
+                    <select id="set-editor-block-scale" class="modal-input" style="width:100%;">
+                        <option value="0.8">Мелкий (80%)</option>
+                        <option value="1.0" selected>Нормальный (100%)</option>
+                        <option value="1.2">Крупный (120%)</option>
+                        <option value="1.4">Огромный (140%)</option>
+                    </select>
+                </div>
+    
+                <div class="input-group">
+                    <label style="display:block; margin-bottom:5px; font-size:12px; color:var(--text-soft);">Шрифт
+                        узлов</label>
+                    <select id="set-editor-font" class="modal-input" style="width:100%;">
+                        <option value="'Inter', sans-serif">Inter</option>
+                        <option value="'Courier New', monospace">Courier New</option>
+                        <option value="'Arial', sans-serif">Arial</option>
+                    </select>
+                </div>
+    
+                <div class="input-group">
+                    <label style="display:block; margin-bottom:5px; font-size:12px; color:var(--text-soft);">Размер текста
+                        узлов</label>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="range" id="set-editor-font-size-range" min="10" max="20" value="13" style="flex:1;">
+                        <span id="set-editor-font-size-val" style="font-size:12px; width:30px;">13</span>
+                    </div>
+                </div>
+            </div>
+    
+            <div style="background:var(--bg-elevated-soft); padding:10px; border-radius:8px; margin-bottom:15px;">
+                <div style="font-weight:bold; font-size:12px; margin-bottom:10px; opacity:0.7;">ПАНЕЛЬ ИНСТРУМЕНТОВ
+                    (TOOLBOX)</div>
+    
+                <div class="input-group">
+                    <label style="display:block; margin-bottom:5px; font-size:12px; color:var(--text-soft);">Высота
+                        элементов</label>
+                    <select id="set-toolbox-scale" class="modal-input" style="width:100%;">
+                        <option value="0.8">Компактно (80%)</option>
+                        <option value="1.0" selected>Стандарт (100%)</option>
+                        <option value="1.2">Удобно (120%)</option>
+                        <option value="1.4">Крупно (140%)</option>
+                    </select>
+                </div>
+    
+                <div class="input-group">
+                    <label style="display:block; margin-bottom:5px; font-size:12px; color:var(--text-soft);">Размер текста
+                        меню</label>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <input type="range" id="set-toolbox-font-size-range" min="10" max="18" value="13" style="flex:1;">
+                        <span id="set-toolbox-font-size-val" style="font-size:12px; width:30px;">13</span>
+                    </div>
+                </div>
+            </div>
+    
+            <div class="modal-buttons" style="justify-content: space-between;">
+                <button class="modal-btn danger" onclick="resetEditorUISettings()"
+                    style="margin-right:auto;">Сбросить</button>
+                <div style="display:flex; gap:10px;">
+                    <button class="modal-btn secondary" onclick="closeEditorSettings()">Отмена</button>
+                    <button class="modal-btn primary" id="btn-save-editor-settings">Сохранить</button>
+                </div>
             </div>
         </div>
     </div>

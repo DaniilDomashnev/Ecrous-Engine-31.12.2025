@@ -1280,3 +1280,69 @@ function filterToolbox(text) {
 		}
 	}
 }
+
+// ==========================================
+// --- ГЕНЕРАЦИЯ НАВИГАЦИИ ---
+// ==========================================
+function initToolboxNavigation() {
+    const navContainer = document.querySelector('.toolbox-nav');
+    const contentContainer = document.getElementById('toolboxContent');
+    
+    // Проверка наличия элементов и определений блоков
+    if (!navContainer || !contentContainer || typeof BLOCK_DEFINITIONS === 'undefined') return;
+
+    navContainer.innerHTML = ''; // Очистка
+
+    // 1. Собираем уникальные категории и их цвета
+    const categories = {};
+    // Порядок категорий важен, берем его по мере встречи в массиве
+    const categoryOrder = [];
+
+    BLOCK_DEFINITIONS.forEach(block => {
+        if (!categories[block.category]) {
+            categories[block.category] = block.color; // Запоминаем цвет первой встречи
+            categoryOrder.push(block.category);
+        }
+    });
+
+    // 2. Создаем кнопки
+    categoryOrder.forEach(catName => {
+        const color = categories[catName];
+        
+        const btn = document.createElement('div');
+        btn.className = 'nav-item';
+        // Используем data-атрибут для связи
+        btn.dataset.target = catName.toLowerCase();
+        
+        btn.innerHTML = `
+            <div class="nav-circle" style="background-color: ${color}; box-shadow: 0 2px 5px ${color}66;"></div>
+            <span class="nav-label">${catName}</span>
+        `;
+
+        // 3. Клик - скролл к заголовку категории
+        btn.addEventListener('click', () => {
+            // Ищем заголовок в тулбоксе
+            // Предлагаю добавить атрибут data-category к заголовкам при их генерации, 
+            // но если они просто текст, ищем по тексту:
+            const headers = Array.from(contentContainer.querySelectorAll('.category-title'));
+            const targetHeader = headers.find(h => h.innerText.trim().toLowerCase() === catName.toLowerCase());
+
+            if (targetHeader) {
+                // Скроллим с отступом для поиска
+                const offset = 50; // Высота поиска примерно
+                const elementPosition = targetHeader.getBoundingClientRect().top;
+                const offsetPosition = elementPosition + contentContainer.scrollTop - contentContainer.getBoundingClientRect().top - offset;
+
+                contentContainer.scrollTo({
+                    top: offsetPosition,
+                    behavior: "smooth"
+                });
+            }
+        });
+
+        navContainer.appendChild(btn);
+    });
+}
+
+// Вызываем функцию после загрузки (добавьте это в конец DOMContentLoaded)
+initToolboxNavigation();

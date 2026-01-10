@@ -11,6 +11,38 @@
 	transition: box-shadow 0.2s, transform 0.1s, border-color 0.2s;
 	/* Легкая прозрачность для фона узла */
 	backdrop-filter: blur(5px);
+
+	transform-origin: top left;
+	transform: scale(var(--editor-block-scale));
+
+	/* Чтобы текст внутри менялся от настройки шрифта */
+	font-family: var(--editor-font-family);
+}
+
+/* Корректировка портов, чтобы они не уезжали при масштабе */
+.node-port {
+	/* Увеличиваем зону клика если блоки большие */
+	width: calc(12px / var(--editor-block-scale));
+	height: calc(12px / var(--editor-block-scale));
+}
+
+/* Настраиваем размер шрифта в инпутах и списках */
+.node-header span {
+	font-size: var(--editor-font-size);
+}
+.input-row span {
+	font-size: calc(var(--editor-font-size) * 0.9); /* Чуть меньше основного */
+}
+.node-input {
+	font-size: var(--editor-font-size);
+	font-family: var(--editor-font-family);
+}
+
+/* Применяем шрифт к сайдбару тоже */
+.sidebar,
+.list-item,
+.header-theme-select {
+	font-size: var(--editor-font-size);
 }
 
 /* Эффект выделения */

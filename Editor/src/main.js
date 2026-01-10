@@ -3178,7 +3178,21 @@ function executeBlockLogic(block) {
 				// --- DEVICE ---
 				case 'dev_vibrate': {
 					const ms = parseInt(resolveValue(v[0])) || 200
-					if (navigator.vibrate) navigator.vibrate(ms)
+
+					// Проверяем поддержку браузером
+					if (typeof navigator.vibrate === 'function') {
+						// Пытаемся вибрировать
+						const success = navigator.vibrate(ms)
+						if (!success) {
+							console.warn(
+								'Вибрация заблокирована браузером (нужен клик по экрану) или не поддерживается устройством.'
+							)
+						}
+					} else {
+						console.log(
+							'Ваше устройство/браузер (например iOS или ПК) не поддерживает Vibration API.'
+						)
+					}
 					break
 				}
 				case 'dev_fullscreen': {
@@ -3229,34 +3243,84 @@ function executeBlockLogic(block) {
 					break
 				}
 
-				// --- INPUTS & TEXTAREA ---
-				case 'ui_input_create':
+				// --- 1. СОЗДАНИЕ TEXTAREA ---
 				case 'ui_textarea_create': {
 					const id = v[0]
 					if (document.getElementById(id)) break
 
-					const isArea = block.type === 'ui_textarea_create'
-					const el = document.createElement(isArea ? 'textarea' : 'input')
+					const el = document.createElement('textarea')
 					el.id = id
 					el.className = 'ui-element ui-input-widget'
 
-					// Переменные для координат и размеров
-					let x, y, w, h
+					// Стили, специфичные для Textarea
+					el.style.position = 'absolute'
+					el.style.boxSizing = 'border-box'
+					el.style.resize = 'none'
 
-					if (isArea) {
-						// У Textarea индексы: ID(0), X(1), Y(2), W(3), H(4)
-						x = resolveValue(v[1])
-						y = resolveValue(v[2])
-						w = resolveValue(v[3])
-						h = resolveValue(v[4])
-					} else {
-						// У Input индексы: ID(0), Подсказка(1), Тип(2), X(3), Y(4), W(5), H(6)
-						el.placeholder = resolveValue(v[1])
-						el.type = v[2] // text, password, number
+					// Парсинг аргументов: [ID, X, Y, W, H]
+					const x = resolveValue(v[1])
+					const y = resolveValue(v[2])
+					const w = resolveValue(v[3])
+					const h = resolveValue(v[4])
+
+					el.style.left = x + 'px'
+					el.style.top = y + 'px'
+					el.style.width = w + 'px'
+					el.style.height = h + 'px'
+
+					el.oninput = () => triggerUiChangeEvent(id)
+					document.getElementById('game-ui').appendChild(el)
+					break
+				}
+
+				// --- 2. СОЗДАНИЕ INPUT ---
+				case 'ui_input_create': {
+					const id = v[0]
+					if (document.getElementById(id)) break
+
+					const el = document.createElement('input')
+					el.id = id
+					el.className = 'ui-element ui-input-widget'
+
+					// Стили, специфичные для Input
+					el.style.position = 'absolute'
+					el.style.boxSizing = 'border-box'
+
+					// Подсказка всегда идет вторым аргументом
+					el.placeholder = resolveValue(v[1])
+
+					let x, y, w, h
+					const possibleType = v[2]
+					const validTypes = ['text', 'password', 'number']
+					const isNewFormat = validTypes.includes(possibleType)
+
+					if (isNewFormat) {
+						// ВАРИАНТ 1: Новый стандарт (есть Тип)
+						// Формат: [ID, Hint, Type, X, Y, W, H]
+						el.type = possibleType
 						x = resolveValue(v[3])
 						y = resolveValue(v[4])
 						w = resolveValue(v[5])
 						h = resolveValue(v[6])
+					} else {
+						// ВАРИАНТ 2: Старые форматы (без Типа -> всегда text)
+						el.type = 'text'
+
+						if (v.length <= 5) {
+							// Очень старый формат (без Y, массив короче)
+							// Формат: [ID, Hint, X, W, H]
+							x = resolveValue(v[2])
+							y = resolveValue(v[2]) // Fallback, если Y не был передан
+							w = resolveValue(v[3])
+							h = resolveValue(v[4])
+						} else {
+							// Стандартный старый (есть Y)
+							// Формат: [ID, Hint, X, Y, W, H]
+							x = resolveValue(v[2])
+							y = resolveValue(v[3])
+							w = resolveValue(v[4])
+							h = resolveValue(v[5])
+						}
 					}
 
 					el.style.left = x + 'px'
@@ -3264,28 +3328,36 @@ function executeBlockLogic(block) {
 					el.style.width = w + 'px'
 					el.style.height = h + 'px'
 
-					// Важно для корректного отображения размеров
-					el.style.boxSizing = 'border-box'
-
-					el.oninput = () => {
-						triggerUiChangeEvent(id)
-					}
-
+					el.oninput = () => triggerUiChangeEvent(id)
 					document.getElementById('game-ui').appendChild(el)
 					break
 				}
 
+				// --- 3. УПРАВЛЕНИЕ (SET) ---
 				case 'ui_input_set': {
 					const el = document.getElementById(v[0])
 					if (!el) break
+
 					const action = v[1]
 					const val = resolveValue(v[2])
 
-					if (action === 'set_text') el.value = val
-					if (action === 'clear') el.value = ''
-					if (action === 'disable') el.disabled = true
-					if (action === 'enable') el.disabled = false
-					if (action === 'focus') el.focus()
+					switch (action) {
+						case 'set_text':
+							el.value = val
+							break
+						case 'clear':
+							el.value = ''
+							break
+						case 'disable':
+							el.disabled = true
+							break
+						case 'enable':
+							el.disabled = false
+							break
+						case 'focus':
+							el.focus()
+							break
+					}
 					break
 				}
 

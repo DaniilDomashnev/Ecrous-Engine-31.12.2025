@@ -1919,7 +1919,7 @@ const BLOCK_DEFINITIONS = [
 		label: 'Рестарт игры',
 		desc: 'Полный сброс.',
 		icon: 'ri-refresh-line',
-		color: '#607D8B',
+		color: '#7c4dff',
 		inputs: [],
 	},
 	{
@@ -2056,7 +2056,7 @@ const BLOCK_DEFINITIONS = [
 		label: 'Консоль',
 		desc: 'Показать/скрыть лог.',
 		icon: 'ri-terminal-box-line',
-		color: '#00B0FF',
+		color: '#F57C00',
 		inputs: [{ label: 'Показать/Скрыть', default: 'hide' }],
 	},
 	{
@@ -2731,7 +2731,7 @@ const BLOCK_DEFINITIONS = [
 		subcategory: 'Ввод',
 		label: 'Поле ввода',
 		desc: 'Однострочный ввод.',
-		icon: 'ri-text-input',
+		icon: 'ri-input-cursor-move',
 		color: '#ff9800',
 		inputs: [
 			{ label: 'ID', default: 'inp1' },

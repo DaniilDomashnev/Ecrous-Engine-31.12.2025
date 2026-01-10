@@ -259,3 +259,148 @@ function resetEditorSettings() {
         setTimeout(() => window.location.reload(), 500);
     }
 }
+
+// ==========================================
+// --- НАСТРОЙКИ РЕДАКТОРА (UI) ---
+// ==========================================
+
+// Дефолтные настройки
+const DEFAULT_EDITOR_SETTINGS = {
+    // Узлы
+    blockScale: '1.0',
+    fontFamily: "'Inter', sans-serif",
+    fontSize: '13',
+    // Toolbox
+    toolboxScale: '1.0',
+    toolboxFontSize: '13'
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    const btnOpenEditorSettings = document.getElementById('btnOpenEditorSettings');
+    if(btnOpenEditorSettings) btnOpenEditorSettings.onclick = openEditorSettings;
+
+    const btnSave = document.getElementById('btn-save-editor-settings');
+    if(btnSave) btnSave.onclick = saveEditorSettings;
+
+    // Живое обновление цифр для ползунков
+    setupRangeListener('set-editor-font-size-range', 'set-editor-font-size-val');
+    setupRangeListener('set-toolbox-font-size-range', 'set-toolbox-font-size-val');
+
+    // Применяем настройки сразу при старте
+    applyEditorSettings();
+});
+
+function setupRangeListener(rangeId, valId) {
+    const range = document.getElementById(rangeId);
+    const val = document.getElementById(valId);
+    if(range && val) {
+        range.oninput = (e) => val.innerText = e.target.value;
+    }
+}
+
+function openEditorSettings() {
+    const modal = document.getElementById('modal-editor-settings');
+    if (!modal) return;
+
+    const settings = getEditorSettings();
+
+    // Заполняем поля УЗЛОВ
+    setVal('set-editor-block-scale', settings.blockScale);
+    setVal('set-editor-font', settings.fontFamily);
+    setVal('set-editor-font-size-range', settings.fontSize);
+    setText('set-editor-font-size-val', settings.fontSize);
+
+    // Заполняем поля TOOLBOX
+    setVal('set-toolbox-scale', settings.toolboxScale);
+    setVal('set-toolbox-font-size-range', settings.toolboxFontSize);
+    setText('set-toolbox-font-size-val', settings.toolboxFontSize);
+
+    modal.classList.remove('hidden');
+    setTimeout(() => modal.classList.add('active'), 10);
+}
+
+function closeEditorSettings() {
+    const modal = document.getElementById('modal-editor-settings');
+    if (modal) {
+        modal.classList.remove('active');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+    }
+}
+
+function saveEditorSettings() {
+    const newSettings = {
+        // Узлы
+        blockScale: getVal('set-editor-block-scale'),
+        fontFamily: getVal('set-editor-font'),
+        fontSize: getVal('set-editor-font-size-range'),
+        // Toolbox
+        toolboxScale: getVal('set-toolbox-scale'),
+        toolboxFontSize: getVal('set-toolbox-font-size-range')
+    };
+
+    localStorage.setItem('ecrous_editor_ui_prefs', JSON.stringify(newSettings));
+    applyEditorSettings();
+    
+    // Обновляем связи на канвасе (так как блоки могли изменить размер)
+    if(typeof updateAllConnections === 'function') {
+        setTimeout(updateAllConnections, 100); 
+    }
+
+    closeEditorSettings();
+    if (typeof showNotification === 'function') showNotification('Визуальные настройки сохранены');
+}
+
+// === ФУНКЦИЯ СБРОСА ===
+function resetEditorUISettings() {
+    if(!confirm('Сбросить внешний вид редактора к стандартным настройкам?')) return;
+
+    // Сохраняем дефолт
+    localStorage.setItem('ecrous_editor_ui_prefs', JSON.stringify(DEFAULT_EDITOR_SETTINGS));
+    
+    // Применяем
+    applyEditorSettings();
+    
+    // Обновляем UI модалки (если она открыта, чтобы юзер видел изменения)
+    openEditorSettings(); 
+    
+    if (typeof showNotification === 'function') showNotification('Настройки сброшены');
+}
+
+function getEditorSettings() {
+    const raw = localStorage.getItem('ecrous_editor_ui_prefs');
+    if (!raw) return DEFAULT_EDITOR_SETTINGS;
+    try {
+        // Объединяем с дефолтными, чтобы новые поля не ломались у старых юзеров
+        return { ...DEFAULT_EDITOR_SETTINGS, ...JSON.parse(raw) };
+    } catch (e) {
+        return DEFAULT_EDITOR_SETTINGS;
+    }
+}
+
+function applyEditorSettings() {
+    const settings = getEditorSettings();
+    const root = document.documentElement;
+
+    // Применяем переменные для УЗЛОВ
+    root.style.setProperty('--editor-block-scale', settings.blockScale);
+    root.style.setProperty('--editor-font-family', settings.fontFamily);
+    root.style.setProperty('--editor-font-size', settings.fontSize + 'px');
+
+    // Применяем переменные для TOOLBOX
+    root.style.setProperty('--toolbox-scale', settings.toolboxScale);
+    root.style.setProperty('--toolbox-font-size', settings.toolboxFontSize + 'px');
+}
+
+// Вспомогательные функции
+function getVal(id) {
+    const el = document.getElementById(id);
+    return el ? el.value : '';
+}
+function setVal(id, val) {
+    const el = document.getElementById(id);
+    if(el) el.value = val;
+}
+function setText(id, txt) {
+    const el = document.getElementById(id);
+    if(el) el.innerText = txt;
+}

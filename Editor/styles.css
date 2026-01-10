@@ -2,8 +2,16 @@
    БАЗОВЫЕ НАСТРОЙКИ И ИМПОРТ ПЕРЕМЕННЫХ
    ========================================= */
 :root {
-	--font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
-		Helvetica, Arial, sans-serif;
+    /* Базовые переменные (существующие) */
+    --font-main: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    
+    /* ПЕРЕМЕННЫЕ НАСТРОЕК */
+    --editor-block-scale: 1.0;      /* Масштаб блоков */
+    --editor-font-size: 13px;       /* Размер шрифта */
+    --editor-font-family: var(--font-main); /* Текущий шрифт */
+
+		--toolbox-scale: 1.0; 
+    --toolbox-font-size: 13px;
 }
 
 /* ГАРАНТИРОВАННЫЕ ПЕРЕМЕННЫЕ ДЛЯ НОЧНОЙ ТЕМЫ (На случай если в themes.css ошибка) */
